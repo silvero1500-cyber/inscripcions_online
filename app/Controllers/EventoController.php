@@ -347,6 +347,75 @@ final class EventoController
         Response::redirect(base_url('/admin/eventos'));
     }
 
+    /**
+     * Duplica un esdeveniment (amb les seves tarifes i camps personalitzats).
+     * La còpia es crea inactiva perquè l'organitzador la revisi abans de publicar-la.
+     */
+    public function duplicate(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+
+        $evento = Evento::findById($id);
+        if ($evento === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, $id)) Response::forbidden();
+
+        $tarifas = Tarifa::listByEvento($id);
+        $campos  = CampoPersonalizado::listByEvento($id);
+
+        $nuevoTitulo = mb_substr((string)$evento['titulo'] . ' (còpia)', 0, 255);
+        $slug        = Slugger::uniqueForEvento($nuevoTitulo);
+
+        $newId = 0;
+        Database::getInstance()->transaction(
+            function () use ($evento, $tarifas, $campos, $nuevoTitulo, $slug, &$newId): void {
+                $newId = Evento::create([
+                    'propietario_id'           => (int) $evento['propietario_id'],
+                    'titulo'                   => $nuevoTitulo,
+                    'slug'                     => $slug,
+                    'descripcion'              => $evento['descripcion'],
+                    'localizacion'             => $evento['localizacion'] ?? null,
+                    'fecha_evento'             => $evento['fecha_evento'],
+                    'fecha_limite_inscripcion' => $evento['fecha_limite_inscripcion'],
+                    'aforo_maximo'             => $evento['aforo_maximo'],
+                    'imagen_portada'           => ImageUploader::copyEventImage($evento['imagen_portada'] ?? null),
+                    'activo'                   => 0, // la còpia comença inactiva
+                    'inscripciones_abiertas'   => (int) $evento['inscripciones_abiertas'],
+                ]);
+
+                // Tarifes: sense id → s'insereixen com a noves per al nou esdeveniment
+                $tarifasNuevas = array_map(static fn(array $t): array => [
+                    'id'           => null,
+                    'nombre'       => $t['nombre'],
+                    'descripcion'  => $t['descripcion'],
+                    'precio'       => $t['precio'],
+                    'aforo_maximo' => $t['aforo_maximo'],
+                    'fecha_inicio' => $t['fecha_inicio'],
+                    'fecha_fin'    => $t['fecha_fin'],
+                    'activo'       => (int) $t['activo'],
+                ], $tarifas);
+                Tarifa::syncForEvento($newId, $tarifasNuevas);
+
+                // Camps personalitzats
+                $camposNuevos = array_map(static fn(array $c): array => [
+                    'nombre_campo' => $c['nombre_campo'],
+                    'etiqueta'     => $c['etiqueta'],
+                    'tipo'         => $c['tipo'],
+                    'opciones'     => $c['opciones'],
+                    'requerido'    => (int) $c['requerido'],
+                    'placeholder'  => $c['placeholder'] ?? null,
+                    'ayuda'        => $c['ayuda'] ?? null,
+                ], $campos);
+                CampoPersonalizado::syncForEvento($newId, $camposNuevos);
+            }
+        );
+
+        Session::flash('success', 'Esdeveniment duplicat. Revisa la còpia i activa-la quan estigui a punt.');
+        Response::redirect(base_url("/admin/eventos/{$newId}/editar"));
+    }
+
     // ────────────────────────────────────────────────────────
     // Helpers privados
     // ────────────────────────────────────────────────────────

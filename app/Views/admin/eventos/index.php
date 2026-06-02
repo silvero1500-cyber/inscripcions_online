@@ -69,9 +69,15 @@
                         <?php endif; ?>
                     </td>
                     <td class="td-actions">
+                        <a class="btn-small" href="<?= e(base_url('/eventos/' . $ev['slug'])) ?>" target="_blank" rel="noopener">👁️ Veure</a>
                         <a class="btn-small btn-kpi" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/kpis')) ?>">📊 KPIs</a>
                         <a class="btn-small" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/descuentos')) ?>">🏷️ Descomptes</a>
                         <a class="btn-small" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/editar')) ?>">Editar</a>
+                        <form method="post" action="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/duplicar')) ?>" class="inline"
+                              onsubmit="return confirm('Vols duplicar aquest esdeveniment? Es crearà una còpia inactiva.');">
+                            <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+                            <button type="submit" class="btn-small">⧉ Duplicar</button>
+                        </form>
                         <form method="post" action="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/eliminar')) ?>" class="inline"
                               onsubmit="return confirm('Vols esborrar aquest esdeveniment? Aquesta acció no es pot desfer.');">
                             <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">

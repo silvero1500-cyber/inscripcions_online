@@ -61,8 +61,9 @@ $router->post('/admin/eventos/{id}/descuentos/generar', [DescuentosController::c
 $router->get ('/admin/eventos/{id}/descuentos/export',   [DescuentosController::class, 'export'],        $auth);
 $router->post('/admin/descuentos/{id}/toggle',           [DescuentosController::class, 'toggle'],        $auth);
 $router->post('/admin/descuentos/{id}/eliminar',         [DescuentosController::class, 'destroy'],       $auth);
-$router->post('/admin/eventos/{id}',                 [EventoController::class, 'update'],  $auth);
-$router->post('/admin/eventos/{id}/eliminar',        [EventoController::class, 'destroy'], $auth);
+$router->post('/admin/eventos/{id}',                 [EventoController::class, 'update'],    $auth);
+$router->post('/admin/eventos/{id}/duplicar',        [EventoController::class, 'duplicate'], $auth);
+$router->post('/admin/eventos/{id}/eliminar',        [EventoController::class, 'destroy'],   $auth);
 
 // Inscrits (llistat + export CSV + import CSV)
 $router->get ('/admin/inscritos',                              [InscritosAdminController::class, 'index'],   $auth);

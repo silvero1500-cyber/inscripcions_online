@@ -77,6 +77,36 @@ final class ImageUploader
         return $relDir . '/' . $newName;
     }
 
+    /**
+     * Copia una imatge existent a un fitxer nou amb nom aleatori (mateixa carpeta).
+     * Útil per duplicar esdeveniments sense que comparteixin el mateix fitxer físic.
+     *
+     * @return string|null Nova ruta relativa (ex. "eventos/abc.jpg"), o null si no es pot copiar.
+     */
+    public static function copyEventImage(?string $relativePath): ?string
+    {
+        if ($relativePath === null || $relativePath === '') return null;
+        if (!preg_match('#^([a-z0-9_-]+)/[a-f0-9]{32}\.(jpg|png|webp|gif)$#i', $relativePath, $m)) {
+            return null;
+        }
+        $relDir = $m[1];
+        $ext    = strtolower($m[2]);
+        $srcAbs = dirname(__DIR__, 2) . '/public/uploads/' . $relativePath;
+        if (!is_file($srcAbs)) return null;
+
+        $newName = bin2hex(random_bytes(16)) . '.' . $ext;
+        $absDir  = dirname(__DIR__, 2) . '/public/uploads/' . $relDir;
+        $absPath = $absDir . '/' . $newName;
+
+        if (!is_dir($absDir) && !mkdir($absDir, 0755, true) && !is_dir($absDir)) {
+            return null;
+        }
+        if (!@copy($srcAbs, $absPath)) return null;
+        @chmod($absPath, 0644);
+
+        return $relDir . '/' . $newName;
+    }
+
     public static function deleteEventImage(?string $relativePath): void
     {
         if ($relativePath === null || $relativePath === '') return;
