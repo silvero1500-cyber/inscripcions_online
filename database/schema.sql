@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS `eventos` (
     `imagen_portada`            VARCHAR(500)    NULL,
     `activo`                    TINYINT(1)      NOT NULL DEFAULT 1,
     `inscripciones_abiertas`    TINYINT(1)      NOT NULL DEFAULT 1,
+    `campos_fijos`              JSON            NULL COMMENT 'Config per camp fix: obligatori/opcional/ocult',
     `created_at`                TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`                TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -128,14 +129,15 @@ CREATE TABLE IF NOT EXISTS `inscritos` (
     `id`              INT UNSIGNED  NOT NULL AUTO_INCREMENT,
     `evento_id`       INT UNSIGNED  NOT NULL,
     `tarifa_id`       INT UNSIGNED  NOT NULL,
-    -- Campos estándar del corredor
+    -- Campos estándar del corredor (nombre y email siempre obligatorios;
+    -- el resto pueden ocultarse/hacerse opcionales por evento → nullable)
     `nombre`          VARCHAR(100)  NOT NULL,
-    `apellido`        VARCHAR(150)  NOT NULL,
-    `sexo`            ENUM('H','M','NB') NOT NULL,
-    `fecha_nacimiento` DATE         NOT NULL,
-    `dni`             VARCHAR(20)   NOT NULL,
+    `apellido`        VARCHAR(150)  NULL,
+    `sexo`            ENUM('H','M','NB') NULL,
+    `fecha_nacimiento` DATE         NULL,
+    `dni`             VARCHAR(20)   NULL,
     `email`           VARCHAR(255)  NOT NULL,
-    `telefono`        VARCHAR(20)   NOT NULL,
+    `telefono`        VARCHAR(20)   NULL,
     `club`            VARCHAR(150)  NULL,
     `talla_camiseta`  ENUM('XS','S','M','L','XL','XXL','XXXL') NULL,
     -- Estado de inscripción/pago

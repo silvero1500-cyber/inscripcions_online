@@ -10,12 +10,20 @@
 /** @var bool $mostraAutofill */
 use App\Core\Csrf;
 use App\Models\CampoPersonalizado;
+use App\Models\CamposFijos;
 use App\Models\Inscrito;
 use App\Services\ImageUploader;
 
 $val = fn(string $k, string $d = ''): string => (string)($old[$k] ?? $d);
 $err = fn(string $k): ?string => $errors[$k][0] ?? null;
 $img = ImageUploader::publicUrl($evento['imagen_portada']);
+
+// Configuració dels camps fixos d'aquest esdeveniment
+$cf      = CamposFijos::resolve($evento['campos_fijos'] ?? null);
+$cfVis   = fn(string $k): bool => CamposFijos::visible($cf, $k);
+$cfReq   = fn(string $k): bool => CamposFijos::requerido($cf, $k);
+$reqMark = fn(string $k): string => CamposFijos::requerido($cf, $k) ? ' <span class="req">*</span>' : '';
+$reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required' : '';
 ?>
 
 <section class="container">
@@ -160,27 +168,33 @@ $img = ImageUploader::publicUrl($evento['imagen_portada']);
                                value="<?= e($val('nombre')) ?>">
                         <?php if ($err('nombre')): ?><div class="field-error"><?= e($err('nombre')) ?></div><?php endif; ?>
                     </div>
+                    <?php if ($cfVis('apellido')): ?>
                     <div class="form-row">
-                        <label for="apellido"><?= e(t('form.label.surname')) ?> <span class="req">*</span></label>
-                        <input type="text" id="apellido" name="apellido" required maxlength="150" autocomplete="family-name"
+                        <label for="apellido"><?= e(t('form.label.surname')) ?><?= $reqMark('apellido') ?></label>
+                        <input type="text" id="apellido" name="apellido" <?= $reqAttr('apellido') ?> maxlength="150" autocomplete="family-name"
                                value="<?= e($val('apellido')) ?>">
                         <?php if ($err('apellido')): ?><div class="field-error"><?= e($err('apellido')) ?></div><?php endif; ?>
                     </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="form-grid-2">
+                    <?php if ($cfVis('dni')): ?>
                     <div class="form-row">
-                        <label for="dni"><?= e(t('form.label.dni')) ?> <span class="req">*</span></label>
-                        <input type="text" id="dni" name="dni" required maxlength="20" placeholder="12345678A"
+                        <label for="dni"><?= e(t('form.label.dni')) ?><?= $reqMark('dni') ?></label>
+                        <input type="text" id="dni" name="dni" <?= $reqAttr('dni') ?> maxlength="20" placeholder="12345678A"
                                value="<?= e(strtoupper($val('dni'))) ?>">
                         <?php if ($err('dni')): ?><div class="field-error"><?= e($err('dni')) ?></div><?php endif; ?>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($cfVis('fecha_nacimiento')): ?>
                     <div class="form-row">
-                        <label for="fecha_nacimiento"><?= e(t('form.label.birth_date')) ?> <span class="req">*</span></label>
-                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required
+                        <label for="fecha_nacimiento"><?= e(t('form.label.birth_date')) ?><?= $reqMark('fecha_nacimiento') ?></label>
+                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" <?= $reqAttr('fecha_nacimiento') ?>
                                value="<?= e($val('fecha_nacimiento')) ?>">
                         <?php if ($err('fecha_nacimiento')): ?><div class="field-error"><?= e($err('fecha_nacimiento')) ?></div><?php endif; ?>
                     </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="form-grid-2">
@@ -190,18 +204,21 @@ $img = ImageUploader::publicUrl($evento['imagen_portada']);
                                value="<?= e($val('email')) ?>">
                         <?php if ($err('email')): ?><div class="field-error"><?= e($err('email')) ?></div><?php endif; ?>
                     </div>
+                    <?php if ($cfVis('telefono')): ?>
                     <div class="form-row">
-                        <label for="telefono"><?= e(t('form.label.phone')) ?> <span class="req">*</span></label>
-                        <input type="tel" id="telefono" name="telefono" required maxlength="15" autocomplete="tel"
+                        <label for="telefono"><?= e(t('form.label.phone')) ?><?= $reqMark('telefono') ?></label>
+                        <input type="tel" id="telefono" name="telefono" <?= $reqAttr('telefono') ?> maxlength="15" autocomplete="tel"
                                placeholder="600123456" value="<?= e($val('telefono')) ?>">
                         <?php if ($err('telefono')): ?><div class="field-error"><?= e($err('telefono')) ?></div><?php endif; ?>
                     </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="form-grid-2">
+                    <?php if ($cfVis('sexo')): ?>
                     <div class="form-row">
-                        <label for="sexo"><?= e(t('form.label.sex')) ?> <span class="req">*</span></label>
-                        <select id="sexo" name="sexo" required>
+                        <label for="sexo"><?= e(t('form.label.sex')) ?><?= $reqMark('sexo') ?></label>
+                        <select id="sexo" name="sexo" <?= $reqAttr('sexo') ?>>
                             <option value=""><?= e(t('form.label.sex.choose')) ?></option>
                             <option value="H" <?= $val('sexo') === 'H' ? 'selected' : '' ?>><?= e(t('form.label.sex.male')) ?></option>
                             <option value="M" <?= $val('sexo') === 'M' ? 'selected' : '' ?>><?= e(t('form.label.sex.female')) ?></option>
@@ -209,35 +226,44 @@ $img = ImageUploader::publicUrl($evento['imagen_portada']);
                         </select>
                         <?php if ($err('sexo')): ?><div class="field-error"><?= e($err('sexo')) ?></div><?php endif; ?>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($cfVis('talla_camiseta')): ?>
                     <div class="form-row">
-                        <label for="talla_camiseta"><?= e(t('form.label.shirt')) ?></label>
-                        <select id="talla_camiseta" name="talla_camiseta">
+                        <label for="talla_camiseta"><?= e(t('form.label.shirt')) ?><?= $reqMark('talla_camiseta') ?></label>
+                        <select id="talla_camiseta" name="talla_camiseta" <?= $reqAttr('talla_camiseta') ?>>
                             <option value=""><?= e(t('form.label.shirt.none')) ?></option>
                             <?php foreach (Inscrito::TALLAS as $t): ?>
                                 <option value="<?= e($t) ?>" <?= $val('talla_camiseta') === $t ? 'selected' : '' ?>><?= e($t) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="form-grid-2">
+                    <?php if ($cfVis('poblacion')): ?>
                     <div class="form-row">
-                        <label for="poblacion"><?= e(t('form.label.city')) ?></label>
-                        <input type="text" id="poblacion" name="poblacion" maxlength="120" autocomplete="address-level2"
+                        <label for="poblacion"><?= e(t('form.label.city')) ?><?= $reqMark('poblacion') ?></label>
+                        <input type="text" id="poblacion" name="poblacion" <?= $reqAttr('poblacion') ?> maxlength="120" autocomplete="address-level2"
                                value="<?= e($val('poblacion')) ?>">
                     </div>
+                    <?php endif; ?>
+                    <?php if ($cfVis('codigo_postal')): ?>
                     <div class="form-row">
-                        <label for="codigo_postal"><?= e(t('form.label.postal_code')) ?></label>
-                        <input type="text" id="codigo_postal" name="codigo_postal" maxlength="10" autocomplete="postal-code"
+                        <label for="codigo_postal"><?= e(t('form.label.postal_code')) ?><?= $reqMark('codigo_postal') ?></label>
+                        <input type="text" id="codigo_postal" name="codigo_postal" <?= $reqAttr('codigo_postal') ?> maxlength="10" autocomplete="postal-code"
                                placeholder="08001" value="<?= e($val('codigo_postal')) ?>">
                         <?php if ($err('codigo_postal')): ?><div class="field-error"><?= e($err('codigo_postal')) ?></div><?php endif; ?>
                     </div>
+                    <?php endif; ?>
                 </div>
 
+                <?php if ($cfVis('club')): ?>
                 <div class="form-row">
-                    <label for="club"><?= e(t('form.label.club')) ?> (<?= e(t('common.optional')) ?>)</label>
-                    <input type="text" id="club" name="club" maxlength="150" value="<?= e($val('club')) ?>">
+                    <label for="club"><?= e(t('form.label.club')) ?><?= $cfReq('club') ? $reqMark('club') : ' (' . e(t('common.optional')) . ')' ?></label>
+                    <input type="text" id="club" name="club" <?= $reqAttr('club') ?> maxlength="150" value="<?= e($val('club')) ?>">
                 </div>
+                <?php endif; ?>
             </fieldset>
         </div>
 

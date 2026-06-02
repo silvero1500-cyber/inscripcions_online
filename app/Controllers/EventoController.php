@@ -14,6 +14,7 @@ use App\Core\Validator;
 use App\Core\View;
 use App\Models\Evento;
 use App\Models\CampoPersonalizado;
+use App\Models\CamposFijos;
 use App\Models\Tarifa;
 use App\Services\ImageUploader;
 use App\Services\Slugger;
@@ -96,6 +97,7 @@ final class EventoController
                     'imagen_portada'           => $imagePath,
                     'activo'                   => $data['activo'],
                     'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
+                    'campos_fijos'             => $data['campos_fijos'],
                 ]);
                 Tarifa::syncForEvento($eventoId, $tarifas);
                 CampoPersonalizado::syncForEvento($eventoId, $campos);
@@ -161,6 +163,7 @@ final class EventoController
             'aforo_maximo'             => $data['aforo_maximo'],
             'activo'                   => $data['activo'],
             'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
+            'campos_fijos'             => $data['campos_fijos'],
         ];
 
         // Si el título cambió, regenerar slug único
@@ -383,6 +386,7 @@ final class EventoController
                     'imagen_portada'           => ImageUploader::copyEventImage($evento['imagen_portada'] ?? null),
                     'activo'                   => 0, // la còpia comença inactiva
                     'inscripciones_abiertas'   => (int) $evento['inscripciones_abiertas'],
+                    'campos_fijos'             => $evento['campos_fijos'] ?? null,
                 ]);
 
                 // Tarifes: sense id → s'insereixen com a noves per al nou esdeveniment
@@ -435,6 +439,7 @@ final class EventoController
             'aforo_maximo'             => $aforo === '' ? null : (int)$aforo,
             'activo'                   => isset($post['activo']) ? 1 : 0,
             'inscripciones_abiertas'   => isset($post['inscripciones_abiertas']) ? 1 : 0,
+            'campos_fijos'             => CamposFijos::fromPost($post),
         ];
     }
 

@@ -6,6 +6,7 @@
 /** @var array $errors */
 use App\Core\Csrf;
 use App\Models\CampoPersonalizado;
+use App\Models\CamposFijos;
 use App\Services\ImageUploader;
 
 $isEdit = $evento !== null;
@@ -22,6 +23,13 @@ $val = function (string $key, string $default = '') use ($old, $evento) {
 };
 
 $err = fn(string $key): ?string => $errors[$key][0] ?? null;
+
+// Configuració actual dels camps fixos (amb fallback a $old si la validació ha fallat)
+$camposFijosCfg = CamposFijos::resolve($evento['campos_fijos'] ?? null);
+$cfState = function (string $key) use ($old, $camposFijosCfg): string {
+    $o = $old['campos_fijos'][$key] ?? null;
+    return in_array($o, CamposFijos::ESTADOS, true) ? (string)$o : $camposFijosCfg[$key];
+};
 ?>
 <section class="page-head with-action">
     <div>
@@ -174,6 +182,28 @@ $err = fn(string $key): ?string => $errors[$key][0] ?? null;
                 </div>
                 <p class="empty-hint" data-empty-for="tarifas-list">Encara no has afegit cap tarifa. Fes clic a «Afegir tarifa».</p>
             </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Camps estàndard del corredor</legend>
+        <p class="muted">Tria quins camps demanar al formulari d'inscripció. <strong>Nom</strong> i <strong>email</strong> són sempre obligatoris.</p>
+
+        <div class="campos-fijos">
+            <div class="cf-row cf-fixed">
+                <span class="cf-label">Nom · Email</span>
+                <span class="badge badge-muted">Sempre obligatori</span>
+            </div>
+            <?php foreach (CamposFijos::CAMPS as $key => $meta): $st = $cfState($key); ?>
+                <div class="cf-row">
+                    <label class="cf-label" for="cf-<?= e($key) ?>"><?= e($meta['label']) ?></label>
+                    <select id="cf-<?= e($key) ?>" name="campos_fijos[<?= e($key) ?>]" class="cf-select">
+                        <option value="obligatori" <?= $st === 'obligatori' ? 'selected' : '' ?>>Obligatori</option>
+                        <option value="opcional"   <?= $st === 'opcional'   ? 'selected' : '' ?>>Opcional</option>
+                        <option value="ocult"      <?= $st === 'ocult'      ? 'selected' : '' ?>>Ocult</option>
+                    </select>
+                </div>
+            <?php endforeach; ?>
         </div>
     </fieldset>
 

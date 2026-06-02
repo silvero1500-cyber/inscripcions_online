@@ -12,6 +12,7 @@ use App\Core\Session;
 use App\Core\Validator;
 use App\Core\View;
 use App\Models\CampoPersonalizado;
+use App\Models\CamposFijos;
 use App\Models\DescuentoEvento;
 use App\Models\Evento;
 use App\Models\Inscrito;
@@ -47,9 +48,10 @@ final class InscripcionController
             Response::redirect(base_url('/eventos/' . $slug) . '#formulari');
         }
 
-        // ── Validación campos estándar ────────────────────────
-        $data = self::extractCorredorData($_POST);
-        $v    = self::validateCorredor($data);
+        // ── Validación campos estándar (segons config de l'esdeveniment) ──
+        $camposFijos = CamposFijos::resolve($evento['campos_fijos'] ?? null);
+        $data = self::extractCorredorData($_POST, $camposFijos);
+        $v    = self::validateCorredor($data, $camposFijos);
 
         // ── Validación campos personalizados ──────────────────
         $valoresCampos = [];
@@ -187,11 +189,14 @@ final class InscripcionController
     // Helpers privados
     // ────────────────────────────────────────────────────────
 
-    /** @return array<string, mixed> */
-    private static function extractCorredorData(array $post): array
+    /**
+     * @param array<string,string> $config  [camp => 'obligatori'|'opcional'|'ocult']
+     * @return array<string, mixed>
+     */
+    private static function extractCorredorData(array $post, array $config): array
     {
         $cp = preg_replace('/\D+/', '', trim((string) ($post['codigo_postal'] ?? ''))) ?? '';
-        return [
+        $data = [
             'nombre'           => trim((string) ($post['nombre'] ?? '')),
             'apellido'         => trim((string) ($post['apellido'] ?? '')),
             'sexo'             => strtoupper(trim((string) ($post['sexo'] ?? ''))),
@@ -204,46 +209,94 @@ final class InscripcionController
             'poblacion'        => mb_substr(trim((string) ($post['poblacion'] ?? '')), 0, 120) ?: null,
             'codigo_postal'    => $cp !== '' ? mb_substr($cp, 0, 10) : null,
         ];
-    }
 
-    private static function validateCorredor(array $data): Validator
-    {
-        $v = new Validator($data);
-
-        $v->required('nombre')->max('nombre', 100);
-        $v->required('apellido')->max('apellido', 150);
-        $v->required('sexo')->in('sexo', Inscrito::SEXOS);
-        $v->required('fecha_nacimiento')->date('fecha_nacimiento');
-        $v->required('dni');
-        $v->required('email')->email('email')->max('email', 255);
-        $v->required('telefono');
-
-        // Fecha de nacimiento razonable
-        if (!empty($data['fecha_nacimiento']) && $v->first('fecha_nacimiento') === null) {
-            $fn = strtotime((string) $data['fecha_nacimiento']);
-            if ($fn === false || $fn > time() || $fn < strtotime('-110 years')) {
-                $v->addError('fecha_nacimiento', 'Data de naixement no plausible.');
+        // Camps ocults: no confiar en el POST, forçar buit/null
+        foreach (CamposFijos::CAMPS as $key => $_meta) {
+            if (($config[$key] ?? '') === 'ocult') {
+                $data[$key] = null;
             }
         }
 
-        // DNI/NIE
-        if (!empty($data['dni']) && !Inscrito::dniValido((string) $data['dni'])) {
-            $v->addError('dni', 'DNI o NIE no vàlid.');
+        // Columnes que ara són nullables: '' → null (només nom i email queden NOT NULL)
+        foreach (['apellido', 'sexo', 'fecha_nacimiento', 'dni', 'telefono'] as $key) {
+            if ($data[$key] === '') $data[$key] = null;
         }
 
-        // Teléfono: 9 dígitos (es)
-        if (!empty($data['telefono']) && !preg_match('/^\+?\d{9,15}$/', (string) $data['telefono'])) {
-            $v->addError('telefono', 'Número de telèfon no vàlid.');
+        return $data;
+    }
+
+    /**
+     * @param array<string,string> $config  [camp => 'obligatori'|'opcional'|'ocult']
+     */
+    private static function validateCorredor(array $data, array $config): Validator
+    {
+        $v = new Validator($data);
+
+        $req = static fn(string $k): bool => ($config[$k] ?? 'obligatori') === 'obligatori';
+        $vis = static fn(string $k): bool => ($config[$k] ?? 'obligatori') !== 'ocult';
+
+        // Sempre obligatoris (no configurables)
+        $v->required('nombre')->max('nombre', 100);
+        $v->required('email')->email('email')->max('email', 255);
+
+        // Cognoms
+        if ($vis('apellido')) {
+            if ($req('apellido')) $v->required('apellido');
+            $v->max('apellido', 150);
         }
 
-        // Talla (opcional, pero si viene tiene que ser válida)
-        if (!empty($data['talla_camiseta'])) {
-            $v->in('talla_camiseta', Inscrito::TALLAS);
+        // Sexe
+        if ($vis('sexo')) {
+            if ($req('sexo')) $v->required('sexo');
+            $v->in('sexo', Inscrito::SEXOS);
         }
 
-        // Código postal (opcional pero si viene, 4-5 dígitos para España)
-        if (!empty($data['codigo_postal']) && !preg_match('/^\d{4,5}$/', (string) $data['codigo_postal'])) {
-            $v->addError('codigo_postal', 'Codi postal no vàlid.');
+        // Data de naixement
+        if ($vis('fecha_nacimiento')) {
+            if ($req('fecha_nacimiento')) $v->required('fecha_nacimiento');
+            $v->date('fecha_nacimiento');
+            if (!empty($data['fecha_nacimiento']) && $v->first('fecha_nacimiento') === null) {
+                $fn = strtotime((string) $data['fecha_nacimiento']);
+                if ($fn === false || $fn > time() || $fn < strtotime('-110 years')) {
+                    $v->addError('fecha_nacimiento', 'Data de naixement no plausible.');
+                }
+            }
+        }
+
+        // DNI / NIE
+        if ($vis('dni')) {
+            if ($req('dni')) $v->required('dni');
+            if (!empty($data['dni']) && !Inscrito::dniValido((string) $data['dni'])) {
+                $v->addError('dni', 'DNI o NIE no vàlid.');
+            }
+        }
+
+        // Telèfon
+        if ($vis('telefono')) {
+            if ($req('telefono')) $v->required('telefono');
+            if (!empty($data['telefono']) && !preg_match('/^\+?\d{9,15}$/', (string) $data['telefono'])) {
+                $v->addError('telefono', 'Número de telèfon no vàlid.');
+            }
+        }
+
+        // Talla
+        if ($vis('talla_camiseta')) {
+            if ($req('talla_camiseta')) $v->required('talla_camiseta');
+            if (!empty($data['talla_camiseta'])) $v->in('talla_camiseta', Inscrito::TALLAS);
+        }
+
+        // Club
+        if ($vis('club') && $req('club')) $v->required('club');
+
+        // Població
+        if ($vis('poblacion') && $req('poblacion')) $v->required('poblacion');
+
+        // Codi postal
+        if ($vis('codigo_postal')) {
+            if ($req('codigo_postal')) $v->required('codigo_postal');
+            if (!empty($data['codigo_postal']) && !preg_match('/^\d{4,5}$/', (string) $data['codigo_postal'])) {
+                $v->addError('codigo_postal', 'Codi postal no vàlid.');
+            }
         }
 
         return $v;
