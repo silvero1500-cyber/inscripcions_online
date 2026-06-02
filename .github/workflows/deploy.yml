@@ -1,0 +1,67 @@
+name: Deploy to FTP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # Permite ejecutar manualmente desde GitHub
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false   # No cancelar un deploy en curso (puede corromper ficheros)
+
+jobs:
+  deploy:
+    name: Build & Deploy via FTP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, zip, intl, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache de dependencias Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor/
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Instalar dependencias (sin dev, optimizado)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: Sincronizar al servidor por FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server:        ${{ secrets.FTP_HOST }}
+          username:      ${{ secrets.FTP_USERNAME }}
+          password:      ${{ secrets.FTP_PASSWORD }}
+          server-dir:    ${{ secrets.FTP_REMOTE_PATH }}
+          protocol:      ftp         # ⚠️ FTPS no disponible en este servidor. Pedir al hosting que lo active.
+          port:          21
+          security:      loose
+          log-level:     standard
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            **/node_modules/**
+            .env
+            .env.example
+            README.md
+            DEPLOY.md
+            .gitignore
+            .gitattributes
+            composer.json
+            composer.lock
+            phpstan.neon
+            phpunit.xml
+            tests/**
+            storage/logs/*.log

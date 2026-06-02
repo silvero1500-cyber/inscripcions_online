@@ -1,0 +1,144 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    // Header / brand / navigation
+    'brand.suffix'                     => 'Inscripciones',
+    'header.brand_full'                => 'WeRun Inscripciones',
+
+    // Common
+    'common.back_to_list'              => 'Volver al listado',
+    'common.cancel'                    => 'Cancelar',
+    'common.continue'                  => 'Continuar',
+    'common.required'                  => 'Obligatorio',
+    'common.optional'                  => 'opcional',
+
+    // Home (event listing)
+    'home.title'                       => 'Inscripciones abiertas',
+    'home.subtitle'                    => 'Elige la carrera e inscríbete en pocos minutos.',
+    'home.empty.title'                 => 'No hay ningún evento activo',
+    'home.empty.desc'                  => 'Vuelve más adelante para ver las próximas carreras.',
+    'home.card.from'                   => 'desde',
+    'home.card.no_tarifa'              => 'Sin tarifas',
+    'home.card.cta'                    => 'Inscríbete →',
+
+    // Event detail
+    'event.breadcrumb_home'            => 'Inicio',
+    'event.breadcrumb_events'          => 'Eventos',
+    'event.info_title'                 => 'Información del evento',
+    'event.event_label'                => 'Evento',
+    'event.dates_label'                => 'Fechas de inscripción',
+    'event.dates_end'                  => 'Fin',
+    'event.capacity_label'             => 'Aforo',
+    'event.capacity_value'             => '{n} plazas disponibles',
+    'event.description_title'          => 'Descripción',
+    'event.closed_title'               => 'Inscripciones cerradas',
+    'event.closed_no_tarifa'           => 'No hay tarifas disponibles ahora mismo.',
+    'event.closed_full'                => 'Se ha agotado el aforo.',
+    'event.closed_generic'             => 'Las inscripciones para este evento están cerradas.',
+
+    // Form labels
+    'form.tarifa.title'                => 'Elige la tarifa',
+    'form.tarifa.label'                => 'Tarifa',
+    'form.tarifa.placeholder'          => '— Elige una tarifa —',
+    'form.personal.title'              => 'Datos personales',
+    'form.label.name'                  => 'Nombre',
+    'form.label.surname'               => 'Apellidos',
+    'form.label.dni'                   => 'DNI / NIE',
+    'form.label.birth_date'            => 'Fecha de nacimiento',
+    'form.label.email'                 => 'Correo electrónico',
+    'form.label.phone'                 => 'Teléfono',
+    'form.label.sex'                   => 'Sexo',
+    'form.label.sex.choose'            => '— Elige —',
+    'form.label.sex.male'              => 'Hombre',
+    'form.label.sex.female'            => 'Mujer',
+    'form.label.sex.nonbinary'         => 'No binario',
+    'form.label.shirt'                 => 'Talla camiseta',
+    'form.label.shirt.none'            => '— Sin —',
+    'form.label.city'                  => 'Población',
+    'form.label.postal_code'           => 'Código postal',
+    'form.label.club'                  => 'Club',
+    'form.label.custom_fields'         => 'Campos adicionales',
+    'form.label.discount_question'     => '¿Tienes un código de descuento?',
+    'form.label.discount'              => 'Código (letras y números)',
+    'form.label.discount.hint'         => 'Se aplicará el descuento al pago.',
+    'form.submit'                      => 'Inscribirme y pagar',
+    'form.submit.note'                 => 'Pago seguro con tarjeta o Bizum vía Redsys.',
+    'form.test.banner'                 => 'Modo prueba',
+    'form.test.banner_desc'            => 'clica para rellenar el formulario con datos aleatorios válidos.',
+    'form.test.fill'                   => '🧪 Rellenar prueba',
+
+    // Payment method selector
+    'payment.choose_title'             => 'Elige cómo quieres pagar',
+    'payment.method.card'              => 'Tarjeta',
+    'payment.method.card.desc'         => 'Visa, Mastercard…',
+    'payment.method.bizum'             => 'Bizum',
+    'payment.method.bizum.desc'        => 'Pago desde el móvil',
+    'payment.method.note'              => 'Serás redirigido a la página segura de Redsys para completar el pago.',
+
+    // Payment redirect
+    'payment.redirecting.title'        => 'Te redirigimos al pago seguro…',
+    'payment.redirecting.desc'         => 'Pagarás {price} con {method} para {event}.',
+    'payment.redirecting.fallback'     => 'Si no te redirige automáticamente en 3 segundos, pulsa el botón:',
+    'payment.redirecting.manual'       => 'Continuar manualmente',
+    'payment.redirecting.noscript'     => 'Continuar al pago',
+    'payment.method_name.card'         => 'tarjeta',
+    'payment.method_name.bizum'        => 'Bizum',
+
+    // Payment OK page
+    'payment.ok.processing.title'      => 'Verificando el pago…',
+    'payment.ok.processing.desc'       => 'Hemos recibido la confirmación del banco pero aún estamos actualizando tu inscripción. En unos segundos deberías ver aquí el comprobante.',
+    'payment.ok.processing.note'       => 'Si en un minuto no se refresca, contáctanos con el ID #{id}.',
+    'payment.ok.title'                 => 'Pago completado',
+    'payment.ok.lead'                  => 'Gracias, {name}. Tu inscripción a {event} ha quedado confirmada.',
+    'payment.ok.summary.event'         => 'Evento',
+    'payment.ok.summary.tarifa'        => 'Tarifa',
+    'payment.ok.summary.reference'     => 'Referencia',
+    'payment.ok.summary.auth'          => 'Autorización',
+    'payment.ok.summary.status'        => 'Estado',
+    'payment.ok.summary.confirmed'     => 'Confirmado',
+    'payment.ok.email_notice'          => 'Pronto recibirás un correo con el comprobante y el código QR para hacer el check-in el día del evento.',
+
+    // Payment KO page
+    'payment.ko.title'                 => 'El pago no se ha completado',
+    'payment.ko.bank_denied'           => 'El banco ha denegado o cancelado la transacción (código {code}).',
+    'payment.ko.generic_error'         => 'La transacción no se ha podido completar.',
+    'payment.ko.summary.status_pending'=> 'Pendiente',
+    'payment.ko.kept'                  => 'Tu inscripción sigue reservada. Puedes volver a intentar el pago.',
+    'payment.ko.retry'                 => 'Volver a intentar el pago',
+    'payment.ko.back_event'            => 'Volver al evento',
+
+    // Inscripción gratuita (éxito)
+    'success.received_title'           => 'Inscripción recibida',
+    'success.lead'                     => 'Gracias, {name}. Hemos recibido tu inscripción a {event}.',
+    'success.summary.dni'              => 'DNI',
+    'success.summary.email'            => 'Correo',
+    'success.summary.event'            => 'Evento',
+    'success.summary.tarifa'           => 'Tarifa',
+    'success.summary.status'           => 'Estado',
+    'success.summary.pending_payment'  => 'Pendiente de pago',
+    'success.payment_note'             => 'El pago con tarjeta se activará pronto. Mientras tanto, tu inscripción queda registrada como pendiente. Te enviaremos un correo cuando puedas completar el pago.',
+
+    // Email confirmación
+    'email.subject'                    => 'Inscripción confirmada · {event}',
+    'email.header_title'               => 'Inscripción confirmada ✓',
+    'email.greeting'                   => 'Hola {name},',
+    'email.intro'                      => 'Tu inscripción a {event} ha sido confirmada correctamente. Aquí tienes los detalles y el QR que tendrás que mostrar el día del evento para hacer el check-in.',
+    'email.field.event'                => 'Evento',
+    'email.field.date'                 => 'Fecha',
+    'email.field.tarifa'               => 'Tarifa',
+    'email.field.runner'               => 'Corredor',
+    'email.field.payment_ref'          => 'Referencia pago',
+    'email.qr.title'                   => 'Tu QR de check-in',
+    'email.qr.desc'                    => 'Muestra este código a la organización el día del evento. Guarda este correo o haz una captura.',
+    'email.qr.alt'                     => 'QR Check-in',
+    'email.footer.contact'             => 'Si tienes cualquier duda, responde a este correo.',
+
+    // Errors / flashes
+    'error.session_expired'            => 'La sesión ha expirado. Vuelve a rellenar el formulario.',
+    'error.event_closed'               => 'Las inscripciones para este evento están cerradas.',
+    'error.tarifa_invalid'             => 'Elige una tarifa válida.',
+    'error.tarifa_full'                => 'La tarifa elegida está agotada.',
+    'error.discount_invalid'           => 'El código de descuento no es válido para este evento.',
+];

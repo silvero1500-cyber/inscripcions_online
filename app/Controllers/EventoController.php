@@ -1,0 +1,504 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use App\Core\Auth;
+use App\Core\Csrf;
+use App\Core\Database;
+use App\Core\Request;
+use App\Core\Response;
+use App\Core\Session;
+use App\Core\Validator;
+use App\Core\View;
+use App\Models\Evento;
+use App\Models\CampoPersonalizado;
+use App\Models\Tarifa;
+use App\Services\ImageUploader;
+use App\Services\Slugger;
+
+final class EventoController
+{
+    public function index(Request $req): void
+    {
+        $user = Auth::user();
+        $eventos = Evento::listForUser($user->id, $user->rol);
+
+        // Añadir contador de inscritos por evento (mejor en una sola query, pero esto es claro)
+        foreach ($eventos as &$e) {
+            $e['_inscritos'] = Evento::countInscritos((int)$e['id']);
+        }
+        unset($e);
+
+        View::render('admin/eventos/index', [
+            'user'    => $user,
+            'eventos' => $eventos,
+            'flash'   => Session::pullAllFlashes(),
+        ], layout: 'admin');
+    }
+
+    public function create(Request $req): void
+    {
+        $user = Auth::user();
+        $oldJson    = Session::pullFlash('form_old');
+        $errorsJson = Session::pullFlash('form_errors');
+
+        View::render('admin/eventos/form', [
+            'user'    => $user,
+            'evento'  => null,
+            'campos'  => [],
+            'tarifas' => [],
+            'old'     => $oldJson    ? (json_decode($oldJson, true) ?: [])    : [],
+            'errors'  => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
+        ], layout: 'admin');
+    }
+
+    public function store(Request $req): void
+    {
+        $user = Auth::user();
+
+        if (!Csrf::verify($req->post('_csrf'))) {
+            Session::flash('error', 'Sessió expirada. Torna-ho a provar.');
+            Response::redirect(base_url('/admin/eventos/nou'));
+        }
+
+        $data = self::extractEventoData($_POST);
+        $validator = self::validateEvento($data);
+
+        if ($validator->fails()) {
+            self::flashOldAndErrors($_POST, $validator->errors());
+            Response::redirect(base_url('/admin/eventos/nou'));
+        }
+
+        try {
+            $imagePath = ImageUploader::handleEventImage($_FILES['imagen'] ?? []);
+        } catch (\Throwable $e) {
+            self::flashOldAndErrors($_POST, ['imagen' => [$e->getMessage()]]);
+            Response::redirect(base_url('/admin/eventos/nou'));
+        }
+
+        $slug    = Slugger::uniqueForEvento((string)$data['titulo']);
+        $tarifas = self::extractTarifasFromPost($_POST);
+        $campos  = self::extractCamposFromPost($_POST);
+
+        Database::getInstance()->transaction(
+            function () use ($user, $data, $imagePath, $slug, $tarifas, $campos): void {
+                $eventoId = Evento::create([
+                    'propietario_id'           => $user->id,
+                    'titulo'                   => $data['titulo'],
+                    'slug'                     => $slug,
+                    'descripcion'              => $data['descripcion'],
+                    'fecha_evento'             => $data['fecha_evento'],
+                    'fecha_limite_inscripcion' => $data['fecha_limite_inscripcion'],
+                    'aforo_maximo'             => $data['aforo_maximo'],
+                    'imagen_portada'           => $imagePath,
+                    'activo'                   => $data['activo'],
+                    'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
+                ]);
+                Tarifa::syncForEvento($eventoId, $tarifas);
+                CampoPersonalizado::syncForEvento($eventoId, $campos);
+            }
+        );
+
+        Session::flash('success', 'Esdeveniment creat correctament.');
+        Response::redirect(base_url('/admin/eventos'));
+    }
+
+    public function edit(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        $evento = Evento::findById($id);
+        if ($evento === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, $id)) Response::forbidden();
+
+        $campos  = CampoPersonalizado::listByEvento($id);
+        $tarifas = Tarifa::listByEvento($id);
+        $oldJson    = Session::pullFlash('form_old');
+        $errorsJson = Session::pullFlash('form_errors');
+
+        View::render('admin/eventos/form', [
+            'user'    => $user,
+            'evento'  => $evento,
+            'campos'  => $campos,
+            'tarifas' => $tarifas,
+            'old'     => $oldJson    ? (json_decode($oldJson, true) ?: [])    : [],
+            'errors'  => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
+        ], layout: 'admin');
+    }
+
+    public function update(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        if (!Csrf::verify($req->post('_csrf'))) {
+            Session::flash('error', 'Sessió expirada. Torna-ho a provar.');
+            Response::redirect(base_url("/admin/eventos/{$id}/editar"));
+        }
+
+        $evento = Evento::findById($id);
+        if ($evento === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, $id)) Response::forbidden();
+
+        $data = self::extractEventoData($_POST);
+        $validator = self::validateEvento($data);
+
+        if ($validator->fails()) {
+            self::flashOldAndErrors($_POST, $validator->errors());
+            Response::redirect(base_url("/admin/eventos/{$id}/editar"));
+        }
+
+        $update = [
+            'titulo'                   => $data['titulo'],
+            'descripcion'              => $data['descripcion'],
+            'fecha_evento'             => $data['fecha_evento'],
+            'fecha_limite_inscripcion' => $data['fecha_limite_inscripcion'],
+            'aforo_maximo'             => $data['aforo_maximo'],
+            'activo'                   => $data['activo'],
+            'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
+        ];
+
+        // Si el título cambió, regenerar slug único
+        if ($data['titulo'] !== $evento['titulo']) {
+            $update['slug'] = Slugger::uniqueForEvento((string)$data['titulo'], $id);
+        }
+
+        // Imagen: si suben una nueva, reemplazar; si tildaron "eliminar", borrar
+        try {
+            $newImage = ImageUploader::handleEventImage($_FILES['imagen'] ?? []);
+            if ($newImage !== null) {
+                ImageUploader::deleteEventImage($evento['imagen_portada'] ?? null);
+                $update['imagen_portada'] = $newImage;
+            } elseif (($_POST['eliminar_imagen'] ?? '') === '1') {
+                ImageUploader::deleteEventImage($evento['imagen_portada'] ?? null);
+                $update['imagen_portada'] = null;
+            }
+        } catch (\Throwable $e) {
+            self::flashOldAndErrors($_POST, ['imagen' => [$e->getMessage()]]);
+            Response::redirect(base_url("/admin/eventos/{$id}/editar"));
+        }
+
+        $tarifas = self::extractTarifasFromPost($_POST);
+        $campos  = self::extractCamposFromPost($_POST);
+
+        Database::getInstance()->transaction(
+            function () use ($id, $update, $tarifas, $campos): void {
+                Evento::update($id, $update);
+                Tarifa::syncForEvento($id, $tarifas);
+                CampoPersonalizado::syncForEvento($id, $campos);
+            }
+        );
+
+        Session::flash('success', 'Esdeveniment actualitzat.');
+        Response::redirect(base_url('/admin/eventos'));
+    }
+
+    /**
+     * Pantalla de KPIs del organitzador per a un esdeveniment.
+     */
+    public function kpis(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        $evento = Evento::findById($id);
+        if ($evento === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, $id)) Response::forbidden();
+
+        $db = Database::getInstance();
+
+        // ── Resumen general ────────────────────────────────────
+        $estados = $db->query(
+            "SELECT estado, COUNT(*) AS n FROM inscritos WHERE evento_id = ? GROUP BY estado",
+            [$id]
+        )->fetchAll(\PDO::FETCH_KEY_PAIR);
+
+        $totalActivas = (int) ($estados['pendiente'] ?? 0) + (int) ($estados['confirmado'] ?? 0);
+
+        // ── Ingresos (solo confirmados) ────────────────────────
+        $ingresosConfirmados = (float) $db->query(
+            "SELECT COALESCE(SUM(t.precio), 0)
+             FROM inscritos i JOIN tarifas_evento t ON t.id = i.tarifa_id
+             WHERE i.evento_id = ? AND i.estado = 'confirmado'",
+            [$id]
+        )->fetchColumn();
+        $ingresosPotenciales = (float) $db->query(
+            "SELECT COALESCE(SUM(t.precio), 0)
+             FROM inscritos i JOIN tarifas_evento t ON t.id = i.tarifa_id
+             WHERE i.evento_id = ? AND i.estado IN ('pendiente', 'confirmado')",
+            [$id]
+        )->fetchColumn();
+
+        // ── Por sexo ───────────────────────────────────────────
+        $porSexo = $db->query(
+            "SELECT sexo, COUNT(*) AS n FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+             GROUP BY sexo",
+            [$id]
+        )->fetchAll(\PDO::FETCH_KEY_PAIR);
+
+        // ── Por talla ──────────────────────────────────────────
+        $porTalla = $db->query(
+            "SELECT COALESCE(talla_camiseta, 'Sense talla') AS talla, COUNT(*) AS n
+             FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+             GROUP BY talla",
+            [$id]
+        )->fetchAll(\PDO::FETCH_KEY_PAIR);
+
+        // ── Por tarifa ─────────────────────────────────────────
+        $porTarifa = $db->query(
+            "SELECT t.nombre, t.precio, COUNT(i.id) AS n
+             FROM tarifas_evento t
+             LEFT JOIN inscritos i ON i.tarifa_id = t.id AND i.estado IN ('pendiente','confirmado')
+             WHERE t.evento_id = ?
+             GROUP BY t.id, t.nombre, t.precio
+             ORDER BY n DESC, t.orden ASC",
+            [$id]
+        )->fetchAll();
+
+        // ── Por edad (rangos) ──────────────────────────────────
+        $rangos = $db->query(
+            "SELECT
+                SUM(CASE WHEN edad < 18 THEN 1 ELSE 0 END)                  AS r1,
+                SUM(CASE WHEN edad BETWEEN 18 AND 29 THEN 1 ELSE 0 END)     AS r2,
+                SUM(CASE WHEN edad BETWEEN 30 AND 39 THEN 1 ELSE 0 END)     AS r3,
+                SUM(CASE WHEN edad BETWEEN 40 AND 49 THEN 1 ELSE 0 END)     AS r4,
+                SUM(CASE WHEN edad BETWEEN 50 AND 59 THEN 1 ELSE 0 END)     AS r5,
+                SUM(CASE WHEN edad >= 60 THEN 1 ELSE 0 END)                 AS r6
+             FROM (
+                SELECT TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad
+                FROM inscritos
+                WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+             ) x",
+            [$id]
+        )->fetch();
+
+        // ── Top clubs ──────────────────────────────────────────
+        $topClubs = $db->query(
+            "SELECT club, COUNT(*) AS n FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+               AND club IS NOT NULL AND club <> ''
+             GROUP BY club ORDER BY n DESC LIMIT 10",
+            [$id]
+        )->fetchAll();
+
+        // ── Top poblacions ─────────────────────────────────────
+        $topPoblaciones = $db->query(
+            "SELECT poblacion, COUNT(*) AS n FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+               AND poblacion IS NOT NULL AND poblacion <> ''
+             GROUP BY poblacion ORDER BY n DESC LIMIT 10",
+            [$id]
+        )->fetchAll();
+
+        // ── Evolución últimos 30 días ──────────────────────────
+        $evolucion = $db->query(
+            "SELECT DATE(created_at) AS dia, COUNT(*) AS n FROM inscritos
+             WHERE evento_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+             GROUP BY dia ORDER BY dia ASC",
+            [$id]
+        )->fetchAll();
+
+        View::render('admin/eventos/kpis', [
+            'user'                => $user,
+            'evento'              => $evento,
+            'estados'             => $estados,
+            'totalActivas'        => $totalActivas,
+            'ingresosConfirmados' => $ingresosConfirmados,
+            'ingresosPotenciales' => $ingresosPotenciales,
+            'porSexo'             => $porSexo,
+            'porTalla'            => $porTalla,
+            'porTarifa'           => $porTarifa,
+            'rangos'              => $rangos,
+            'topClubs'            => $topClubs,
+            'topPoblaciones'      => $topPoblaciones,
+            'evolucion'           => $evolucion,
+            'aforoMax'            => $evento['aforo_maximo'] !== null ? (int) $evento['aforo_maximo'] : null,
+        ], layout: 'admin');
+    }
+
+    public function destroy(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+
+        $evento = Evento::findById($id);
+        if ($evento === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, $id)) Response::forbidden();
+
+        // Si hay inscritos, no permitir borrar
+        if (Evento::countInscritos($id) > 0) {
+            Session::flash('error', 'No es pot esborrar: hi ha inscrits confirmats.');
+            Response::redirect(base_url('/admin/eventos'));
+        }
+
+        ImageUploader::deleteEventImage($evento['imagen_portada'] ?? null);
+        Evento::delete($id);
+
+        Session::flash('success', 'Esdeveniment esborrat.');
+        Response::redirect(base_url('/admin/eventos'));
+    }
+
+    // ────────────────────────────────────────────────────────
+    // Helpers privados
+    // ────────────────────────────────────────────────────────
+
+    /** @return array<string, mixed> */
+    private static function extractEventoData(array $post): array
+    {
+        $aforo  = trim((string)($post['aforo_maximo'] ?? ''));
+        $fechaLimite = self::normalizeDateTime(trim((string)($post['fecha_limite_inscripcion'] ?? '')));
+
+        return [
+            'titulo'                   => trim((string)($post['titulo'] ?? '')),
+            'descripcion'              => trim((string)($post['descripcion'] ?? '')),
+            'fecha_evento'             => trim((string)($post['fecha_evento'] ?? '')),
+            'fecha_limite_inscripcion' => $fechaLimite,
+            'aforo_maximo'             => $aforo === '' ? null : (int)$aforo,
+            'activo'                   => isset($post['activo']) ? 1 : 0,
+            'inscripciones_abiertas'   => isset($post['inscripciones_abiertas']) ? 1 : 0,
+        ];
+    }
+
+    /**
+     * Normaliza un input datetime-local ("2026-06-12T18:30") a formato MySQL ("2026-06-12 18:30:00").
+     * Devuelve null si el valor está vacío.
+     */
+    private static function normalizeDateTime(string $value): ?string
+    {
+        if ($value === '') return null;
+        $value = str_replace('T', ' ', $value);
+        // Si solo viene HH:MM, añadir :00
+        if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $value)) {
+            return $value . ':00';
+        }
+        return $value;
+    }
+
+    private static function validateEvento(array $data): Validator
+    {
+        $v = new Validator($data);
+        $v->required('titulo')->max('titulo', 255);
+        $v->required('fecha_evento')->date('fecha_evento');
+        if (!empty($data['fecha_limite_inscripcion'])) {
+            $v->dateTime('fecha_limite_inscripcion');
+        }
+        if (isset($data['aforo_maximo']) && $data['aforo_maximo'] !== null) {
+            $v->integer('aforo_maximo', 1, 100000);
+        }
+        return $v;
+    }
+
+    /**
+     * Extrae las tarifas del POST.
+     * Estructura esperada:
+     *   tarifas[0][id]            = 5  (vacío si es nueva)
+     *   tarifas[0][nombre]        = Adult
+     *   tarifas[0][descripcion]   = ...
+     *   tarifas[0][precio]        = 15.00
+     *   tarifas[0][aforo_maximo]  = 100 (vacío = sin límite)
+     *   tarifas[0][fecha_inicio]  = 2026-01-01T00:00 (opcional)
+     *   tarifas[0][fecha_fin]     = 2026-06-30T23:59 (opcional)
+     *   tarifas[0][activo]        = 1 (checkbox)
+     *
+     * @return list<array<string,mixed>>
+     */
+    private static function extractTarifasFromPost(array $post): array
+    {
+        $raw = $post['tarifas'] ?? [];
+        if (!is_array($raw)) return [];
+
+        $out = [];
+        foreach ($raw as $t) {
+            $nombre = trim((string)($t['nombre'] ?? ''));
+            $precioRaw = trim((string)($t['precio'] ?? ''));
+            if ($nombre === '' || $precioRaw === '') continue;
+
+            $precio = (float) str_replace(',', '.', $precioRaw);
+            if ($precio < 0) $precio = 0;
+
+            $aforo = trim((string)($t['aforo_maximo'] ?? ''));
+            $fIni  = self::normalizeDateTime(trim((string)($t['fecha_inicio'] ?? '')));
+            $fFin  = self::normalizeDateTime(trim((string)($t['fecha_fin']    ?? '')));
+
+            $out[] = [
+                'id'           => !empty($t['id']) ? (int)$t['id'] : null,
+                'nombre'       => mb_substr($nombre, 0, 100),
+                'descripcion'  => mb_substr(trim((string)($t['descripcion'] ?? '')), 0, 500) ?: null,
+                'precio'       => number_format($precio, 2, '.', ''),
+                'aforo_maximo' => $aforo === '' ? null : max(1, (int)$aforo),
+                'fecha_inicio' => $fIni,
+                'fecha_fin'    => $fFin,
+                'activo'       => isset($t['activo']) ? 1 : 0,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Extrae los campos personalizados del POST.
+     * Estructura esperada:
+     *   campos[0][nombre_campo]=acepta_reglamento
+     *   campos[0][etiqueta]=Accepto el reglament
+     *   campos[0][tipo]=checkbox
+     *   campos[0][opciones]=... (solo para select/radio/checkbox múltiple, separadas por |)
+     *   campos[0][requerido]=1
+     *
+     * @return list<array<string,mixed>>
+     */
+    private static function extractCamposFromPost(array $post): array
+    {
+        $raw = $post['campos'] ?? [];
+        if (!is_array($raw)) return [];
+
+        $out = [];
+        foreach ($raw as $c) {
+            $etiqueta = trim((string)($c['etiqueta'] ?? ''));
+            if ($etiqueta === '') continue; // ignorar filas vacías
+
+            $tipo = (string)($c['tipo'] ?? 'text');
+            if (!in_array($tipo, CampoPersonalizado::TIPOS_VALIDOS, true)) {
+                $tipo = 'text';
+            }
+
+            $nombre = trim((string)($c['nombre_campo'] ?? ''));
+            if ($nombre === '') {
+                $nombre = Slugger::make($etiqueta);
+            }
+            $nombre = preg_replace('/[^a-z0-9_]/i', '_', strtolower($nombre)) ?? 'campo';
+
+            $opcionesRaw = (string)($c['opciones'] ?? '');
+            $opcionesJson = null;
+            if (in_array($tipo, ['select', 'radio', 'checkbox'], true) && $opcionesRaw !== '') {
+                $opcionesArr = preg_split('/\s*\|\s*/', $opcionesRaw) ?: [];
+                $opcionesJson = CampoPersonalizado::opcionesToJson($opcionesArr);
+            }
+
+            $out[] = [
+                'nombre_campo' => substr($nombre, 0, 100),
+                'etiqueta'     => substr($etiqueta, 0, 255),
+                'tipo'         => $tipo,
+                'opciones'     => $opcionesJson,
+                'requerido'    => !empty($c['requerido']) ? 1 : 0,
+                'placeholder'  => substr(trim((string)($c['placeholder'] ?? '')), 0, 255) ?: null,
+                'ayuda'        => substr(trim((string)($c['ayuda'] ?? '')), 0, 500) ?: null,
+            ];
+        }
+
+        return $out;
+    }
+
+    private static function flashOldAndErrors(array $post, array $errors): void
+    {
+        // No incluimos _csrf en old
+        unset($post['_csrf']);
+        Session::flash('form_old', (string) json_encode($post, JSON_UNESCAPED_UNICODE));
+        Session::flash('form_errors', (string) json_encode($errors, JSON_UNESCAPED_UNICODE));
+    }
+}

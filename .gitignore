@@ -1,0 +1,24 @@
+# Secretos - NUNCA al repo
+.env
+.deploy/
+DEPLOY_SECRETS.local.md
+
+# Dependencias Composer
+/vendor/
+
+# Uploads generados por usuarios
+/public/uploads/eventos/*
+!/public/uploads/eventos/.gitkeep
+
+# Logs
+/storage/logs/*.log
+
+# Cache
+/storage/cache/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

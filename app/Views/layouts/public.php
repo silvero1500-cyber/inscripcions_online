@@ -1,0 +1,53 @@
+<?php
+$currentLocale = current_locale();
+$currentPath = $_SERVER['REQUEST_URI'] ?? '/';
+// Treure el prefix /inscripcions si hi és per al param ret
+$basePrefix = base_path_prefix();
+if ($basePrefix !== '' && str_starts_with($currentPath, $basePrefix)) {
+    $currentPath = substr($currentPath, strlen($basePrefix));
+}
+$ret = urlencode($currentPath ?: '/');
+?><!DOCTYPE html>
+<html lang="<?= e($currentLocale) ?>">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= e($pageTitle ?? t('header.brand_full')) ?></title>
+    <?php if (!empty($metaDescription)): ?>
+        <meta name="description" content="<?= e($metaDescription) ?>">
+    <?php endif; ?>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= e(asset('css/public.css')) ?>">
+</head>
+<body class="layout-public">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a class="site-brand" href="<?= e(base_url('/')) ?>">
+                <span class="brand-mark">W</span>
+                <span class="brand-text">WeRun <strong><?= e(t('brand.suffix')) ?></strong></span>
+            </a>
+            <nav class="lang-switcher" aria-label="Idioma">
+                <?php foreach (['ca' => 'CA', 'es' => 'ES'] as $code => $label): ?>
+                    <a class="lang-link<?= $currentLocale === $code ? ' active' : '' ?>"
+                       href="<?= e(base_url('/lang/' . $code . '?ret=' . $ret)) ?>"
+                       <?= $currentLocale === $code ? 'aria-current="true"' : '' ?>>
+                        <?= $label ?>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
+        </div>
+    </header>
+
+    <main class="site-main">
+        <?= $content ?? '' ?>
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <small>&copy; <?= date('Y') ?> WeRun · <?= e(t('brand.suffix')) ?></small>
+        </div>
+    </footer>
+</body>
+</html>
