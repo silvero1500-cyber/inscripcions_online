@@ -3,6 +3,9 @@
 .deploy/
 DEPLOY_SECRETS.local.md
 
+# Config local de Claude Code (hook FTP, rutas de esta máquina)
+.claude/settings.local.json
+
 # Dependencias Composer
 /vendor/
 
