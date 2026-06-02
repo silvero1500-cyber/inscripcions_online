@@ -30,7 +30,7 @@ $err = fn(string $key): ?string => $errors[$key][0] ?? null;
     </div>
 </section>
 
-<form method="post" action="<?= e($action) ?>" enctype="multipart/form-data" novalidate class="form-stacked">
+<form id="evento-form" method="post" action="<?= e($action) ?>" enctype="multipart/form-data" novalidate class="form-stacked">
     <?= Csrf::field() ?>
 
     <fieldset>
@@ -113,106 +113,134 @@ $err = fn(string $key): ?string => $errors[$key][0] ?? null;
 
     <fieldset>
         <legend>Tarifes</legend>
-        <p class="muted">Defineix les diferents tarifes disponibles (per exemple: Adult, Infantil, VIP). Cada inscrit haurà de triar-ne una.</p>
+        <p class="muted">Defineix les diferents tarifes disponibles (per exemple: Adult, Infantil, VIP). Cada inscrit haurà de triar-ne una. Arrossega les targetes pel punt <span aria-hidden="true">⠿</span> o fes servir les fletxes per ordenar-les.</p>
 
-        <div id="tarifas-list">
-            <?php foreach ($tarifas as $idx => $t): ?>
-                <div class="tarifa-row" data-index="<?= (int)$idx ?>">
-                    <input type="hidden" name="tarifas[<?= (int)$idx ?>][id]" value="<?= e((string)$t['id']) ?>">
-                    <div class="tarifa-grid">
-                        <div>
-                            <label>Nom *</label>
-                            <input type="text" name="tarifas[<?= (int)$idx ?>][nombre]" value="<?= e((string)$t['nombre']) ?>" required maxlength="100">
+        <div class="builder">
+            <aside class="builder-side">
+                <button type="button" id="add-tarifa" class="btn btn-secondary btn-block">+ Afegir tarifa</button>
+                <p class="builder-count"><strong data-count-for="tarifas-list">0</strong> tarifes</p>
+            </aside>
+            <div class="builder-main">
+                <div id="tarifas-list" class="sortable-list">
+                    <?php foreach ($tarifas as $idx => $t): ?>
+                        <div class="tarifa-row card-item" data-index="<?= (int)$idx ?>">
+                            <div class="item-head">
+                                <span class="drag-handle" title="Arrossega per ordenar" aria-hidden="true">⠿</span>
+                                <span class="item-title"><?= e((string)$t['nombre'] !== '' ? (string)$t['nombre'] : 'Tarifa') ?></span>
+                                <span class="item-tools">
+                                    <button type="button" class="btn-move move-up" title="Pujar" aria-label="Pujar">↑</button>
+                                    <button type="button" class="btn-move move-down" title="Baixar" aria-label="Baixar">↓</button>
+                                    <button type="button" class="btn-link btn-danger tarifa-remove" title="Eliminar tarifa" aria-label="Eliminar tarifa">✕</button>
+                                </span>
+                            </div>
+                            <input type="hidden" name="tarifas[<?= (int)$idx ?>][id]" value="<?= e((string)$t['id']) ?>">
+                            <div class="tarifa-grid">
+                                <div>
+                                    <label>Nom *</label>
+                                    <input type="text" name="tarifas[<?= (int)$idx ?>][nombre]" value="<?= e((string)$t['nombre']) ?>" required maxlength="100">
+                                </div>
+                                <div>
+                                    <label>Preu (€) *</label>
+                                    <input type="text" name="tarifas[<?= (int)$idx ?>][precio]" value="<?= e(number_format((float)$t['precio'], 2, '.', '')) ?>" required inputmode="decimal" placeholder="0.00">
+                                </div>
+                                <div>
+                                    <label>Aforament</label>
+                                    <input type="number" name="tarifas[<?= (int)$idx ?>][aforo_maximo]" value="<?= e((string)($t['aforo_maximo'] ?? '')) ?>" min="1" placeholder="Sense límit">
+                                </div>
+                                <div>
+                                    <label>&nbsp;</label>
+                                    <label class="inline-check">
+                                        <input type="checkbox" name="tarifas[<?= (int)$idx ?>][activo]" value="1" <?= (int)$t['activo'] === 1 ? 'checked' : '' ?>>
+                                        Activa
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="tarifa-grid-2">
+                                <div>
+                                    <label>Descripció (opcional)</label>
+                                    <input type="text" name="tarifas[<?= (int)$idx ?>][descripcion]" value="<?= e((string)($t['descripcion'] ?? '')) ?>" maxlength="500">
+                                </div>
+                                <div>
+                                    <label>Disponible des de</label>
+                                    <input type="datetime-local" name="tarifas[<?= (int)$idx ?>][fecha_inicio]" value="<?= e(str_replace(' ', 'T', substr((string)($t['fecha_inicio'] ?? ''), 0, 16))) ?>">
+                                </div>
+                                <div>
+                                    <label>Disponible fins a</label>
+                                    <input type="datetime-local" name="tarifas[<?= (int)$idx ?>][fecha_fin]" value="<?= e(str_replace(' ', 'T', substr((string)($t['fecha_fin'] ?? ''), 0, 16))) ?>">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label>Preu (€) *</label>
-                            <input type="text" name="tarifas[<?= (int)$idx ?>][precio]" value="<?= e(number_format((float)$t['precio'], 2, '.', '')) ?>" required inputmode="decimal" placeholder="0.00">
-                        </div>
-                        <div>
-                            <label>Aforament</label>
-                            <input type="number" name="tarifas[<?= (int)$idx ?>][aforo_maximo]" value="<?= e((string)($t['aforo_maximo'] ?? '')) ?>" min="1" placeholder="Sense límit">
-                        </div>
-                        <div>
-                            <label>&nbsp;</label>
-                            <label class="inline-check">
-                                <input type="checkbox" name="tarifas[<?= (int)$idx ?>][activo]" value="1" <?= (int)$t['activo'] === 1 ? 'checked' : '' ?>>
-                                Activa
-                            </label>
-                        </div>
-                    </div>
-                    <div class="tarifa-grid-2">
-                        <div>
-                            <label>Descripció (opcional)</label>
-                            <input type="text" name="tarifas[<?= (int)$idx ?>][descripcion]" value="<?= e((string)($t['descripcion'] ?? '')) ?>" maxlength="500">
-                        </div>
-                        <div>
-                            <label>Disponible des de</label>
-                            <input type="datetime-local" name="tarifas[<?= (int)$idx ?>][fecha_inicio]" value="<?= e(str_replace(' ', 'T', substr((string)($t['fecha_inicio'] ?? ''), 0, 16))) ?>">
-                        </div>
-                        <div>
-                            <label>Disponible fins a</label>
-                            <input type="datetime-local" name="tarifas[<?= (int)$idx ?>][fecha_fin]" value="<?= e(str_replace(' ', 'T', substr((string)($t['fecha_fin'] ?? ''), 0, 16))) ?>">
-                        </div>
-                    </div>
-                    <button type="button" class="btn-link btn-danger tarifa-remove">Eliminar tarifa</button>
-                    <hr>
+                    <?php endforeach; ?>
                 </div>
-            <?php endforeach; ?>
+                <p class="empty-hint" data-empty-for="tarifas-list">Encara no has afegit cap tarifa. Fes clic a «Afegir tarifa».</p>
+            </div>
         </div>
-
-        <button type="button" id="add-tarifa" class="btn btn-secondary">+ Afegir tarifa</button>
     </fieldset>
 
     <fieldset>
         <legend>Camps personalitzats del formulari</legend>
-        <p class="muted">A part dels camps estàndard del corredor (nom, DNI, email...), pots afegir camps extra que es mostraran al formulari d'inscripció.</p>
+        <p class="muted">A part dels camps estàndard del corredor (nom, DNI, email...), pots afegir camps extra que es mostraran al formulari d'inscripció. Arrossega'ls o fes servir les fletxes per ordenar-los.</p>
 
-        <div id="campos-list">
-            <?php foreach ($campos as $idx => $c): ?>
-                <?php $opcionesArr = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null); ?>
-                <div class="campo-row" data-index="<?= (int)$idx ?>">
-                    <div class="campo-grid">
-                        <div>
-                            <label>Etiqueta (visible)</label>
-                            <input type="text" name="campos[<?= (int)$idx ?>][etiqueta]" value="<?= e((string)$c['etiqueta']) ?>" required>
+        <div class="builder">
+            <aside class="builder-side">
+                <button type="button" id="add-campo" class="btn btn-secondary btn-block">+ Afegir camp</button>
+                <p class="builder-count"><strong data-count-for="campos-list">0</strong> camps</p>
+            </aside>
+            <div class="builder-main">
+                <div id="campos-list" class="sortable-list">
+                    <?php foreach ($campos as $idx => $c): ?>
+                        <?php $opcionesArr = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null); ?>
+                        <div class="campo-row card-item" data-index="<?= (int)$idx ?>">
+                            <div class="item-head">
+                                <span class="drag-handle" title="Arrossega per ordenar" aria-hidden="true">⠿</span>
+                                <span class="item-title"><?= e((string)$c['etiqueta'] !== '' ? (string)$c['etiqueta'] : 'Camp') ?></span>
+                                <span class="item-tools">
+                                    <button type="button" class="btn-move move-up" title="Pujar" aria-label="Pujar">↑</button>
+                                    <button type="button" class="btn-move move-down" title="Baixar" aria-label="Baixar">↓</button>
+                                    <button type="button" class="btn-link btn-danger campo-remove" title="Eliminar camp" aria-label="Eliminar camp">✕</button>
+                                </span>
+                            </div>
+                            <div class="campo-grid">
+                                <div>
+                                    <label>Etiqueta (visible)</label>
+                                    <input type="text" name="campos[<?= (int)$idx ?>][etiqueta]" value="<?= e((string)$c['etiqueta']) ?>" required>
+                                </div>
+                                <div>
+                                    <label>Nom intern</label>
+                                    <input type="text" name="campos[<?= (int)$idx ?>][nombre_campo]" value="<?= e((string)$c['nombre_campo']) ?>" placeholder="auto">
+                                </div>
+                                <div>
+                                    <label>Tipus</label>
+                                    <select name="campos[<?= (int)$idx ?>][tipo]" class="campo-tipo">
+                                        <?php foreach (CampoPersonalizado::TIPOS_VALIDOS as $t): ?>
+                                            <option value="<?= e($t) ?>" <?= $c['tipo'] === $t ? 'selected' : '' ?>><?= e($t) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label>Obligatori</label>
+                                    <label class="inline-check">
+                                        <input type="checkbox" name="campos[<?= (int)$idx ?>][requerido]" value="1" <?= (int)$c['requerido'] === 1 ? 'checked' : '' ?>>
+                                        Obligatori
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="campo-grid-2">
+                                <div>
+                                    <label>Opcions (només select/radio/checkbox · separa amb |)</label>
+                                    <input type="text" name="campos[<?= (int)$idx ?>][opciones]" value="<?= e(implode(' | ', $opcionesArr)) ?>" placeholder="Opció 1 | Opció 2 | Opció 3">
+                                </div>
+                                <div>
+                                    <label>Text d'ajuda</label>
+                                    <input type="text" name="campos[<?= (int)$idx ?>][ayuda]" value="<?= e((string)($c['ayuda'] ?? '')) ?>">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label>Nom intern</label>
-                            <input type="text" name="campos[<?= (int)$idx ?>][nombre_campo]" value="<?= e((string)$c['nombre_campo']) ?>" placeholder="auto">
-                        </div>
-                        <div>
-                            <label>Tipus</label>
-                            <select name="campos[<?= (int)$idx ?>][tipo]" class="campo-tipo">
-                                <?php foreach (CampoPersonalizado::TIPOS_VALIDOS as $t): ?>
-                                    <option value="<?= e($t) ?>" <?= $c['tipo'] === $t ? 'selected' : '' ?>><?= e($t) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div>
-                            <label>Obligatori</label>
-                            <label class="inline-check">
-                                <input type="checkbox" name="campos[<?= (int)$idx ?>][requerido]" value="1" <?= (int)$c['requerido'] === 1 ? 'checked' : '' ?>>
-                                Obligatori
-                            </label>
-                        </div>
-                    </div>
-                    <div class="campo-grid-2">
-                        <div>
-                            <label>Opcions (només select/radio/checkbox · separa amb |)</label>
-                            <input type="text" name="campos[<?= (int)$idx ?>][opciones]" value="<?= e(implode(' | ', $opcionesArr)) ?>" placeholder="Opció 1 | Opció 2 | Opció 3">
-                        </div>
-                        <div>
-                            <label>Text d'ajuda</label>
-                            <input type="text" name="campos[<?= (int)$idx ?>][ayuda]" value="<?= e((string)($c['ayuda'] ?? '')) ?>">
-                        </div>
-                    </div>
-                    <button type="button" class="btn-link btn-danger campo-remove">Eliminar camp</button>
-                    <hr>
+                    <?php endforeach; ?>
                 </div>
-            <?php endforeach; ?>
+                <p class="empty-hint" data-empty-for="campos-list">Encara no has afegit cap camp.</p>
+            </div>
         </div>
-
-        <button type="button" id="add-campo" class="btn btn-secondary">+ Afegir camp personalitzat</button>
     </fieldset>
 
     <div class="form-actions">
@@ -223,7 +251,16 @@ $err = fn(string $key): ?string => $errors[$key][0] ?? null;
 
 <!-- Plantilla para nuevos campos (oculta) -->
 <template id="campo-template">
-    <div class="campo-row" data-index="__IDX__">
+    <div class="campo-row card-item" data-index="__IDX__">
+        <div class="item-head">
+            <span class="drag-handle" title="Arrossega per ordenar" aria-hidden="true">⠿</span>
+            <span class="item-title">Camp</span>
+            <span class="item-tools">
+                <button type="button" class="btn-move move-up" title="Pujar" aria-label="Pujar">↑</button>
+                <button type="button" class="btn-move move-down" title="Baixar" aria-label="Baixar">↓</button>
+                <button type="button" class="btn-link btn-danger campo-remove" title="Eliminar camp" aria-label="Eliminar camp">✕</button>
+            </span>
+        </div>
         <div class="campo-grid">
             <div>
                 <label>Etiqueta (visible)</label>
@@ -259,14 +296,21 @@ $err = fn(string $key): ?string => $errors[$key][0] ?? null;
                 <input type="text" name="campos[__IDX__][ayuda]">
             </div>
         </div>
-        <button type="button" class="btn-link btn-danger campo-remove">Eliminar camp</button>
-        <hr>
     </div>
 </template>
 
 <!-- Plantilla para nuevas tarifas -->
 <template id="tarifa-template">
-    <div class="tarifa-row" data-index="__IDX__">
+    <div class="tarifa-row card-item" data-index="__IDX__">
+        <div class="item-head">
+            <span class="drag-handle" title="Arrossega per ordenar" aria-hidden="true">⠿</span>
+            <span class="item-title">Tarifa</span>
+            <span class="item-tools">
+                <button type="button" class="btn-move move-up" title="Pujar" aria-label="Pujar">↑</button>
+                <button type="button" class="btn-move move-down" title="Baixar" aria-label="Baixar">↓</button>
+                <button type="button" class="btn-link btn-danger tarifa-remove" title="Eliminar tarifa" aria-label="Eliminar tarifa">✕</button>
+            </span>
+        </div>
         <input type="hidden" name="tarifas[__IDX__][id]" value="">
         <div class="tarifa-grid">
             <div>
@@ -303,9 +347,7 @@ $err = fn(string $key): ?string => $errors[$key][0] ?? null;
                 <input type="datetime-local" name="tarifas[__IDX__][fecha_fin]">
             </div>
         </div>
-        <button type="button" class="btn-link btn-danger tarifa-remove">Eliminar tarifa</button>
-        <hr>
     </div>
 </template>
 
-<script src="<?= e(asset('js/eventos.js')) ?>"></script>
+<script src="<?= e(asset('js/eventos.js')) ?>?v=<?= @filemtime(BASE_PATH . '/public/assets/js/eventos.js') ?: time() ?>"></script>

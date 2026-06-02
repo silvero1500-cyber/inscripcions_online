@@ -352,7 +352,7 @@ input:focus, select:focus, textarea:focus {
 .btn-secondary:hover { background: #e5e7eb; }
 
 /* ── Formularios estructurados ──────────────────────────── */
-.form-stacked { max-width: 900px; }
+.form-stacked { max-width: 1040px; }
 .form-stacked fieldset {
     border: 1px solid #e5e7eb;
     border-radius: 8px;
@@ -403,14 +403,77 @@ input:focus, select:focus, textarea:focus {
     border-radius: 4px;
 }
 
-/* ── Filas de campos personalizados ─────────────────────── */
-.campo-row {
+/* ── Constructor visual (tarifes / camps) ───────────────── */
+.builder {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+.builder-side { position: sticky; top: 1rem; }
+.builder-side .btn-block { width: 100%; }
+.builder-count { margin: .6rem 0 0; font-size: .85rem; color: #6b7280; text-align: center; }
+.builder-count strong { color: #111827; }
+.builder-main { min-width: 0; }
+
+.sortable-list { display: flex; flex-direction: column; gap: .75rem; }
+
+.empty-hint {
+    margin: 0;
+    padding: 1.75rem 1rem;
+    text-align: center;
+    color: #9ca3af;
+    font-size: .9rem;
+    border: 1px dashed #d1d5db;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+/* Targetes d'ítem */
+.card-item {
     background: #f9fafb;
     border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    padding: 1rem;
-    margin-bottom: .75rem;
+    border-radius: 8px;
+    padding: .9rem 1rem 1rem;
 }
+.card-item.dragging { opacity: .55; }
+.card-item label { font-size: .8rem; margin: 0 0 .25rem; }
+
+.item-head {
+    display: flex; align-items: center; gap: .5rem;
+    margin-bottom: .85rem;
+    padding-bottom: .55rem;
+    border-bottom: 1px solid #eef0f3;
+}
+.drag-handle {
+    cursor: grab; color: #9ca3af; font-size: 1.15rem;
+    line-height: 1; padding: 0 .15rem; user-select: none;
+}
+.drag-handle:active { cursor: grabbing; }
+.item-title {
+    flex: 1; min-width: 0;
+    font-weight: 600; font-size: .95rem; color: #374151;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.item-tools { display: flex; align-items: center; gap: .3rem; }
+.btn-move {
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid #d1d5db; border-radius: 6px;
+    background: #fff; color: #4b5563; cursor: pointer;
+    font-size: .9rem; line-height: 1; padding: 0;
+}
+.btn-move:hover:not(:disabled) { background: #f3f4f6; border-color: #9ca3af; }
+.btn-move:disabled { opacity: .4; cursor: default; }
+.item-tools .btn-danger {
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid #fecaca; border-radius: 6px;
+    background: #fff; color: #b91c1c; font-size: .8rem; cursor: pointer;
+}
+.item-tools .btn-danger:hover { background: #fef2f2; text-decoration: none; }
+
+/* Graelles internes de cada targeta */
 .campo-grid {
     display: grid;
     grid-template-columns: 2fr 1.2fr 1fr .8fr;
@@ -421,22 +484,29 @@ input:focus, select:focus, textarea:focus {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: .75rem;
-    margin-bottom: .5rem;
 }
-.campo-row label {
-    font-size: .8rem;
-    margin: 0 0 .25rem;
+.tarifa-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr .9fr;
+    gap: .75rem;
+    margin-bottom: .75rem;
 }
-.campo-row hr {
-    margin: .5rem 0 0;
-    border: 0;
-    border-top: 1px dashed #e5e7eb;
+.tarifa-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: .75rem;
 }
-.campo-remove {
-    color: #991b1b;
-    font-size: .85rem;
+
+/* En pantalles mitjanes, el constructor passa a una sola columna */
+@media (max-width: 860px) {
+    .builder { grid-template-columns: 1fr; }
+    .builder-side {
+        position: static;
+        display: flex; align-items: center; gap: 1rem;
+    }
+    .builder-side .btn-block { width: auto; }
+    .builder-count { margin: 0; }
 }
-#add-campo { margin-top: .5rem; }
 
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 640px) {
@@ -446,8 +516,12 @@ input:focus, select:focus, textarea:focus {
     .content { padding: 1.5rem 1rem; }
     .login-box { padding: 1.8rem 1.5rem; }
     .form-grid-2 { grid-template-columns: 1fr; }
+    .builder { grid-template-columns: 1fr; }
+    .builder-side { position: static; }
     .campo-grid { grid-template-columns: 1fr 1fr; }
     .campo-grid-2 { grid-template-columns: 1fr; }
+    .tarifa-grid { grid-template-columns: 1fr 1fr; }
+    .tarifa-grid-2 { grid-template-columns: 1fr; }
     .page-head.with-action { flex-direction: column; align-items: stretch; }
     .data-table { font-size: .85rem; }
     .data-table thead th, .data-table tbody td { padding: .6rem .5rem; }
