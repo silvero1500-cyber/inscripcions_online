@@ -61,6 +61,17 @@ $img = ImageUploader::publicUrl($evento['imagen_portada']);
                 </div>
             </div>
 
+            <?php if (!empty($evento['localizacion'])): ?>
+                <div class="evt-info-section">
+                    <div class="evt-info-label"><?= e(t('event.location_label')) ?></div>
+                    <div class="evt-info-box">
+                        <strong><?= e(t('event.location_label')) ?>:</strong>
+                        <a href="https://www.google.com/maps/search/?api=1&query=<?= e(urlencode((string)$evento['localizacion'])) ?>"
+                           target="_blank" rel="noopener"><?= e($evento['localizacion']) ?></a>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <?php if (!empty($evento['fecha_limite_inscripcion'])): ?>
                 <div class="evt-info-section">
                     <div class="evt-info-label"><?= e(t('event.dates_label')) ?></div>

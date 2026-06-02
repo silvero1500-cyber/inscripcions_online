@@ -28,6 +28,7 @@ return [
     'event.breadcrumb_events'          => 'Esdeveniments',
     'event.info_title'                 => "Informació de l'esdeveniment",
     'event.event_label'                => 'Esdeveniment',
+    'event.location_label'             => 'Localització',
     'event.dates_label'                => "Dates d'inscripció",
     'event.dates_end'                  => 'Fi',
     'event.capacity_label'             => 'Aforament',

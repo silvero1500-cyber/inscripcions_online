@@ -14,23 +14,29 @@ $currentUser = $currentUser ?? Auth::user();
 <body class="layout-admin">
     <header class="topbar">
         <a class="brand" href="<?= e(base_url('/admin')) ?>">Inscripcions <strong>Online</strong></a>
-        <nav class="topnav">
-            <a href="<?= e(base_url('/admin')) ?>">Panel</a>
-            <a href="<?= e(base_url('/admin/eventos')) ?>">Esdeveniments</a>
-            <a href="<?= e(base_url('/admin/checkin')) ?>">📷 Check-in</a>
-            <a href="<?= e(base_url('/admin/inscritos')) ?>">Inscrits</a>
-            <?php if ($currentUser && $currentUser->rol === 'superadmin'): ?>
-                <a href="<?= e(base_url('/admin/usuarios')) ?>">Usuaris</a>
-            <?php endif; ?>
-        </nav>
-        <div class="user-menu">
-            <?php if ($currentUser): ?>
-                <span class="user-name"><?= e($currentUser->nombre) ?></span>
-                <form method="post" action="<?= e(base_url('/admin/logout')) ?>" class="inline">
-                    <?= Csrf::field() ?>
-                    <button type="submit" class="btn-link">Surt</button>
-                </form>
-            <?php endif; ?>
+        <button type="button" class="nav-toggle" id="navToggle"
+                aria-label="Menú" aria-controls="navMenu" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="topbar-collapse" id="navMenu">
+            <nav class="topnav">
+                <a href="<?= e(base_url('/admin')) ?>">Panel</a>
+                <a href="<?= e(base_url('/admin/eventos')) ?>">Esdeveniments</a>
+                <a href="<?= e(base_url('/admin/checkin')) ?>">Check-in</a>
+                <a href="<?= e(base_url('/admin/inscritos')) ?>">Inscrits</a>
+                <?php if ($currentUser && $currentUser->rol === 'superadmin'): ?>
+                    <a href="<?= e(base_url('/admin/usuarios')) ?>">Usuaris</a>
+                <?php endif; ?>
+            </nav>
+            <div class="user-menu">
+                <?php if ($currentUser): ?>
+                    <span class="user-name"><?= e($currentUser->nombre) ?></span>
+                    <form method="post" action="<?= e(base_url('/admin/logout')) ?>" class="inline">
+                        <?= Csrf::field() ?>
+                        <button type="submit" class="btn-link">Surt</button>
+                    </form>
+                <?php endif; ?>
+            </div>
         </div>
     </header>
 
@@ -41,5 +47,18 @@ $currentUser = $currentUser ?? Auth::user();
     <footer class="footer">
         <small>&copy; <?= date('Y') ?> WeRun · Inscripcions Online</small>
     </footer>
+
+    <script>
+        (function () {
+            var btn = document.getElementById('navToggle');
+            var menu = document.getElementById('navMenu');
+            if (!btn || !menu) return;
+            btn.addEventListener('click', function () {
+                var open = menu.classList.toggle('open');
+                btn.classList.toggle('open', open);
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
 </body>
 </html>

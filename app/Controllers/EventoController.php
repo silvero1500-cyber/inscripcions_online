@@ -89,6 +89,7 @@ final class EventoController
                     'titulo'                   => $data['titulo'],
                     'slug'                     => $slug,
                     'descripcion'              => $data['descripcion'],
+                    'localizacion'             => $data['localizacion'],
                     'fecha_evento'             => $data['fecha_evento'],
                     'fecha_limite_inscripcion' => $data['fecha_limite_inscripcion'],
                     'aforo_maximo'             => $data['aforo_maximo'],
@@ -154,6 +155,7 @@ final class EventoController
         $update = [
             'titulo'                   => $data['titulo'],
             'descripcion'              => $data['descripcion'],
+            'localizacion'             => $data['localizacion'],
             'fecha_evento'             => $data['fecha_evento'],
             'fecha_limite_inscripcion' => $data['fecha_limite_inscripcion'],
             'aforo_maximo'             => $data['aforo_maximo'],
@@ -358,6 +360,7 @@ final class EventoController
         return [
             'titulo'                   => trim((string)($post['titulo'] ?? '')),
             'descripcion'              => trim((string)($post['descripcion'] ?? '')),
+            'localizacion'             => trim((string)($post['localizacion'] ?? '')) ?: null,
             'fecha_evento'             => trim((string)($post['fecha_evento'] ?? '')),
             'fecha_limite_inscripcion' => $fechaLimite,
             'aforo_maximo'             => $aforo === '' ? null : (int)$aforo,
@@ -385,6 +388,9 @@ final class EventoController
     {
         $v = new Validator($data);
         $v->required('titulo')->max('titulo', 255);
+        if (!empty($data['localizacion'])) {
+            $v->max('localizacion', 255);
+        }
         $v->required('fecha_evento')->date('fecha_evento');
         if (!empty($data['fecha_limite_inscripcion'])) {
             $v->dateTime('fecha_limite_inscripcion');

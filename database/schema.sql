@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS `eventos` (
     `titulo`                    VARCHAR(255)    NOT NULL,
     `slug`                      VARCHAR(255)    NOT NULL,
     `descripcion`               LONGTEXT        NULL,
+    `localizacion`              VARCHAR(255)    NULL COMMENT 'Lloc o adreça de l''esdeveniment',
     `fecha_evento`              DATE            NOT NULL,
     `fecha_limite_inscripcion`  DATETIME        NULL,
     `aforo_maximo`              INT UNSIGNED    NULL COMMENT 'NULL = sin límite',

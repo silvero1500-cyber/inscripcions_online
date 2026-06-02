@@ -28,6 +28,7 @@ return [
     'event.breadcrumb_events'          => 'Eventos',
     'event.info_title'                 => 'Información del evento',
     'event.event_label'                => 'Evento',
+    'event.location_label'             => 'Localización',
     'event.dates_label'                => 'Fechas de inscripción',
     'event.dates_end'                  => 'Fin',
     'event.capacity_label'             => 'Aforo',

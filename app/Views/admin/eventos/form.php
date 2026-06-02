@@ -68,6 +68,14 @@ $err = fn(string $key): ?string => $errors[$key][0] ?? null;
         </div>
 
         <div class="form-row">
+            <label for="localizacion">Localització</label>
+            <input type="text" id="localizacion" name="localizacion" maxlength="255"
+                   placeholder="Ex: Plaça Major, 08001 Barcelona" value="<?= e($val('localizacion')) ?>">
+            <small class="muted">Lloc o adreça on es celebra l'esdeveniment.</small>
+            <?php if ($err('localizacion')): ?><div class="field-error"><?= e($err('localizacion')) ?></div><?php endif; ?>
+        </div>
+
+        <div class="form-row">
             <label for="descripcion">Descripció</label>
             <textarea id="descripcion" name="descripcion" rows="6"><?= e($val('descripcion')) ?></textarea>
         </div>
