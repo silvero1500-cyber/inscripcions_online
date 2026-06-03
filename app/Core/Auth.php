@@ -13,11 +13,8 @@ final class Auth
 
     public static function attempt(string $email, string $password): bool
     {
-        // Rate limit muy básico: 5 intentos por minuto por IP
-        if (!self::checkRateLimit()) {
-            return false;
-        }
-
+        // El throttling anti força bruta es gestiona a AuthController amb
+        // LoginThrottle (persistent en BD). Aquí només es verifiquen credencials.
         $row = Usuario::findByEmail($email);
         if ($row === null) {
             // Pequeña espera para mitigar timing attack
@@ -104,27 +101,5 @@ final class Auth
         if (!self::isSuperadmin()) {
             Response::forbidden();
         }
-    }
-
-    // ── Rate limit muy ligero por IP en sesión ──────────────
-
-    private static function checkRateLimit(): bool
-    {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        $key = '_rl_login_' . md5($ip);
-        $now = time();
-        $window = 60;
-        $max = 5;
-
-        $data = Session::get($key, ['count' => 0, 'reset' => $now + $window]);
-
-        if ($now > $data['reset']) {
-            $data = ['count' => 0, 'reset' => $now + $window];
-        }
-
-        $data['count']++;
-        Session::set($key, $data);
-
-        return $data['count'] <= $max;
     }
 }

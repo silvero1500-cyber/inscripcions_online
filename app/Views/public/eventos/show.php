@@ -141,6 +141,12 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
     <form id="formulari" method="post" action="<?= e(base_url('/eventos/' . $evento['slug'] . '/inscriure')) ?>" class="form-publico" novalidate>
         <?= Csrf::field() ?>
 
+        <!-- Anti-bot honeypot: ha de quedar buit; els humans no el veuen -->
+        <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">
+            <label for="website">No omplir aquest camp</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" value="">
+        </div>
+
         <div class="panel">
             <h2 class="panel-title"><?= e(t('form.tarifa.title')) ?></h2>
             <div class="form-row" style="margin:0;">

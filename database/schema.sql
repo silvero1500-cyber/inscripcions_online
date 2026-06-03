@@ -227,6 +227,19 @@ CREATE TABLE IF NOT EXISTS `redsys_notificaciones` (
     KEY `idx_ds_order` (`ds_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ------------------------------------------------------------
+-- 9. INTENTOS DE LOGIN (throttling anti fuerza bruta)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `intentos_login` (
+    `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `ip`         VARCHAR(45)     NOT NULL,
+    `email`      VARCHAR(255)    NULL,
+    `created_at` TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_ip_time`    (`ip`, `created_at`),
+    KEY `idx_email_time` (`email`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ------------------------------------------------------------

@@ -10,6 +10,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
+use App\Models\LoginThrottle;
 
 final class AuthController
 {
@@ -47,11 +48,22 @@ final class AuthController
             Response::redirect(base_url('/admin/login'));
         }
 
-        if (!Auth::attempt($email, $pass)) {
-            Session::flash('login_error', 'Credenciales no válidas o demasiados intentos.');
+        // Throttling anti força bruta (persistent: per email i per IP)
+        $ip = $req->ip;
+        if (LoginThrottle::blocked($ip, $email)) {
+            Session::flash('login_error', 'Demasiados intentos fallidos. Espera unos minutos antes de volver a intentarlo.');
             Session::flash('login_email', $email);
             Response::redirect(base_url('/admin/login'));
         }
+
+        if (!Auth::attempt($email, $pass)) {
+            LoginThrottle::recordFailure($ip, $email);
+            Session::flash('login_error', 'Credenciales no válidas.');
+            Session::flash('login_email', $email);
+            Response::redirect(base_url('/admin/login'));
+        }
+
+        LoginThrottle::clearFailures($email);
 
         $next = Session::pullFlash('redirect_after_login');
         Response::redirect(base_url($next ?: '/admin'));

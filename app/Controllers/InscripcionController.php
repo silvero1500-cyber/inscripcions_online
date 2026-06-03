@@ -36,6 +36,12 @@ final class InscripcionController
             Response::redirect(base_url('/eventos/' . $slug));
         }
 
+        // Honeypot anti-bot: si el camp ocult ve omplert, és spam → descartar en silenci
+        if (trim((string) ($_POST['website'] ?? '')) !== '') {
+            error_log('[Inscripcio] Honeypot activat (spam) IP=' . $req->ip);
+            Response::redirect(base_url('/'));
+        }
+
         if (!PublicController::inscripcionesAbiertas($evento)) {
             Session::flash('error', 'Les inscripcions per a aquest esdeveniment estan tancades.');
             Response::redirect(base_url('/eventos/' . $slug));
