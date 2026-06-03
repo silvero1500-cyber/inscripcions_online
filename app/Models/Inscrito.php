@@ -45,23 +45,18 @@ final class Inscrito
     }
 
     /**
-     * ¿Ya existe una inscripción activa (pendiente o confirmada) con este DNI
-     * en el mismo evento? Identifica a la persona por DNI, de modo que una misma
-     * familia (mismo email, distinto DNI) sí puede inscribir a varios.
-     * Si no se recoge DNI (null/vacío), no se puede deduplicar → devuelve false.
+     * ¿Hay ya un inscrito activo (pendiente o confirmado) con este DNI o email
+     * en el mismo evento? (Disponible como helper; no se aplica al alta pública.)
      */
-    public static function existeDuplicado(int $eventoId, ?string $dni): bool
+    public static function existeDuplicado(int $eventoId, string $dni, string $email): bool
     {
-        $dni = strtoupper(trim((string) $dni));
-        if ($dni === '') return false;
-
         $row = Database::getInstance()->query(
             "SELECT 1 FROM inscritos
              WHERE evento_id = ?
                AND estado IN ('pendiente', 'confirmado')
-               AND dni = ?
+               AND (dni = ? OR email = ?)
              LIMIT 1",
-            [$eventoId, $dni]
+            [$eventoId, $dni, $email]
         )->fetchColumn();
         return (bool) $row;
     }

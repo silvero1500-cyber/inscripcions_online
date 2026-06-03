@@ -77,11 +77,6 @@ final class InscripcionController
             }
         }
 
-        // ── Evitar inscripció duplicada (mateixa persona, per DNI) ──
-        if ($v->first('dni') === null && Inscrito::existeDuplicado($eventoId, $data['dni'] ?? null)) {
-            $v->addError('dni', 'Ja existeix una inscripció amb aquest DNI per a aquest esdeveniment.');
-        }
-
         if ($v->fails()) {
             $post = $_POST;
             unset($post['_csrf']);
