@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Core\Auth;
 use App\Core\Database;
 use App\Core\Request;
 use App\Core\Response;
@@ -100,7 +101,9 @@ final class PublicController
             'old'                => $oldJson    ? (json_decode($oldJson, true) ?: [])    : [],
             'errors'             => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
             'flashError'         => Session::pullFlash('error'),
-            'mostraAutofill'     => ($req->query('prova') === '1'),
+            // Autoreblert de proves: a tots els esdeveniments si ets admin (logat),
+            // o per a qualsevol amb ?prova=1. (Temporal, mentre estem en proves.)
+            'mostraAutofill'     => ($req->query('prova') === '1') || Auth::check(),
             'pageTitle'          => $evento['titulo'] . ' · WeRun',
             'metaDescription'    => $metaDesc,
             'ogTitle'            => $evento['titulo'],
