@@ -125,6 +125,13 @@ return [
     'success.confirmed_note'           => "La teva plaça està confirmada! T'hem enviat un correu amb el justificant i el QR de check-in (també el tens aquí sota).",
     'success.payment_note'             => "El pagament amb targeta s'activarà ben aviat. Mentrestant, la teva inscripció queda registrada com a pendent. T'enviarem un correu quan puguis completar el pagament.",
 
+    // Comprovant imprimible
+    'comprovant.title'                 => "Comprovant d'inscripció",
+    'comprovant.download'              => '📄 Descarregar comprovant (PDF)',
+    'comprovant.print'                 => '⬇ Descarregar / Imprimir',
+    'comprovant.dorsal'                => 'Dorsal',
+    'comprovant.instructions'          => "Presenta aquest comprovant o el codi QR a l'organització el dia de l'esdeveniment.",
+
     // Email confirmacio
     'email.subject'                    => 'Inscripció confirmada · {event}',
     'email.header_title'               => 'Inscripció confirmada ✓',

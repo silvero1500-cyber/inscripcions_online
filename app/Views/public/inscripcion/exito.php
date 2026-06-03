@@ -3,6 +3,7 @@
 /** @var array $inscrito */
 /** @var array|null $tarifa */
 /** @var string|null $qrDataUri */
+/** @var string|null $qrToken */
 $confirmada = ($inscrito['estado'] ?? '') === 'confirmado';
 ?>
 <section class="container exito-box">
@@ -42,6 +43,12 @@ $confirmada = ($inscrito['estado'] ?? '') === 'confirmado';
                 <p class="muted"><?= e(t('email.qr.desc')) ?></p>
                 <img src="<?= e($qrDataUri) ?>" alt="<?= e(t('email.qr.alt')) ?>" width="280" height="280">
             </div>
+        <?php endif; ?>
+
+        <?php if (!empty($qrToken)): ?>
+            <p style="margin:0 0 1.5rem;">
+                <a class="btn btn-primary" href="<?= e(base_url('/comprovant/' . $qrToken)) ?>" target="_blank" rel="noopener"><?= e(t('comprovant.download')) ?></a>
+            </p>
         <?php endif; ?>
     <?php else: ?>
         <div class="alert alert-info"><?= e(t('success.payment_note')) ?></div>

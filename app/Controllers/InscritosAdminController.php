@@ -123,6 +123,22 @@ final class InscritosAdminController
     }
 
     /**
+     * Assegura el qr_token i redirigeix al comprovant imprimible públic.
+     */
+    public function comprovant(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        $inscrito = Inscrito::findById($id);
+        if ($inscrito === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, (int) $inscrito['evento_id'])) Response::forbidden();
+
+        $token = Inscrito::ensureQrToken($id);
+        Response::redirect(base_url('/comprovant/' . $token));
+    }
+
+    /**
      * Genera i mostra el PNG del QR de check-in d'un inscrit (inline, descarregable).
      */
     public function qr(Request $req, array $params): void

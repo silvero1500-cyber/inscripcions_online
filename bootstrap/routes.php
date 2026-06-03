@@ -30,6 +30,7 @@ $router->get ('/',                                    [PublicController::class, 
 $router->get ('/eventos/{slug}',                      [PublicController::class,       'show']);
 $router->post('/eventos/{slug}/inscriure',            [InscripcionController::class,  'store']);
 $router->get ('/eventos/{slug}/gracies',              [InscripcionController::class,  'exito']);
+$router->get ('/comprovant/{token}',                  [InscripcionController::class,  'comprovant']);
 
 // ── Pagament (Redsys: targeta + Bizum) ─────────────────
 $router->get ('/pago/metodo',         [PagoController::class, 'metodo']);
@@ -69,6 +70,7 @@ $router->post('/admin/eventos/{id}/eliminar',        [EventoController::class, '
 $router->get ('/admin/inscritos',                              [InscritosAdminController::class, 'index'],   $auth);
 $router->get ('/admin/inscritos/export',                       [InscritosAdminController::class, 'export'],  $auth);
 $router->get ('/admin/inscritos/{id}/qr',                      [InscritosAdminController::class, 'qr'],                 $auth);
+$router->get ('/admin/inscritos/{id}/comprovant',              [InscritosAdminController::class, 'comprovant'],         $auth);
 $router->post('/admin/inscritos/{id}/reenviar',                [InscritosAdminController::class, 'resendConfirmation'], $auth);
 $router->get ('/admin/eventos/{id}/inscritos/import',          [InscritosImportController::class, 'form'],    $auth);
 $router->post('/admin/eventos/{id}/inscritos/import/preview',  [InscritosImportController::class, 'preview'], $auth);

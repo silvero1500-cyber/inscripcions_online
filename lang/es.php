@@ -125,6 +125,13 @@ return [
     'success.confirmed_note'           => '¡Tu plaza está confirmada! Te hemos enviado un correo con el justificante y el QR de check-in (también lo tienes aquí abajo).',
     'success.payment_note'             => 'El pago con tarjeta se activará pronto. Mientras tanto, tu inscripción queda registrada como pendiente. Te enviaremos un correo cuando puedas completar el pago.',
 
+    // Justificante imprimible
+    'comprovant.title'                 => 'Justificante de inscripción',
+    'comprovant.download'              => '📄 Descargar justificante (PDF)',
+    'comprovant.print'                 => '⬇ Descargar / Imprimir',
+    'comprovant.dorsal'                => 'Dorsal',
+    'comprovant.instructions'          => 'Presenta este justificante o el código QR a la organización el día del evento.',
+
     // Email confirmación
     'email.subject'                    => 'Inscripción confirmada · {event}',
     'email.header_title'               => 'Inscripción confirmada ✓',

@@ -207,10 +207,11 @@ final class InscripcionController
 
         // QR de check-in: només si la inscripció ja està confirmada (gratuïtes / ja pagades)
         $qrDataUri = null;
+        $qrToken   = null;
         if ($inscrito !== null && ($inscrito['estado'] ?? '') === 'confirmado') {
             try {
-                $token = Inscrito::ensureQrToken((int) $inscrito['id']);
-                $png   = QrService::pngBytes(base_url('/admin/checkin/' . $token), 320);
+                $qrToken = Inscrito::ensureQrToken((int) $inscrito['id']);
+                $png     = QrService::pngBytes(base_url('/admin/checkin/' . $qrToken), 320);
                 $qrDataUri = 'data:image/png;base64,' . base64_encode($png);
             } catch (\Throwable $e) {
                 error_log('[InscripcionController] QR gràcies fallit: ' . $e->getMessage());
@@ -222,7 +223,38 @@ final class InscripcionController
             'inscrito'  => $inscrito,
             'tarifa'    => $tarifa,
             'qrDataUri' => $qrDataUri,
+            'qrToken'   => $qrToken,
         ], layout: 'public');
+    }
+
+    /**
+     * Comprovant d'inscripció imprimible (públic, accés pel qr_token secret).
+     * Pàgina autònoma optimitzada per imprimir / desar com a PDF des del navegador.
+     */
+    public function comprovant(Request $req, array $params): void
+    {
+        $token    = (string) ($params['token'] ?? '');
+        $inscrito = Inscrito::findByQrToken($token);
+        if ($inscrito === null) Response::notFound();
+
+        $evento = Evento::findById((int) $inscrito['evento_id']);
+        $tarifa = Tarifa::findById((int) $inscrito['tarifa_id']);
+        if ($evento === null) Response::notFound();
+
+        $qrDataUri = null;
+        try {
+            $png = QrService::pngBytes(base_url('/admin/checkin/' . $inscrito['qr_token']), 360);
+            $qrDataUri = 'data:image/png;base64,' . base64_encode($png);
+        } catch (\Throwable $e) {
+            error_log('[InscripcionController] QR comprovant fallit: ' . $e->getMessage());
+        }
+
+        View::render('public/inscripcion/comprovant', [
+            'evento'    => $evento,
+            'inscrito'  => $inscrito,
+            'tarifa'    => $tarifa,
+            'qrDataUri' => $qrDataUri,
+        ]);
     }
 
     // ────────────────────────────────────────────────────────

@@ -251,6 +251,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                     </td>
                     <td data-col="accions" class="cell-actions">
                         <?php if ($i['estado'] === 'confirmado'): ?>
+                            <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/comprovant')) ?>" target="_blank" rel="noopener" title="Comprovant imprimible">📄</a>
                             <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/qr')) ?>" target="_blank" rel="noopener" title="Veure / descarregar QR">QR</a>
                             <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/reenviar')) ?>" class="inline"
                                   onsubmit="return confirm('Reenviar l\'email de confirmació a <?= e($i['email']) ?>?');">
