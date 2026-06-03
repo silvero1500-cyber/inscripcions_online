@@ -23,7 +23,7 @@ final class PublicController
                     (SELECT MIN(precio) FROM tarifas_evento
                      WHERE evento_id = e.id AND activo = 1) AS precio_min
              FROM eventos e
-             WHERE e.activo = 1
+             WHERE e.activo = 1 AND e.archivado_at IS NULL
              ORDER BY e.fecha_evento ASC, e.id ASC"
         )->fetchAll();
 
@@ -42,7 +42,7 @@ final class PublicController
         $slug = (string) ($params['slug'] ?? '');
         $evento = Evento::findBySlug($slug);
 
-        if ($evento === null || (int) $evento['activo'] !== 1) {
+        if ($evento === null || (int) $evento['activo'] !== 1 || !empty($evento['archivado_at'])) {
             Response::notFound();
         }
 

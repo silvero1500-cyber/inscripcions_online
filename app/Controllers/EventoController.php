@@ -24,7 +24,8 @@ final class EventoController
     public function index(Request $req): void
     {
         $user = Auth::user();
-        $eventos = Evento::listForUser($user->id, $user->rol);
+        $showArchived = $req->query('arxivats') === '1';
+        $eventos = Evento::listForUser($user->id, $user->rol, $showArchived);
 
         // Añadir contador de inscritos por evento (mejor en una sola query, pero esto es claro)
         foreach ($eventos as &$e) {
@@ -33,9 +34,10 @@ final class EventoController
         unset($e);
 
         View::render('admin/eventos/index', [
-            'user'    => $user,
-            'eventos' => $eventos,
-            'flash'   => Session::pullAllFlashes(),
+            'user'         => $user,
+            'eventos'      => $eventos,
+            'showArchived' => $showArchived,
+            'flash'        => Session::pullAllFlashes(),
         ], layout: 'admin');
     }
 
@@ -347,6 +349,45 @@ final class EventoController
         Evento::delete($id);
 
         Session::flash('success', 'Esdeveniment esborrat.');
+        Response::redirect(base_url('/admin/eventos'));
+    }
+
+    /**
+     * Arxiva un esdeveniment (no l'esborra: surt del llistat actiu i del públic,
+     * però es conserven les dades i els inscrits).
+     */
+    public function archive(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+
+        $evento = Evento::findById($id);
+        if ($evento === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, $id)) Response::forbidden();
+
+        Evento::archive($id);
+        Session::flash('success', 'Esdeveniment arxivat. El trobaràs a «Arxivats».');
+        Response::redirect(base_url('/admin/eventos'));
+    }
+
+    /**
+     * Desarxiva un esdeveniment (torna al llistat actiu).
+     */
+    public function unarchive(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+
+        $evento = Evento::findById($id);
+        if ($evento === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, $id)) Response::forbidden();
+
+        Evento::unarchive($id);
+        Session::flash('success', 'Esdeveniment desarxivat.');
         Response::redirect(base_url('/admin/eventos'));
     }
 

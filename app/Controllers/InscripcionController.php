@@ -27,7 +27,7 @@ final class InscripcionController
         $slug = (string) ($params['slug'] ?? '');
         $evento = Evento::findBySlug($slug);
 
-        if ($evento === null || (int) $evento['activo'] !== 1) {
+        if ($evento === null || (int) $evento['activo'] !== 1 || !empty($evento['archivado_at'])) {
             Response::notFound();
         }
 

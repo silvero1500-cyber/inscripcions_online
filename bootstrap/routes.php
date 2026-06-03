@@ -64,6 +64,8 @@ $router->post('/admin/descuentos/{id}/toggle',           [DescuentosController::
 $router->post('/admin/descuentos/{id}/eliminar',         [DescuentosController::class, 'destroy'],       $auth);
 $router->post('/admin/eventos/{id}',                 [EventoController::class, 'update'],    $auth);
 $router->post('/admin/eventos/{id}/duplicar',        [EventoController::class, 'duplicate'], $auth);
+$router->post('/admin/eventos/{id}/arxivar',         [EventoController::class, 'archive'],   $auth);
+$router->post('/admin/eventos/{id}/desarxivar',      [EventoController::class, 'unarchive'], $auth);
 $router->post('/admin/eventos/{id}/eliminar',        [EventoController::class, 'destroy'],   $auth);
 
 // Inscrits (llistat + export CSV + import CSV)

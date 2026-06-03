@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS `eventos` (
     `activo`                    TINYINT(1)      NOT NULL DEFAULT 1,
     `inscripciones_abiertas`    TINYINT(1)      NOT NULL DEFAULT 1,
     `campos_fijos`              JSON            NULL COMMENT 'Config per camp fix: obligatori/opcional/ocult',
+    `archivado_at`              DATETIME        NULL COMMENT 'Si té data, esdeveniment arxivat',
     `created_at`                TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`                TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
