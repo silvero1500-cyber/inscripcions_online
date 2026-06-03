@@ -43,6 +43,8 @@ return [
     'form.tarifa.title'                => 'Elige la tarifa',
     'form.tarifa.label'                => 'Tarifa',
     'form.tarifa.placeholder'          => '— Elige una tarifa —',
+    'form.tarifa.soldout'              => 'Agotada',
+    'form.tarifa.left'                 => 'quedan {n}',
     'form.personal.title'              => 'Datos personales',
     'form.label.name'                  => 'Nombre',
     'form.label.surname'               => 'Apellidos',

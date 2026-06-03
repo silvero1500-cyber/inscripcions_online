@@ -114,6 +114,23 @@ final class Tarifa
     }
 
     /**
+     * Places que queden en una tarifa amb aforament propi.
+     * Retorna null si la tarifa no té aforament propi (places il·limitades).
+     */
+    public static function plazasRestantes(array $tarifa): ?int
+    {
+        if (empty($tarifa['aforo_maximo'])) return null;
+
+        $usadas = (int) Database::getInstance()->query(
+            "SELECT COUNT(*) FROM inscritos
+             WHERE tarifa_id = ? AND estado IN ('pendiente', 'confirmado')",
+            [(int) $tarifa['id']]
+        )->fetchColumn();
+
+        return max(0, (int) $tarifa['aforo_maximo'] - $usadas);
+    }
+
+    /**
      * Devuelve el precio mínimo entre las tarifas activas disponibles ahora.
      * Útil para mostrar "des de X €" en el listado.
      */

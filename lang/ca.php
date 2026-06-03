@@ -43,6 +43,8 @@ return [
     'form.tarifa.title'                => 'Tria la tarifa',
     'form.tarifa.label'                => 'Tarifa',
     'form.tarifa.placeholder'          => '— Tria una tarifa —',
+    'form.tarifa.soldout'              => 'Esgotada',
+    'form.tarifa.left'                 => 'queden {n}',
     'form.personal.title'              => 'Dades personals',
     'form.label.name'                  => 'Nom',
     'form.label.surname'               => 'Cognoms',

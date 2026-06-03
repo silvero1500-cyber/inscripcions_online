@@ -49,8 +49,18 @@ final class PublicController
 
         $tarifas = Tarifa::listDisponibles((int) $evento['id']);
 
-        // Estado de inscripciones
-        $abierto           = self::inscripcionesAbiertas($evento) && count($tarifas) > 0;
+        // Places per tarifa (per marcar les esgotades al desplegable)
+        $hayDisponibles = false;
+        foreach ($tarifas as &$t) {
+            $rest = Tarifa::plazasRestantes($t);
+            $t['_plazas']  = $rest;                          // null = sense límit propi
+            $t['_agotada'] = ($rest !== null && $rest <= 0);
+            if (!$t['_agotada']) $hayDisponibles = true;
+        }
+        unset($t);
+
+        // Estado de inscripciones (tancat si no queda cap tarifa amb places)
+        $abierto           = self::inscripcionesAbiertas($evento) && $hayDisponibles;
         $plazasDisponibles = self::plazasDisponibles($evento);
 
         // Recuperar datos del último intento fallido (si los hay)

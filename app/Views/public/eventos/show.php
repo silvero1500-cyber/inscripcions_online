@@ -147,9 +147,17 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
                 <label for="tarifa_id"><?= e(t('form.tarifa.label')) ?> <span class="req">*</span></label>
                 <select id="tarifa_id" name="tarifa_id" required>
                     <option value=""><?= e(t('form.tarifa.placeholder')) ?></option>
-                    <?php foreach ($tarifas as $t): ?>
-                        <option value="<?= (int)$t['id'] ?>" <?= (int)$val('tarifa_id') === (int)$t['id'] ? 'selected' : '' ?>>
-                            <?= e($t['nombre']) ?> · <?= e(format_price((float)$t['precio'])) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?>
+                    <?php foreach ($tarifas as $t): $ag = !empty($t['_agotada']); ?>
+                        <option value="<?= (int)$t['id'] ?>"
+                                <?= $ag ? 'disabled' : '' ?>
+                                <?= (!$ag && (int)$val('tarifa_id') === (int)$t['id']) ? 'selected' : '' ?>>
+                            <?= e($t['nombre']) ?> · <?= e(format_price((float)$t['precio'])) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
+                                if ($ag) {
+                                    echo ' — ' . e(t('form.tarifa.soldout'));
+                                } elseif (isset($t['_plazas']) && $t['_plazas'] !== null && $t['_plazas'] <= 10) {
+                                    echo ' · ' . e(t('form.tarifa.left', ['n' => (int)$t['_plazas']]));
+                                }
+                            ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
