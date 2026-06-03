@@ -16,6 +16,30 @@ $ret = urlencode($currentPath ?: '/');
     <?php if (!empty($metaDescription)): ?>
         <meta name="description" content="<?= e($metaDescription) ?>">
     <?php endif; ?>
+
+    <?php
+    // ── Open Graph / Twitter Card (preview en compartir) ──
+    $ogTitle       = $ogTitle       ?? ($pageTitle ?? t('header.brand_full'));
+    $ogDescription = $ogDescription ?? ($metaDescription ?? '');
+    $ogType        = $ogType        ?? 'website';
+    $ogUrl         = $ogUrl         ?? base_url($currentPath ?: '/');
+    $ogImage       = $ogImage       ?? null;
+    ?>
+    <meta property="og:site_name" content="WeRun">
+    <meta property="og:locale" content="<?= e($currentLocale === 'es' ? 'es_ES' : 'ca_ES') ?>">
+    <meta property="og:type" content="<?= e($ogType) ?>">
+    <meta property="og:title" content="<?= e($ogTitle) ?>">
+    <?php if ($ogDescription !== ''): ?><meta property="og:description" content="<?= e($ogDescription) ?>"><?php endif; ?>
+    <meta property="og:url" content="<?= e($ogUrl) ?>">
+    <?php if (!empty($ogImage)): ?>
+        <meta property="og:image" content="<?= e($ogImage) ?>">
+        <meta name="twitter:card" content="summary_large_image">
+    <?php else: ?>
+        <meta name="twitter:card" content="summary">
+    <?php endif; ?>
+    <meta name="twitter:title" content="<?= e($ogTitle) ?>">
+    <?php if ($ogDescription !== ''): ?><meta name="twitter:description" content="<?= e($ogDescription) ?>"><?php endif; ?>
+    <?php if (!empty($ogImage)): ?><meta name="twitter:image" content="<?= e($ogImage) ?>"><?php endif; ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">

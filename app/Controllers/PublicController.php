@@ -11,6 +11,7 @@ use App\Core\Session;
 use App\Core\View;
 use App\Models\Evento;
 use App\Models\Tarifa;
+use App\Services\ImageUploader;
 
 final class PublicController
 {
@@ -27,7 +28,12 @@ final class PublicController
         )->fetchAll();
 
         View::render('public/eventos/index', [
-            'eventos' => $eventos,
+            'eventos'         => $eventos,
+            'pageTitle'       => t('home.title') . ' · WeRun',
+            'metaDescription' => t('home.subtitle'),
+            'ogTitle'         => t('home.title'),
+            'ogDescription'   => t('home.subtitle'),
+            'ogUrl'           => base_url('/'),
         ], layout: 'public');
     }
 
@@ -67,6 +73,17 @@ final class PublicController
         $oldJson    = Session::pullFlash('insc_old');
         $errorsJson = Session::pullFlash('insc_errors');
 
+        // ── Open Graph (preview en compartir) ──
+        $ogImage = ImageUploader::publicUrl($evento['imagen_portada'] ?? null);
+        $plain   = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($evento['descripcion'] ?? ''))));
+        if ($plain === '') {
+            $plain = $evento['titulo'] . ' · ' . format_date_ca((string) $evento['fecha_evento']);
+            if (!empty($evento['localizacion'])) {
+                $plain .= ' · ' . $evento['localizacion'];
+            }
+        }
+        $metaDesc = mb_substr($plain, 0, 180);
+
         View::render('public/eventos/show', [
             'evento'             => $evento,
             'campos'             => $campos,
@@ -77,6 +94,13 @@ final class PublicController
             'errors'             => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
             'flashError'         => Session::pullFlash('error'),
             'mostraAutofill'     => ($req->query('prova') === '1'),
+            'pageTitle'          => $evento['titulo'] . ' · WeRun',
+            'metaDescription'    => $metaDesc,
+            'ogTitle'            => $evento['titulo'],
+            'ogDescription'      => $metaDesc,
+            'ogImage'            => $ogImage,
+            'ogUrl'              => base_url('/eventos/' . $evento['slug']),
+            'ogType'             => 'article',
         ], layout: 'public');
     }
 
