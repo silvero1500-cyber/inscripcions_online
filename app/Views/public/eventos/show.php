@@ -441,7 +441,11 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
         document.querySelectorAll('select[name^="campo_"]').forEach(function (el) { if (!el.value && el.options.length > 1) el.selectedIndex = 1; });
 
         var tarifaSel = document.getElementById('tarifa_id');
-        if (tarifaSel && !tarifaSel.value && tarifaSel.options.length > 1) tarifaSel.selectedIndex = 1;
+        if (tarifaSel && !tarifaSel.value) {
+            for (var ti = 0; ti < tarifaSel.options.length; ti++) {
+                if (tarifaSel.options[ti].value && !tarifaSel.options[ti].disabled) { tarifaSel.selectedIndex = ti; break; }
+            }
+        }
     });
 })();
 </script>

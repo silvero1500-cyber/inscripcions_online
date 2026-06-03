@@ -84,6 +84,7 @@ $showArchived = $showArchived ?? false;
                     <td class="td-actions">
                         <?php if (!$showArchived): ?>
                             <a class="btn-small" href="<?= e(base_url('/eventos/' . $ev['slug'])) ?>" target="_blank" rel="noopener">👁️ Veure</a>
+                            <a class="btn-small" href="<?= e(base_url('/eventos/' . $ev['slug'] . '?prova=1')) ?>" target="_blank" rel="noopener" title="Obre el formulari amb autoreblert de proves">🧪 Provar</a>
                             <a class="btn-small btn-kpi" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/kpis')) ?>">📊 KPIs</a>
                             <a class="btn-small" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/descuentos')) ?>">🏷️ Descomptes</a>
                             <a class="btn-small" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/editar')) ?>">Editar</a>
