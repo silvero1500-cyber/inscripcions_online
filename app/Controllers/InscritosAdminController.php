@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\Csrf;
 use App\Core\Database;
 use App\Core\Request;
 use App\Core\Response;
+use App\Core\Session;
 use App\Core\View;
 use App\Models\Evento;
 use App\Models\Inscrito;
+use App\Models\Tarifa;
+use App\Services\EmailService;
+use App\Services\QrService;
 
 final class InscritosAdminController
 {
@@ -66,7 +71,77 @@ final class InscritosAdminController
             'totalPages' => $totalPages,
             'from'       => $from,
             'to'         => $to,
+            'flash'      => Session::pullAllFlashes(),
         ], layout: 'admin');
+    }
+
+    /**
+     * Reenvia l'email de confirmació (amb QR) d'un inscrit confirmat.
+     */
+    public function resendConfirmation(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+
+        $inscrito = Inscrito::findById($id);
+        if ($inscrito === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, (int) $inscrito['evento_id'])) Response::forbidden();
+
+        $back = base_url('/admin/inscritos?' . http_build_query(['evento_id' => (int) $inscrito['evento_id']]));
+
+        if (empty($inscrito['email'])) {
+            Session::flash('error', 'Aquest inscrit no té email.');
+            Response::redirect($back);
+        }
+
+        try {
+            $evento = Evento::findById((int) $inscrito['evento_id']);
+            $tarifa = Tarifa::findById((int) $inscrito['tarifa_id']);
+            if ($evento === null || $tarifa === null) {
+                Session::flash('error', 'No s\'ha pogut carregar l\'esdeveniment o la tarifa.');
+                Response::redirect($back);
+            }
+
+            $pago = Database::getInstance()->query(
+                'SELECT * FROM pagos WHERE inscrito_id = ? ORDER BY id DESC LIMIT 1',
+                [$id]
+            )->fetch() ?: [];
+
+            Inscrito::ensureQrToken($id);
+            $inscrito = Inscrito::findById($id); // recarregar amb qr_token
+
+            EmailService::sendConfirmacionInscripcion($inscrito, $evento, $tarifa, $pago);
+            Session::flash('success', 'Email de confirmació reenviat a ' . $inscrito['email'] . '.');
+        } catch (\Throwable $e) {
+            error_log('[InscritosAdmin] Reenviament fallit: ' . $e->getMessage());
+            Session::flash('error', 'No s\'ha pogut enviar l\'email: ' . $e->getMessage());
+        }
+
+        Response::redirect($back);
+    }
+
+    /**
+     * Genera i mostra el PNG del QR de check-in d'un inscrit (inline, descarregable).
+     */
+    public function qr(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        $inscrito = Inscrito::findById($id);
+        if ($inscrito === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, (int) $inscrito['evento_id'])) Response::forbidden();
+
+        $token = Inscrito::ensureQrToken($id);
+        $png   = QrService::pngBytes(base_url('/admin/checkin/' . $token), 360);
+
+        header('Content-Type: image/png');
+        header('Content-Disposition: inline; filename="qr_inscrit_' . $id . '.png"');
+        header('Cache-Control: private, no-store');
+        echo $png;
+        exit;
     }
 
     /**

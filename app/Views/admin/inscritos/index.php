@@ -10,7 +10,9 @@
 /** @var int $totalPages */
 /** @var int $from */
 /** @var int $to */
+/** @var array $flash */
 
+$flash = $flash ?? [];
 $selEvento = (int) ($filters['evento_id'] ?? 0);
 $filtersClean = array_filter($filters, fn($v) => $v !== null && $v !== '');
 $exportUrl = base_url('/admin/inscritos/export?' . http_build_query($filtersClean));
@@ -36,6 +38,13 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         </div>
     <?php endif; ?>
 </section>
+
+<?php if (!empty($flash['success'])): ?>
+    <div class="alert alert-success"><?= e($flash['success']) ?></div>
+<?php endif; ?>
+<?php if (!empty($flash['error'])): ?>
+    <div class="alert alert-error"><?= e($flash['error']) ?></div>
+<?php endif; ?>
 
 <!-- ── Filtres ──────────────────────────────────────────── -->
 <form method="get" action="" class="filtres-inscrits">
@@ -153,6 +162,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         ['key' => 'dorsal',      'label' => 'Dorsal'],
         ['key' => 'estado',      'label' => 'Estat'],
         ['key' => 'checkin',     'label' => 'Check-in'],
+        ['key' => 'accions',     'label' => 'Accions'],
     ];
     ?>
     <div class="col-manager-bar">
@@ -199,6 +209,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                     <th data-col="dorsal">Dorsal</th>
                     <th data-col="estado">Estat</th>
                     <th data-col="checkin">Check-in</th>
+                    <th data-col="accions">Accions</th>
                 </tr>
             </thead>
             <tbody>
@@ -234,6 +245,18 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                     <td data-col="checkin">
                         <?php if (!empty($i['check_in_at'])): ?>
                             <span class="badge badge-success">✓ <?= e(date('d/m H:i', strtotime((string)$i['check_in_at']))) ?></span>
+                        <?php else: ?>
+                            <span class="muted">—</span>
+                        <?php endif; ?>
+                    </td>
+                    <td data-col="accions" class="cell-actions">
+                        <?php if ($i['estado'] === 'confirmado'): ?>
+                            <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/qr')) ?>" target="_blank" rel="noopener" title="Veure / descarregar QR">QR</a>
+                            <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/reenviar')) ?>" class="inline"
+                                  onsubmit="return confirm('Reenviar l\'email de confirmació a <?= e($i['email']) ?>?');">
+                                <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+                                <button type="submit" class="btn-tiny" title="Reenviar email de confirmació">✉ Reenviar</button>
+                            </form>
                         <?php else: ?>
                             <span class="muted">—</span>
                         <?php endif; ?>
