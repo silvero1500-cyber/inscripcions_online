@@ -2,6 +2,7 @@
 /** @var array|null $evento */
 /** @var list<array> $campos */
 /** @var list<array> $tarifas */
+/** @var list<array> $grupos */
 /** @var array $old */
 /** @var array $errors */
 use App\Core\Csrf;
@@ -10,6 +11,7 @@ use App\Models\CamposFijos;
 use App\Services\ImageUploader;
 
 $isEdit = $evento !== null;
+$grupos = $grupos ?? [];
 $titulo = $isEdit ? 'Editar esdeveniment' : 'Nou esdeveniment';
 $action = $isEdit
     ? base_url('/admin/eventos/' . (int)$evento['id'])
@@ -137,6 +139,45 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
     </fieldset>
 
     <fieldset>
+        <legend>Grups d'aforament compartit (opcional)</legend>
+        <p class="muted">Crea grups perquè diverses tarifes restin d'un <strong>mateix cupo</strong> (p. ex. «Cursa 10km» = 100 places compartides entre Adult i Infantil). Després assigna cada tarifa a un grup a la seva targeta. Una tarifa amb grup <strong>ignora el seu aforament propi</strong>.</p>
+
+        <div class="builder">
+            <aside class="builder-side">
+                <button type="button" id="add-grupo" class="btn btn-secondary btn-block">+ Afegir grup</button>
+                <p class="builder-count"><strong data-count-for="grupos-list">0</strong> grups</p>
+            </aside>
+            <div class="builder-main">
+                <div id="grupos-list" class="sortable-list">
+                    <?php foreach ($grupos as $gidx => $g): $gcid = 'g' . (int)$g['id']; ?>
+                        <div class="grupo-row card-item" data-index="<?= (int)$gidx ?>" data-cid="<?= e($gcid) ?>">
+                            <div class="item-head">
+                                <span class="item-title"><?= e((string)$g['nombre'] !== '' ? (string)$g['nombre'] : 'Grup') ?></span>
+                                <span class="item-tools">
+                                    <button type="button" class="btn-link btn-danger grupo-remove" title="Eliminar grup" aria-label="Eliminar grup">✕</button>
+                                </span>
+                            </div>
+                            <input type="hidden" name="grupos[<?= (int)$gidx ?>][id]" value="<?= (int)$g['id'] ?>">
+                            <input type="hidden" name="grupos[<?= (int)$gidx ?>][cid]" value="<?= e($gcid) ?>">
+                            <div class="grupo-grid">
+                                <div>
+                                    <label>Nom del grup *</label>
+                                    <input type="text" name="grupos[<?= (int)$gidx ?>][nombre]" value="<?= e((string)$g['nombre']) ?>" class="grupo-nombre" required maxlength="100" placeholder="Ex: Cursa 10km">
+                                </div>
+                                <div>
+                                    <label>Aforament compartit *</label>
+                                    <input type="number" name="grupos[<?= (int)$gidx ?>][aforo_maximo]" value="<?= (int)$g['aforo_maximo'] ?>" min="1" placeholder="Ex: 100">
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <p class="empty-hint" data-empty-for="grupos-list">Cap grup. Les tarifes faran servir el seu aforament propi.</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
         <legend>Tarifes</legend>
         <p class="muted">Defineix les diferents tarifes disponibles (per exemple: Adult, Infantil, VIP). Cada inscrit haurà de triar-ne una. Arrossega les targetes pel punt <span aria-hidden="true">⠿</span> o fes servir les fletxes per ordenar-les.</p>
 
@@ -179,6 +220,15 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                                         Activa
                                     </label>
                                 </div>
+                            </div>
+                            <div class="tarifa-grupo">
+                                <label>Aforament compartit (grup)</label>
+                                <select name="tarifas[<?= (int)$idx ?>][grupo_cid]" class="tarifa-grupo-select">
+                                    <option value="">— Independent (aforament propi) —</option>
+                                    <?php foreach ($grupos as $g): $gc = 'g' . (int)$g['id']; ?>
+                                        <option value="<?= e($gc) ?>" <?= ((int)($t['grupo_aforo_id'] ?? 0) === (int)$g['id']) ? 'selected' : '' ?>><?= e((string)$g['nombre']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                             <div class="tarifa-grid-2">
                                 <div>
@@ -380,6 +430,12 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                 </label>
             </div>
         </div>
+        <div class="tarifa-grupo">
+            <label>Aforament compartit (grup)</label>
+            <select name="tarifas[__IDX__][grupo_cid]" class="tarifa-grupo-select">
+                <option value="">— Independent (aforament propi) —</option>
+            </select>
+        </div>
         <div class="tarifa-grid-2">
             <div>
                 <label>Descripció (opcional)</label>
@@ -392,6 +448,30 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
             <div>
                 <label>Disponible fins a</label>
                 <input type="datetime-local" name="tarifas[__IDX__][fecha_fin]">
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Plantilla per a nous grups d'aforament -->
+<template id="grupo-template">
+    <div class="grupo-row card-item" data-index="__IDX__" data-cid="__CID__">
+        <div class="item-head">
+            <span class="item-title">Grup</span>
+            <span class="item-tools">
+                <button type="button" class="btn-link btn-danger grupo-remove" title="Eliminar grup" aria-label="Eliminar grup">✕</button>
+            </span>
+        </div>
+        <input type="hidden" name="grupos[__IDX__][id]" value="">
+        <input type="hidden" name="grupos[__IDX__][cid]" value="__CID__">
+        <div class="grupo-grid">
+            <div>
+                <label>Nom del grup *</label>
+                <input type="text" name="grupos[__IDX__][nombre]" class="grupo-nombre" required maxlength="100" placeholder="Ex: Cursa 10km">
+            </div>
+            <div>
+                <label>Aforament compartit *</label>
+                <input type="number" name="grupos[__IDX__][aforo_maximo]" min="1" placeholder="Ex: 100">
             </div>
         </div>
     </div>

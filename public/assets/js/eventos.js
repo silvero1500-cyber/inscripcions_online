@@ -56,6 +56,7 @@
             updateMeta(opts.listId, itemSelector);
             var firstInput = node.querySelector('input[type="text"], input[type="number"]');
             if (firstInput) firstInput.focus();
+            if (typeof opts.onAdd === 'function') opts.onAdd(node);
         });
 
         // ── Clics: eliminar / pujar / baixar ────────────────
@@ -147,6 +148,114 @@
         });
     }
 
+    // ── Grups d'aforament compartit ─────────────────────────
+    var grupoCounter = 0;
+    function newGrupoCid() { return 'n' + (++grupoCounter) + Date.now().toString(36); }
+
+    // Reconstrueix les opcions de tots els selects de grup de les tarifes
+    // a partir dels grups actuals, preservant la selecció (per cid).
+    function refreshGroupSelects() {
+        var list = document.getElementById('grupos-list');
+        var groups = [];
+        if (list) {
+            list.querySelectorAll('.grupo-row').forEach(function (row) {
+                var cid = row.getAttribute('data-cid');
+                var nameInput = row.querySelector('.grupo-nombre');
+                var name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'Grup';
+                if (cid) groups.push({ cid: cid, name: name });
+            });
+        }
+        document.querySelectorAll('.tarifa-grupo-select').forEach(function (sel) {
+            var current = sel.value;
+            sel.innerHTML = '';
+            var opt0 = document.createElement('option');
+            opt0.value = '';
+            opt0.textContent = '— Independent (aforament propi) —';
+            sel.appendChild(opt0);
+            var keep = false;
+            groups.forEach(function (g) {
+                var o = document.createElement('option');
+                o.value = g.cid;
+                o.textContent = g.name;
+                if (g.cid === current) { o.selected = true; keep = true; }
+                sel.appendChild(o);
+            });
+            if (!keep) sel.value = '';
+            toggleTarifaAforo(sel);
+        });
+    }
+
+    // Quan una tarifa té grup, desactiva el seu aforo propi (no s'envia ni s'usa)
+    function toggleTarifaAforo(sel) {
+        var card = sel.closest('.tarifa-row');
+        if (!card) return;
+        var aforo = card.querySelector('input[name$="[aforo_maximo]"]');
+        if (!aforo) return;
+        var hasGroup = sel.value !== '';
+        aforo.disabled = hasGroup;
+        aforo.style.opacity = hasGroup ? '0.5' : '';
+        aforo.title = hasGroup ? "Gestionat pel grup d'aforament compartit" : '';
+    }
+
+    function setupGrupos() {
+        var list = document.getElementById('grupos-list');
+        var addBtn = document.getElementById('add-grupo');
+        var template = document.getElementById('grupo-template');
+        if (!list || !addBtn || !template) return;
+
+        function nextIndex() {
+            var max = -1;
+            list.querySelectorAll('.grupo-row').forEach(function (r) {
+                var i = parseInt(r.getAttribute('data-index'), 10);
+                if (!isNaN(i) && i > max) max = i;
+            });
+            return max + 1;
+        }
+        function updateMetaG() {
+            var n = list.querySelectorAll('.grupo-row').length;
+            var counter = document.querySelector('[data-count-for="grupos-list"]');
+            if (counter) counter.textContent = String(n);
+            var empty = document.querySelector('[data-empty-for="grupos-list"]');
+            if (empty) empty.style.display = (n === 0) ? '' : 'none';
+        }
+
+        addBtn.addEventListener('click', function () {
+            var idx = nextIndex();
+            var cid = newGrupoCid();
+            var html = template.innerHTML.replace(/__IDX__/g, String(idx)).replace(/__CID__/g, cid);
+            var tmp = document.createElement('div');
+            tmp.innerHTML = html.trim();
+            var node = tmp.firstElementChild;
+            list.appendChild(node);
+            updateMetaG();
+            refreshGroupSelects();
+            var f = node.querySelector('input[type="text"]');
+            if (f) f.focus();
+        });
+
+        list.addEventListener('click', function (e) {
+            if (!e.target.closest('.grupo-remove')) return;
+            var row = e.target.closest('.grupo-row');
+            if (!row) return;
+            if (!confirm('Vols eliminar aquest grup? Les seves tarifes passaran a aforament propi.')) return;
+            row.remove();
+            updateMetaG();
+            refreshGroupSelects();
+        });
+
+        list.addEventListener('input', function (e) {
+            var row = e.target.closest('.grupo-row');
+            if (!row) return;
+            if (e.target.classList.contains('grupo-nombre')) {
+                var t = row.querySelector('.item-title');
+                if (t) t.textContent = e.target.value.trim() || 'Grup';
+                refreshGroupSelects();
+            }
+        });
+
+        updateMetaG();
+    }
+
     setupBuilder({
         listId: 'campos-list', addBtnId: 'add-campo', templateId: 'campo-template',
         itemSelector: '.campo-row', removeClass: 'campo-remove',
@@ -155,12 +264,24 @@
     setupBuilder({
         listId: 'tarifas-list', addBtnId: 'add-tarifa', templateId: 'tarifa-template',
         itemSelector: '.tarifa-row', removeClass: 'tarifa-remove',
-        titleField: 'nombre', confirmMsg: 'Vols eliminar aquesta tarifa?'
+        titleField: 'nombre', confirmMsg: 'Vols eliminar aquesta tarifa?',
+        onAdd: function () { refreshGroupSelects(); }
+    });
+
+    setupGrupos();
+    refreshGroupSelects();
+
+    // Canvi de grup en una tarifa → activar/desactivar el seu aforo propi
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains('tarifa-grupo-select')) {
+            toggleTarifaAforo(e.target);
+        }
     });
 
     var form = document.getElementById('evento-form');
     if (form) {
         form.addEventListener('submit', function () {
+            reindex('grupos-list', '.grupo-row', 'grupos');
             reindex('tarifas-list', '.tarifa-row', 'tarifas');
             reindex('campos-list', '.campo-row', 'campos');
         });

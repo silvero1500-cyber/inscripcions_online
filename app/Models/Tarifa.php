@@ -170,15 +170,16 @@ final class Tarifa
             $keepIds = [];
             foreach ($tarifas as $orden => $t) {
                 $payload = [
-                    'evento_id'    => $eventoId,
-                    'nombre'       => $t['nombre'],
-                    'descripcion'  => $t['descripcion'],
-                    'precio'       => $t['precio'],
-                    'aforo_maximo' => $t['aforo_maximo'],
-                    'fecha_inicio' => $t['fecha_inicio'],
-                    'fecha_fin'    => $t['fecha_fin'],
-                    'orden'        => $orden,
-                    'activo'       => $t['activo'],
+                    'evento_id'     => $eventoId,
+                    'nombre'        => $t['nombre'],
+                    'descripcion'   => $t['descripcion'],
+                    'precio'        => $t['precio'],
+                    'aforo_maximo'  => $t['aforo_maximo'],
+                    'grupo_aforo_id' => $t['grupo_aforo_id'] ?? null,
+                    'fecha_inicio'  => $t['fecha_inicio'],
+                    'fecha_fin'     => $t['fecha_fin'],
+                    'orden'         => $orden,
+                    'activo'        => $t['activo'],
                 ];
 
                 if (!empty($t['id']) && in_array((int)$t['id'], $existingIds, true)) {

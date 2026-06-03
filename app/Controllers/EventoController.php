@@ -15,6 +15,7 @@ use App\Core\View;
 use App\Models\Evento;
 use App\Models\CampoPersonalizado;
 use App\Models\CamposFijos;
+use App\Models\GrupoAforo;
 use App\Models\Tarifa;
 use App\Services\ImageUploader;
 use App\Services\Slugger;
@@ -52,6 +53,7 @@ final class EventoController
             'evento'  => null,
             'campos'  => [],
             'tarifas' => [],
+            'grupos'  => [],
             'old'     => $oldJson    ? (json_decode($oldJson, true) ?: [])    : [],
             'errors'  => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
         ], layout: 'admin');
@@ -84,9 +86,10 @@ final class EventoController
         $slug    = Slugger::uniqueForEvento((string)$data['titulo']);
         $tarifas = self::extractTarifasFromPost($_POST);
         $campos  = self::extractCamposFromPost($_POST);
+        $grupos  = self::extractGruposFromPost($_POST);
 
         Database::getInstance()->transaction(
-            function () use ($user, $data, $imagePath, $slug, $tarifas, $campos): void {
+            function () use ($user, $data, $imagePath, $slug, $tarifas, $campos, $grupos): void {
                 $eventoId = Evento::create([
                     'propietario_id'           => $user->id,
                     'titulo'                   => $data['titulo'],
@@ -103,7 +106,8 @@ final class EventoController
                     'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
                     'campos_fijos'             => $data['campos_fijos'],
                 ]);
-                Tarifa::syncForEvento($eventoId, $tarifas);
+                $map = GrupoAforo::syncForEvento($eventoId, $grupos);
+                Tarifa::syncForEvento($eventoId, self::assignTarifaGroups($tarifas, $map));
                 CampoPersonalizado::syncForEvento($eventoId, $campos);
             }
         );
@@ -123,6 +127,7 @@ final class EventoController
 
         $campos  = CampoPersonalizado::listByEvento($id);
         $tarifas = Tarifa::listByEvento($id);
+        $grupos  = GrupoAforo::listByEvento($id);
         $oldJson    = Session::pullFlash('form_old');
         $errorsJson = Session::pullFlash('form_errors');
 
@@ -131,6 +136,7 @@ final class EventoController
             'evento'  => $evento,
             'campos'  => $campos,
             'tarifas' => $tarifas,
+            'grupos'  => $grupos,
             'old'     => $oldJson    ? (json_decode($oldJson, true) ?: [])    : [],
             'errors'  => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
         ], layout: 'admin');
@@ -194,11 +200,13 @@ final class EventoController
 
         $tarifas = self::extractTarifasFromPost($_POST);
         $campos  = self::extractCamposFromPost($_POST);
+        $grupos  = self::extractGruposFromPost($_POST);
 
         Database::getInstance()->transaction(
-            function () use ($id, $update, $tarifas, $campos): void {
+            function () use ($id, $update, $tarifas, $campos, $grupos): void {
                 Evento::update($id, $update);
-                Tarifa::syncForEvento($id, $tarifas);
+                $map = GrupoAforo::syncForEvento($id, $grupos);
+                Tarifa::syncForEvento($id, self::assignTarifaGroups($tarifas, $map));
                 CampoPersonalizado::syncForEvento($id, $campos);
             }
         );
@@ -412,13 +420,14 @@ final class EventoController
 
         $tarifas = Tarifa::listByEvento($id);
         $campos  = CampoPersonalizado::listByEvento($id);
+        $grupos  = GrupoAforo::listByEvento($id);
 
         $nuevoTitulo = mb_substr((string)$evento['titulo'] . ' (còpia)', 0, 255);
         $slug        = Slugger::uniqueForEvento($nuevoTitulo);
 
         $newId = 0;
         Database::getInstance()->transaction(
-            function () use ($evento, $tarifas, $campos, $nuevoTitulo, $slug, &$newId): void {
+            function () use ($evento, $tarifas, $campos, $grupos, $nuevoTitulo, $slug, &$newId): void {
                 $newId = Evento::create([
                     'propietario_id'           => (int) $evento['propietario_id'],
                     'titulo'                   => $nuevoTitulo,
@@ -436,17 +445,33 @@ final class EventoController
                     'campos_fijos'             => $evento['campos_fijos'] ?? null,
                 ]);
 
-                // Tarifes: sense id → s'insereixen com a noves per al nou esdeveniment
-                $tarifasNuevas = array_map(static fn(array $t): array => [
+                // Grups d'aforament: crear-los de nou i obtenir mapa old_id -> new_id
+                $gruposNuevos = array_map(static fn(array $g): array => [
                     'id'           => null,
-                    'nombre'       => $t['nombre'],
-                    'descripcion'  => $t['descripcion'],
-                    'precio'       => $t['precio'],
-                    'aforo_maximo' => $t['aforo_maximo'],
-                    'fecha_inicio' => $t['fecha_inicio'],
-                    'fecha_fin'    => $t['fecha_fin'],
-                    'activo'       => (int) $t['activo'],
-                ], $tarifas);
+                    'cid'          => 'old_' . (int)$g['id'],
+                    'nombre'       => $g['nombre'],
+                    'aforo_maximo' => (int)$g['aforo_maximo'],
+                ], $grupos);
+                $cidMap = GrupoAforo::syncForEvento($newId, $gruposNuevos);
+
+                // Tarifes: sense id → s'insereixen com a noves; es remapeja el grup
+                $tarifasNuevas = array_map(function (array $t) use ($cidMap): array {
+                    $grupoId = null;
+                    if (!empty($t['grupo_aforo_id'])) {
+                        $grupoId = $cidMap['old_' . (int)$t['grupo_aforo_id']] ?? null;
+                    }
+                    return [
+                        'id'            => null,
+                        'nombre'        => $t['nombre'],
+                        'descripcion'   => $t['descripcion'],
+                        'precio'        => $t['precio'],
+                        'aforo_maximo'  => $t['aforo_maximo'],
+                        'grupo_aforo_id' => $grupoId,
+                        'fecha_inicio'  => $t['fecha_inicio'],
+                        'fecha_fin'     => $t['fecha_fin'],
+                        'activo'        => (int) $t['activo'],
+                    ];
+                }, $tarifas);
                 Tarifa::syncForEvento($newId, $tarifasNuevas);
 
                 // Camps personalitzats
@@ -580,12 +605,56 @@ final class EventoController
                 'descripcion'  => mb_substr(trim((string)($t['descripcion'] ?? '')), 0, 500) ?: null,
                 'precio'       => number_format($precio, 2, '.', ''),
                 'aforo_maximo' => $aforo === '' ? null : max(1, (int)$aforo),
+                'grupo_cid'    => trim((string)($t['grupo_cid'] ?? '')),
                 'fecha_inicio' => $fIni,
                 'fecha_fin'    => $fFin,
                 'activo'       => isset($t['activo']) ? 1 : 0,
             ];
         }
         return $out;
+    }
+
+    /**
+     * Extreu els grups d'aforament compartit del POST.
+     * Estructura: grupos[idx][id|cid|nombre|aforo_maximo]
+     * @return list<array<string,mixed>>
+     */
+    private static function extractGruposFromPost(array $post): array
+    {
+        $raw = $post['grupos'] ?? [];
+        if (!is_array($raw)) return [];
+
+        $out = [];
+        foreach ($raw as $g) {
+            $nombre = trim((string)($g['nombre'] ?? ''));
+            $aforo  = (int)($g['aforo_maximo'] ?? 0);
+            if ($nombre === '' || $aforo < 1) continue; // ignorar files incompletes
+
+            $out[] = [
+                'id'           => !empty($g['id']) ? (int)$g['id'] : null,
+                'cid'          => trim((string)($g['cid'] ?? '')),
+                'nombre'       => mb_substr($nombre, 0, 100),
+                'aforo_maximo' => $aforo,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Resol el grup de cada tarifa (grupo_cid → grupo_aforo_id) amb el mapa de grups.
+     *
+     * @param list<array<string,mixed>> $tarifas
+     * @param array<string,int>         $map      cid => grupoId
+     * @return list<array<string,mixed>>
+     */
+    private static function assignTarifaGroups(array $tarifas, array $map): array
+    {
+        foreach ($tarifas as &$t) {
+            $cid = (string)($t['grupo_cid'] ?? '');
+            $t['grupo_aforo_id'] = ($cid !== '' && isset($map[$cid])) ? $map[$cid] : null;
+        }
+        unset($t);
+        return $tarifas;
     }
 
     /**

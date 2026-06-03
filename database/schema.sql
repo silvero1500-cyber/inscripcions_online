@@ -79,6 +79,23 @@ CREATE TABLE IF NOT EXISTS `organizador_evento` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- 3.5 GRUPOS DE AFORO COMPARTIDO (varias tarifas restan del mismo cupo)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `grupos_aforo` (
+    `id`           INT UNSIGNED     NOT NULL AUTO_INCREMENT,
+    `evento_id`    INT UNSIGNED     NOT NULL,
+    `nombre`       VARCHAR(100)     NOT NULL,
+    `aforo_maximo` INT UNSIGNED     NOT NULL,
+    `created_at`   TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`   TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_evento` (`evento_id`),
+    CONSTRAINT `fk_grupo_evento`
+        FOREIGN KEY (`evento_id`) REFERENCES `eventos` (`id`)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- 4. TARIFAS POR EVENTO (Adult, Infantil, VIP...)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `tarifas_evento` (
@@ -88,6 +105,7 @@ CREATE TABLE IF NOT EXISTS `tarifas_evento` (
     `descripcion`   VARCHAR(500)     NULL,
     `precio`        DECIMAL(8,2)     NOT NULL,
     `aforo_maximo`  INT UNSIGNED     NULL COMMENT 'NULL = sense límit propi',
+    `grupo_aforo_id` INT UNSIGNED    NULL COMMENT 'Si està definit, comparteix cupo amb el grup',
     `fecha_inicio`  DATETIME         NULL COMMENT 'Disponible des de',
     `fecha_fin`     DATETIME         NULL COMMENT 'Disponible fins a',
     `orden`         SMALLINT UNSIGNED NOT NULL DEFAULT 0,
@@ -97,9 +115,13 @@ CREATE TABLE IF NOT EXISTS `tarifas_evento` (
     PRIMARY KEY (`id`),
     KEY `idx_evento_orden` (`evento_id`, `orden`),
     KEY `idx_activo` (`activo`),
+    KEY `idx_grupo_aforo` (`grupo_aforo_id`),
     CONSTRAINT `fk_tarifa_evento`
         FOREIGN KEY (`evento_id`) REFERENCES `eventos` (`id`)
-        ON DELETE CASCADE ON UPDATE CASCADE
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_tarifa_grupo`
+        FOREIGN KEY (`grupo_aforo_id`) REFERENCES `grupos_aforo` (`id`)
+        ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

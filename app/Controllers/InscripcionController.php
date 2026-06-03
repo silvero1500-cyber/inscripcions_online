@@ -15,6 +15,7 @@ use App\Models\CampoPersonalizado;
 use App\Models\CamposFijos;
 use App\Models\DescuentoEvento;
 use App\Models\Evento;
+use App\Models\GrupoAforo;
 use App\Models\Inscrito;
 use App\Models\Tarifa;
 use App\Services\EmailService;
@@ -114,7 +115,12 @@ final class InscripcionController
                     if ($tarifa === null) {
                         throw new \DomainException('tarifa_invalida');
                     }
-                    if (!Tarifa::tieneCapacidad($tarifa)) {
+                    // Si la tarifa pertany a un grup d'aforament, compta contra el cupo
+                    // del grup (bloqueja la fila del grup); si no, contra el seu aforo propi.
+                    $capacidadOk = !empty($tarifa['grupo_aforo_id'])
+                        ? GrupoAforo::tieneCapacidad((int) $tarifa['grupo_aforo_id'])
+                        : Tarifa::tieneCapacidad($tarifa);
+                    if (!$capacidadOk) {
                         throw new \DomainException('tarifa_esgotada');
                     }
 

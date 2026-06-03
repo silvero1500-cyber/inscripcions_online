@@ -10,6 +10,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
 use App\Models\Evento;
+use App\Models\GrupoAforo;
 use App\Models\Tarifa;
 use App\Services\ImageUploader;
 
@@ -53,13 +54,19 @@ final class PublicController
             [$evento['id']]
         )->fetchAll();
 
-        $tarifas = Tarifa::listDisponibles((int) $evento['id']);
+        $tarifas    = Tarifa::listDisponibles((int) $evento['id']);
+        $gruposRest = GrupoAforo::plazasRestantesByEvento((int) $evento['id']);
 
-        // Places per tarifa (per marcar les esgotades al desplegable)
+        // Places per tarifa (per marcar les esgotades al desplegable).
+        // Si la tarifa té grup, fa servir les places restants del grup (compartides).
         $hayDisponibles = false;
         foreach ($tarifas as &$t) {
-            $rest = Tarifa::plazasRestantes($t);
-            $t['_plazas']  = $rest;                          // null = sense límit propi
+            if (!empty($t['grupo_aforo_id']) && isset($gruposRest[(int)$t['grupo_aforo_id']])) {
+                $rest = $gruposRest[(int)$t['grupo_aforo_id']];
+            } else {
+                $rest = Tarifa::plazasRestantes($t);
+            }
+            $t['_plazas']  = $rest;                          // null = sense límit
             $t['_agotada'] = ($rest !== null && $rest <= 0);
             if (!$t['_agotada']) $hayDisponibles = true;
         }
