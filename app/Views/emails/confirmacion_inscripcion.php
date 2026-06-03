@@ -50,7 +50,7 @@
                             <tr><td style="font-size:15px;color:#1f2937;font-weight:600;padding-bottom:14px;"><?= e($tarifa['nombre']) ?> · <?= e(format_price((float)$tarifa['precio'])) ?></td></tr>
 
                             <tr><td style="font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;padding-bottom:4px;"><?= e(t('email.field.runner')) ?></td></tr>
-                            <tr><td style="font-size:15px;color:#1f2937;font-weight:600;padding-bottom:14px;"><?= e($inscrito['nombre']) ?> <?= e($inscrito['apellido']) ?> · DNI <?= e($inscrito['dni']) ?></td></tr>
+                            <tr><td style="font-size:15px;color:#1f2937;font-weight:600;padding-bottom:14px;"><?= e(trim($inscrito['nombre'] . ' ' . (string)($inscrito['apellido'] ?? ''))) ?><?php if (!empty($inscrito['dni'])): ?> · DNI <?= e($inscrito['dni']) ?><?php endif; ?></td></tr>
 
                             <?php if (!empty($pago['ds_order'])): ?>
                                 <tr><td style="font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;padding-bottom:4px;"><?= e(t('email.field.payment_ref')) ?></td></tr>

@@ -17,6 +17,7 @@ use App\Models\DescuentoEvento;
 use App\Models\Evento;
 use App\Models\Inscrito;
 use App\Models\Tarifa;
+use App\Services\EmailService;
 
 final class InscripcionController
 {
@@ -74,6 +75,11 @@ final class InscripcionController
             } else {
                 $valoresCampos[(int) $c['id']] = mb_substr((string) $raw, 0, 1000);
             }
+        }
+
+        // ── Evitar inscripció duplicada (mateixa persona, per DNI) ──
+        if ($v->first('dni') === null && Inscrito::existeDuplicado($eventoId, $data['dni'] ?? null)) {
+            $v->addError('dni', 'Ja existeix una inscripció amb aquest DNI per a aquest esdeveniment.');
         }
 
         if ($v->fails()) {
@@ -158,10 +164,35 @@ final class InscripcionController
         }
         if ($precio <= 0.01) {
             Inscrito::marcarConfirmado($inscritoId);
+            self::enviarConfirmacionGratuita($inscritoId);
             Response::redirect(base_url('/eventos/' . $slug . '/gracies'));
         }
 
         Response::redirect(base_url('/pago/metodo'));
+    }
+
+    /**
+     * Envia l'email de confirmació amb el QR de check-in per a inscripcions
+     * gratuïtes (preu 0), que es confirmen sense passar per la passarel·la de pagament.
+     * Si l'enviament falla, no bloqueja la confirmació (ja feta).
+     */
+    private static function enviarConfirmacionGratuita(int $inscritoId): void
+    {
+        try {
+            $inscrito = Inscrito::findById($inscritoId);
+            if ($inscrito === null || empty($inscrito['email'])) return;
+
+            $evento = Evento::findById((int) $inscrito['evento_id']);
+            $tarifa = Tarifa::findById((int) $inscrito['tarifa_id']);
+            if ($evento === null || $tarifa === null) return;
+
+            Inscrito::ensureQrToken($inscritoId);
+            $inscrito = Inscrito::findById($inscritoId); // recarregar amb qr_token
+
+            EmailService::sendConfirmacionInscripcion($inscrito, $evento, $tarifa, []);
+        } catch (\Throwable $e) {
+            error_log('[InscripcionController] Email confirmació gratuïta fallit: ' . $e->getMessage());
+        }
     }
 
     public function exito(Request $req, array $params): void
