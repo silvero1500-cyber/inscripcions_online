@@ -49,6 +49,11 @@
                             <tr><td style="font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;padding-bottom:4px;"><?= e(t('email.field.tarifa')) ?></td></tr>
                             <tr><td style="font-size:15px;color:#1f2937;font-weight:600;padding-bottom:14px;"><?= e($tarifa['nombre']) ?> · <?= e(format_price((float)$tarifa['precio'])) ?></td></tr>
 
+                            <?php if (!empty($inscrito['talla_camiseta'])): ?>
+                                <tr><td style="font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;padding-bottom:4px;"><?= e(t('form.label.shirt')) ?></td></tr>
+                                <tr><td style="font-size:15px;color:#1f2937;font-weight:600;padding-bottom:14px;"><?= e($inscrito['talla_camiseta']) ?></td></tr>
+                            <?php endif; ?>
+
                             <tr><td style="font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;padding-bottom:4px;"><?= e(t('email.field.runner')) ?></td></tr>
                             <tr><td style="font-size:15px;color:#1f2937;font-weight:600;padding-bottom:14px;"><?= e(trim($inscrito['nombre'] . ' ' . (string)($inscrito['apellido'] ?? ''))) ?><?php if (!empty($inscrito['dni'])): ?> · DNI <?= e($inscrito['dni']) ?><?php endif; ?></td></tr>
 

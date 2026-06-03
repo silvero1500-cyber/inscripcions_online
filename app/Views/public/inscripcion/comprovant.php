@@ -76,6 +76,10 @@ $confirmada = ($inscrito['estado'] ?? '') === 'confirmado';
                     <dd><?= e($tarifa['nombre']) ?> · <?= e(format_price((float)$tarifa['precio'])) ?></dd>
                 <?php endif; ?>
 
+                <?php if (!empty($inscrito['talla_camiseta'])): ?>
+                    <dt><?= e(t('form.label.shirt')) ?></dt><dd><?= e($inscrito['talla_camiseta']) ?></dd>
+                <?php endif; ?>
+
                 <?php if (!empty($inscrito['numero_dorsal'])): ?>
                     <dt><?= e(t('comprovant.dorsal')) ?></dt><dd>#<?= (int)$inscrito['numero_dorsal'] ?></dd>
                 <?php endif; ?>
