@@ -102,6 +102,17 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
                 <span class="evt-tag evt-tag-primary">Running</span>
                 <span class="evt-tag evt-tag-muted"><?= current_locale() === 'es' ? 'Carrera popular' : 'Cursa popular' ?></span>
             </div>
+
+            <?php if (!empty($evento['reglamento_url']) || !empty($evento['web_oficial_url'])): ?>
+                <div class="evt-links">
+                    <?php if (!empty($evento['reglamento_url'])): ?>
+                        <a class="btn btn-secondary" href="<?= e($evento['reglamento_url']) ?>" target="_blank" rel="noopener noreferrer">📋 <?= e(t('event.regulations')) ?></a>
+                    <?php endif; ?>
+                    <?php if (!empty($evento['web_oficial_url'])): ?>
+                        <a class="btn btn-secondary" href="<?= e($evento['web_oficial_url']) ?>" target="_blank" rel="noopener noreferrer">🌐 <?= e(t('event.official_web')) ?></a>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 

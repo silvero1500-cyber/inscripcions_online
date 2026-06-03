@@ -526,6 +526,9 @@ small.muted { display: block; margin-top: .35rem; font-size: .8rem; }
 .exito-resum dt { font-weight: 600; color: var(--text-muted); font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; }
 .exito-resum dd { margin: 0; color: var(--text-strong); font-size: .95rem; font-weight: 500; }
 
+.evt-links { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.1rem; }
+.evt-links .btn { font-size: .92rem; }
+
 .exito-qr { margin: 1.5rem 0 2rem; }
 .exito-qr h2 { margin: 0 0 .3rem; font-size: 1.15rem; }
 .exito-qr p { margin: 0 0 1rem; }

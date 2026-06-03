@@ -83,6 +83,23 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
             <?php if ($err('localizacion')): ?><div class="field-error"><?= e($err('localizacion')) ?></div><?php endif; ?>
         </div>
 
+        <div class="form-grid-2">
+            <div class="form-row">
+                <label for="reglamento_url">Enllaç al reglament</label>
+                <input type="url" id="reglamento_url" name="reglamento_url" maxlength="500"
+                       placeholder="https://..." value="<?= e($val('reglamento_url')) ?>">
+                <small class="muted">Opcional. Es mostrarà com a botó a la pàgina pública.</small>
+                <?php if ($err('reglamento_url')): ?><div class="field-error"><?= e($err('reglamento_url')) ?></div><?php endif; ?>
+            </div>
+            <div class="form-row">
+                <label for="web_oficial_url">Web oficial</label>
+                <input type="url" id="web_oficial_url" name="web_oficial_url" maxlength="500"
+                       placeholder="https://..." value="<?= e($val('web_oficial_url')) ?>">
+                <small class="muted">Opcional. Es mostrarà com a botó a la pàgina pública.</small>
+                <?php if ($err('web_oficial_url')): ?><div class="field-error"><?= e($err('web_oficial_url')) ?></div><?php endif; ?>
+            </div>
+        </div>
+
         <div class="form-row">
             <label for="descripcion">Descripció</label>
             <textarea id="descripcion" name="descripcion" rows="6"><?= e($val('descripcion')) ?></textarea>

@@ -93,6 +93,8 @@ final class EventoController
                     'slug'                     => $slug,
                     'descripcion'              => $data['descripcion'],
                     'localizacion'             => $data['localizacion'],
+                    'reglamento_url'           => $data['reglamento_url'],
+                    'web_oficial_url'          => $data['web_oficial_url'],
                     'fecha_evento'             => $data['fecha_evento'],
                     'fecha_limite_inscripcion' => $data['fecha_limite_inscripcion'],
                     'aforo_maximo'             => $data['aforo_maximo'],
@@ -160,6 +162,8 @@ final class EventoController
             'titulo'                   => $data['titulo'],
             'descripcion'              => $data['descripcion'],
             'localizacion'             => $data['localizacion'],
+            'reglamento_url'           => $data['reglamento_url'],
+            'web_oficial_url'          => $data['web_oficial_url'],
             'fecha_evento'             => $data['fecha_evento'],
             'fecha_limite_inscripcion' => $data['fecha_limite_inscripcion'],
             'aforo_maximo'             => $data['aforo_maximo'],
@@ -421,6 +425,8 @@ final class EventoController
                     'slug'                     => $slug,
                     'descripcion'              => $evento['descripcion'],
                     'localizacion'             => $evento['localizacion'] ?? null,
+                    'reglamento_url'           => $evento['reglamento_url'] ?? null,
+                    'web_oficial_url'          => $evento['web_oficial_url'] ?? null,
                     'fecha_evento'             => $evento['fecha_evento'],
                     'fecha_limite_inscripcion' => $evento['fecha_limite_inscripcion'],
                     'aforo_maximo'             => $evento['aforo_maximo'],
@@ -475,6 +481,8 @@ final class EventoController
             'titulo'                   => trim((string)($post['titulo'] ?? '')),
             'descripcion'              => trim((string)($post['descripcion'] ?? '')),
             'localizacion'             => trim((string)($post['localizacion'] ?? '')) ?: null,
+            'reglamento_url'           => self::normalizeUrl((string)($post['reglamento_url'] ?? '')),
+            'web_oficial_url'          => self::normalizeUrl((string)($post['web_oficial_url'] ?? '')),
             'fecha_evento'             => trim((string)($post['fecha_evento'] ?? '')),
             'fecha_limite_inscripcion' => $fechaLimite,
             'aforo_maximo'             => $aforo === '' ? null : (int)$aforo,
@@ -499,12 +507,30 @@ final class EventoController
         return $value;
     }
 
+    /**
+     * Normaliza una URL: vacía → null; si no trae esquema, le antepone https://.
+     */
+    private static function normalizeUrl(string $url): ?string
+    {
+        $url = trim($url);
+        if ($url === '') return null;
+        if (!preg_match('#^https?://#i', $url)) {
+            $url = 'https://' . $url;
+        }
+        return mb_substr($url, 0, 500);
+    }
+
     private static function validateEvento(array $data): Validator
     {
         $v = new Validator($data);
         $v->required('titulo')->max('titulo', 255);
         if (!empty($data['localizacion'])) {
             $v->max('localizacion', 255);
+        }
+        foreach (['reglamento_url', 'web_oficial_url'] as $f) {
+            if (!empty($data[$f]) && !filter_var($data[$f], FILTER_VALIDATE_URL)) {
+                $v->addError($f, 'Enllaç no vàlid (ha de ser una URL).');
+            }
         }
         $v->required('fecha_evento')->date('fecha_evento');
         if (!empty($data['fecha_limite_inscripcion'])) {

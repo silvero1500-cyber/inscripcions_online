@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS `eventos` (
     `slug`                      VARCHAR(255)    NOT NULL,
     `descripcion`               LONGTEXT        NULL,
     `localizacion`              VARCHAR(255)    NULL COMMENT 'Lloc o adreça de l''esdeveniment',
+    `reglamento_url`            VARCHAR(500)    NULL COMMENT 'Enllaç al reglament',
+    `web_oficial_url`           VARCHAR(500)    NULL COMMENT 'Enllaç a la web oficial',
     `fecha_evento`              DATE            NOT NULL,
     `fecha_limite_inscripcion`  DATETIME        NULL,
     `aforo_maximo`              INT UNSIGNED    NULL COMMENT 'NULL = sin límite',
