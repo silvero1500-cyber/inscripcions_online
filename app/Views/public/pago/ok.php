@@ -4,6 +4,7 @@
 /** @var array $evento */
 /** @var array $tarifa */
 /** @var bool $esperando */
+/** @var string|null $qrToken */
 ?>
 <section class="container exito-box">
     <?php if ($esperando): ?>
@@ -34,6 +35,12 @@
         <div class="alert alert-success">
             <?= e(t('payment.ok.email_notice')) ?>
         </div>
+
+        <?php if (!empty($qrToken)): ?>
+            <p style="margin:0 0 1.2rem;">
+                <a class="btn btn-primary" href="<?= e(base_url('/comprovant/' . $qrToken)) ?>" target="_blank" rel="noopener"><?= e(t('comprovant.download')) ?></a>
+            </p>
+        <?php endif; ?>
 
         <a class="btn btn-secondary" href="<?= e(base_url('/')) ?>"><?= e(t('common.back_to_list')) ?></a>
     <?php endif; ?>

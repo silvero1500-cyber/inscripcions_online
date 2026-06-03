@@ -322,12 +322,19 @@ final class PagoController
         // Limpiar sesión de pago en curso
         Session::forget('pago_actual');
 
+        // Si el pagament ja està completat, assegura el qr_token per al comprovant
+        $qrToken = null;
+        if ($pago['estado'] === Pago::ESTADO_COMPLETADO) {
+            $qrToken = Inscrito::ensureQrToken((int) $inscrito['id']);
+        }
+
         View::render('public/pago/ok', [
             'pago'     => $pago,
             'inscrito' => $inscrito,
             'evento'   => $evento,
             'tarifa'   => $tarifa,
             'esperando' => $pago['estado'] !== Pago::ESTADO_COMPLETADO,
+            'qrToken'  => $qrToken,
         ], layout: 'public');
     }
 
