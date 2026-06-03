@@ -19,7 +19,7 @@ $ret = urlencode($currentPath ?: '/');
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= e(asset('css/public.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('css/public.css')) ?>?v=<?= @filemtime(BASE_PATH . '/public/assets/css/public.css') ?: time() ?>">
 </head>
 <body class="layout-public">
     <header class="site-header">

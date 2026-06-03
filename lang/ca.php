@@ -121,6 +121,8 @@ return [
     'success.summary.tarifa'           => 'Tarifa',
     'success.summary.status'           => 'Estat',
     'success.summary.pending_payment'  => 'Pendent de pagament',
+    'success.summary.confirmed'        => 'Confirmada',
+    'success.confirmed_note'           => "La teva plaça està confirmada! T'hem enviat un correu amb el justificant i el QR de check-in (també el tens aquí sota).",
     'success.payment_note'             => "El pagament amb targeta s'activarà ben aviat. Mentrestant, la teva inscripció queda registrada com a pendent. T'enviarem un correu quan puguis completar el pagament.",
 
     // Email confirmacio

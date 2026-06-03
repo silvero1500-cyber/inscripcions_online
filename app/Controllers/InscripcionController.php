@@ -18,6 +18,7 @@ use App\Models\Evento;
 use App\Models\Inscrito;
 use App\Models\Tarifa;
 use App\Services\EmailService;
+use App\Services\QrService;
 
 final class InscripcionController
 {
@@ -204,10 +205,23 @@ final class InscripcionController
         $inscrito = Inscrito::findById((int) $ult['id']);
         $tarifa   = Tarifa::findById((int) $ult['tarifa_id']);
 
+        // QR de check-in: només si la inscripció ja està confirmada (gratuïtes / ja pagades)
+        $qrDataUri = null;
+        if ($inscrito !== null && ($inscrito['estado'] ?? '') === 'confirmado') {
+            try {
+                $token = Inscrito::ensureQrToken((int) $inscrito['id']);
+                $png   = QrService::pngBytes(base_url('/admin/checkin/' . $token), 320);
+                $qrDataUri = 'data:image/png;base64,' . base64_encode($png);
+            } catch (\Throwable $e) {
+                error_log('[InscripcionController] QR gràcies fallit: ' . $e->getMessage());
+            }
+        }
+
         View::render('public/inscripcion/exito', [
-            'evento'   => $evento,
-            'inscrito' => $inscrito,
-            'tarifa'   => $tarifa,
+            'evento'    => $evento,
+            'inscrito'  => $inscrito,
+            'tarifa'    => $tarifa,
+            'qrDataUri' => $qrDataUri,
         ], layout: 'public');
     }
 

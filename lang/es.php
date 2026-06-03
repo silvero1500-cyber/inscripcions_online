@@ -121,6 +121,8 @@ return [
     'success.summary.tarifa'           => 'Tarifa',
     'success.summary.status'           => 'Estado',
     'success.summary.pending_payment'  => 'Pendiente de pago',
+    'success.summary.confirmed'        => 'Confirmada',
+    'success.confirmed_note'           => '¡Tu plaza está confirmada! Te hemos enviado un correo con el justificante y el QR de check-in (también lo tienes aquí abajo).',
     'success.payment_note'             => 'El pago con tarjeta se activará pronto. Mientras tanto, tu inscripción queda registrada como pendiente. Te enviaremos un correo cuando puedas completar el pago.',
 
     // Email confirmación
