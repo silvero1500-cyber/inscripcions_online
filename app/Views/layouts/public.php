@@ -73,5 +73,20 @@ $ret = urlencode($currentPath ?: '/');
             <small>&copy; <?= date('Y') ?> WeRun · <?= e(t('brand.suffix')) ?></small>
         </div>
     </footer>
+
+    <script>
+        // Clic a qualsevol part d'un camp de data → obre el selector natiu
+        (function () {
+            document.addEventListener('click', function (e) {
+                var el = e.target;
+                if (!el || el.tagName !== 'INPUT') return;
+                var t = el.type;
+                if ((t === 'date' || t === 'datetime-local' || t === 'time' || t === 'month')
+                    && typeof el.showPicker === 'function') {
+                    try { el.showPicker(); } catch (err) {}
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

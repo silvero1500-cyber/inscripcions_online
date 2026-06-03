@@ -383,6 +383,32 @@ input:focus, select:focus, textarea:focus {
     border-color: var(--color-primary);
     box-shadow: var(--shadow-focus);
 }
+
+/* ── Camps de data/hora més moderns ─────────────────────── */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"] {
+    cursor: pointer;
+    min-height: 46px;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: .55;
+    padding: 4px;
+    border-radius: 6px;
+    transition: opacity .15s, background .15s;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    background: rgba(30, 136, 194, .14);
+}
 select {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M6 8L0 0h12z'/%3E%3C/svg%3E");

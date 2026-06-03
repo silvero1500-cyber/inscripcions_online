@@ -63,6 +63,32 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
 }
 
+/* ── Camps de data/hora més moderns ─────────────────────── */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"] {
+    cursor: pointer;
+    min-height: 44px;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: .55;
+    padding: 4px;
+    border-radius: 6px;
+    transition: opacity .15s, background .15s;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    background: rgba(37, 99, 235, .12);
+}
+
 /* ── Alerts ─────────────────────────────────────────────── */
 .alert {
     padding: .75rem 1rem;
