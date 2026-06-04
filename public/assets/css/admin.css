@@ -341,10 +341,10 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
     border-radius: 3px;
     font-size: .8rem;
 }
-.th-actions, .td-actions { text-align: right; white-space: nowrap; }
+.th-actions, .td-actions { text-align: left; white-space: nowrap; }
 .td-actions form { display: inline-block; }
 .td-actions > a,
-.td-actions > form { margin-left: .3rem; vertical-align: middle; }
+.td-actions > form { margin: 0 .35rem 0 0; vertical-align: middle; }
 /* Columna del títol: ample mínim perquè no parteixi paraula a paraula */
 .data-table td:first-child { min-width: 200px; }
 
