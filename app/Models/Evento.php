@@ -31,6 +31,8 @@ final class Evento
             )->fetchAll();
         }
 
+        // Placeholders posicionals (?) perquè PDO amb prepares reals no admet
+        // reutilitzar un placeholder nominal (:uid) dues vegades → HY093.
         return $db->query(
             "SELECT DISTINCT e.*, u.nombre AS propietario_nombre,
                     (SELECT MIN(precio) FROM tarifas_evento WHERE evento_id = e.id AND activo = 1) AS precio_min,
@@ -38,9 +40,9 @@ final class Evento
              FROM eventos e
              JOIN usuarios u ON u.id = e.propietario_id
              LEFT JOIN organizador_evento oe ON oe.evento_id = e.id
-             WHERE (e.propietario_id = :uid OR oe.usuario_id = :uid) AND {$arch}
+             WHERE (e.propietario_id = ? OR oe.usuario_id = ?) AND {$arch}
              ORDER BY e.fecha_evento DESC, e.id DESC",
-            ['uid' => $userId]
+            [$userId, $userId]
         )->fetchAll();
     }
 
@@ -75,11 +77,11 @@ final class Evento
         if ($rol === 'superadmin') return true;
         $db = Database::getInstance();
         $row = $db->query(
-            'SELECT 1 FROM eventos WHERE id = :eid AND propietario_id = :uid
+            'SELECT 1 FROM eventos WHERE id = ? AND propietario_id = ?
              UNION
-             SELECT 1 FROM organizador_evento WHERE evento_id = :eid AND usuario_id = :uid AND puede_editar = 1
+             SELECT 1 FROM organizador_evento WHERE evento_id = ? AND usuario_id = ? AND puede_editar = 1
              LIMIT 1',
-            ['eid' => $eventoId, 'uid' => $userId]
+            [$eventoId, $userId, $eventoId, $userId]
         )->fetchColumn();
         return (bool) $row;
     }
