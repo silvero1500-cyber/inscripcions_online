@@ -2,14 +2,18 @@
 /** @var list<array> $eventos */
 /** @var array $flash */
 /** @var bool $showArchived */
+/** @var object $user */
 $showArchived = $showArchived ?? false;
+$isSuper = isset($user) && ($user->rol ?? '') === 'superadmin';
 ?>
 <section class="page-head with-action">
     <div>
         <h1>Esdeveniments</h1>
         <p class="muted">Llistat de carreres que pots gestionar.</p>
     </div>
-    <a class="btn btn-primary" href="<?= e(base_url('/admin/eventos/nou')) ?>">+ Nou esdeveniment</a>
+    <?php if ($isSuper): ?>
+        <a class="btn btn-primary" href="<?= e(base_url('/admin/eventos/nou')) ?>">+ Nou esdeveniment</a>
+    <?php endif; ?>
 </section>
 
 <?php if (!empty($flash['success'])): ?>
@@ -28,9 +32,11 @@ $showArchived = $showArchived ?? false;
     <div class="empty-state">
         <?php if ($showArchived): ?>
             <p>No hi ha cap esdeveniment arxivat.</p>
-        <?php else: ?>
+        <?php elseif ($isSuper): ?>
             <p>Encara no hi ha cap esdeveniment. Crea el primer per començar.</p>
             <a class="btn btn-primary" href="<?= e(base_url('/admin/eventos/nou')) ?>">+ Nou esdeveniment</a>
+        <?php else: ?>
+            <p>Encara no tens cap esdeveniment assignat.</p>
         <?php endif; ?>
     </div>
 <?php else: ?>
@@ -81,29 +87,33 @@ $showArchived = $showArchived ?? false;
                             <a class="btn-small" href="<?= e(base_url('/eventos/' . $ev['slug'] . '?prova=1')) ?>" target="_blank" rel="noopener" title="Obre el formulari amb autoreblert de proves">🧪 Provar</a>
                             <a class="btn-small btn-kpi" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/kpis')) ?>">📊 KPIs</a>
                             <a class="btn-small" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/descuentos')) ?>">🏷️ Descomptes</a>
-                            <a class="btn-small" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/editar')) ?>">Editar</a>
-                            <form method="post" action="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/duplicar')) ?>" class="inline"
-                                  onsubmit="return confirm('Vols duplicar aquest esdeveniment? Es crearà una còpia inactiva.');">
-                                <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
-                                <button type="submit" class="btn-small">⧉ Duplicar</button>
-                            </form>
-                            <form method="post" action="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/arxivar')) ?>" class="inline"
-                                  onsubmit="return confirm('Vols arxivar aquest esdeveniment? Sortirà del llistat i del públic, però es conserven les dades i els inscrits.');">
-                                <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
-                                <button type="submit" class="btn-small">🗄 Arxivar</button>
-                            </form>
+                            <?php if ($isSuper): ?>
+                                <a class="btn-small" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/editar')) ?>">Editar</a>
+                                <form method="post" action="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/duplicar')) ?>" class="inline"
+                                      onsubmit="return confirm('Vols duplicar aquest esdeveniment? Es crearà una còpia inactiva.');">
+                                    <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+                                    <button type="submit" class="btn-small">⧉ Duplicar</button>
+                                </form>
+                                <form method="post" action="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/arxivar')) ?>" class="inline"
+                                      onsubmit="return confirm('Vols arxivar aquest esdeveniment? Sortirà del llistat i del públic, però es conserven les dades i els inscrits.');">
+                                    <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+                                    <button type="submit" class="btn-small">🗄 Arxivar</button>
+                                </form>
+                            <?php endif; ?>
                         <?php else: ?>
                             <a class="btn-small btn-kpi" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/kpis')) ?>">📊 KPIs</a>
-                            <a class="btn-small" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/editar')) ?>">Editar</a>
-                            <form method="post" action="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/desarxivar')) ?>" class="inline">
-                                <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
-                                <button type="submit" class="btn-small">♻ Desarxivar</button>
-                            </form>
-                            <form method="post" action="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/eliminar')) ?>" class="inline"
-                                  onsubmit="return confirm('Vols esborrar DEFINITIVAMENT aquest esdeveniment? Aquesta acció no es pot desfer.');">
-                                <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
-                                <button type="submit" class="btn-small btn-danger">🗑 Esborra</button>
-                            </form>
+                            <?php if ($isSuper): ?>
+                                <a class="btn-small" href="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/editar')) ?>">Editar</a>
+                                <form method="post" action="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/desarxivar')) ?>" class="inline">
+                                    <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+                                    <button type="submit" class="btn-small">♻ Desarxivar</button>
+                                </form>
+                                <form method="post" action="<?= e(base_url('/admin/eventos/' . (int)$ev['id'] . '/eliminar')) ?>" class="inline"
+                                      onsubmit="return confirm('Vols esborrar DEFINITIVAMENT aquest esdeveniment? Aquesta acció no es pot desfer.');">
+                                    <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+                                    <button type="submit" class="btn-small btn-danger">🗑 Esborra</button>
+                                </form>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </td>
                 </tr>

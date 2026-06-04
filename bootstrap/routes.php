@@ -47,14 +47,17 @@ $router->post('/admin/logout', [AuthController::class, 'logout']);
 
 // ── Panel admin (protegido) ─────────────────────────────
 $auth = [[Auth::class, 'requireLogin']];
+// Gestió d'esdeveniments (crear/editar/duplicar/arxivar/esborrar → també tarifes
+// i camps) reservada a superadmin. Els organitzadors només operen els seus events.
+$superadmin = [[Auth::class, 'requireSuperadmin']];
 
 $router->get ('/admin',                              [AdminController::class, 'dashboard'], $auth);
 
-// CRUD eventos
+// CRUD eventos — el llistat el veuen tots els admins; crear/editar/etc. NOMÉS superadmin
 $router->get ('/admin/eventos',                      [EventoController::class, 'index'],   $auth);
-$router->get ('/admin/eventos/nou',                  [EventoController::class, 'create'],  $auth);
-$router->post('/admin/eventos',                      [EventoController::class, 'store'],   $auth);
-$router->get ('/admin/eventos/{id}/editar',          [EventoController::class, 'edit'],    $auth);
+$router->get ('/admin/eventos/nou',                  [EventoController::class, 'create'],  $superadmin);
+$router->post('/admin/eventos',                      [EventoController::class, 'store'],   $superadmin);
+$router->get ('/admin/eventos/{id}/editar',          [EventoController::class, 'edit'],    $superadmin);
 $router->get ('/admin/eventos/{id}/kpis',            [EventoController::class, 'kpis'],    $auth);
 $router->get ('/admin/eventos/{id}/descuentos',          [DescuentosController::class, 'index'],         $auth);
 $router->get ('/admin/eventos/{id}/descuentos/generar', [DescuentosController::class, 'generar'],       $auth);
@@ -62,11 +65,11 @@ $router->post('/admin/eventos/{id}/descuentos/generar', [DescuentosController::c
 $router->get ('/admin/eventos/{id}/descuentos/export',   [DescuentosController::class, 'export'],        $auth);
 $router->post('/admin/descuentos/{id}/toggle',           [DescuentosController::class, 'toggle'],        $auth);
 $router->post('/admin/descuentos/{id}/eliminar',         [DescuentosController::class, 'destroy'],       $auth);
-$router->post('/admin/eventos/{id}',                 [EventoController::class, 'update'],    $auth);
-$router->post('/admin/eventos/{id}/duplicar',        [EventoController::class, 'duplicate'], $auth);
-$router->post('/admin/eventos/{id}/arxivar',         [EventoController::class, 'archive'],   $auth);
-$router->post('/admin/eventos/{id}/desarxivar',      [EventoController::class, 'unarchive'], $auth);
-$router->post('/admin/eventos/{id}/eliminar',        [EventoController::class, 'destroy'],   $auth);
+$router->post('/admin/eventos/{id}',                 [EventoController::class, 'update'],    $superadmin);
+$router->post('/admin/eventos/{id}/duplicar',        [EventoController::class, 'duplicate'], $superadmin);
+$router->post('/admin/eventos/{id}/arxivar',         [EventoController::class, 'archive'],   $superadmin);
+$router->post('/admin/eventos/{id}/desarxivar',      [EventoController::class, 'unarchive'], $superadmin);
+$router->post('/admin/eventos/{id}/eliminar',        [EventoController::class, 'destroy'],   $superadmin);
 
 // Inscrits (llistat + export CSV + import CSV)
 $router->get ('/admin/inscritos',                              [InscritosAdminController::class, 'index'],   $auth);
@@ -79,7 +82,6 @@ $router->post('/admin/eventos/{id}/inscritos/import/preview',  [InscritosImportC
 $router->post('/admin/eventos/{id}/inscritos/import/apply',    [InscritosImportController::class, 'apply'],   $auth);
 
 // Usuarios (només superadmin)
-$superadmin = [[Auth::class, 'requireSuperadmin']];
 $router->get ('/admin/usuarios',                     [UsuariosAdminController::class, 'index'],   $superadmin);
 $router->get ('/admin/usuarios/nou',                 [UsuariosAdminController::class, 'create'],  $superadmin);
 $router->post('/admin/usuarios',                     [UsuariosAdminController::class, 'store'],   $superadmin);
