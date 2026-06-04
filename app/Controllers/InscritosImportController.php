@@ -98,8 +98,9 @@ final class InscritosImportController
             Response::redirect(base_url("/admin/eventos/{$eventoId}/inscritos/import"));
         }
 
-        // Validar i preparar canvis
-        $report = self::buildChanges($eventoId, $parsed['headers'], $parsed['rows']);
+        // Validar i preparar canvis. Només superadmin pot canviar l'estat per CSV.
+        $canEditEstado = $user->rol === 'superadmin';
+        $report = self::buildChanges($eventoId, $parsed['headers'], $parsed['rows'], $canEditEstado);
 
         // Guardar canvis pendents en fitxer temporal (sessió pot ser massa)
         $token = bin2hex(random_bytes(8));
@@ -120,6 +121,7 @@ final class InscritosImportController
             'errors'      => $report['errors'],
             'skipped'     => $report['skipped'],
             'changedCols' => $report['changedCols'],
+            'estadoIgnored' => $report['estadoIgnored'] ?? false,
         ], layout: 'admin');
     }
 
@@ -170,12 +172,17 @@ final class InscritosImportController
 
         $applied = 0;
         $failed = [];
+        $isSuper = $user->rol === 'superadmin';
 
         try {
-            Database::getInstance()->transaction(function () use ($changes, &$applied, &$failed): void {
+            Database::getInstance()->transaction(function () use ($changes, $isSuper, &$applied, &$failed): void {
                 foreach ($changes as $c) {
+                    $fields = is_array($c['fields'] ?? null) ? $c['fields'] : [];
+                    // Doble verificació: només superadmin pot tocar l'estat
+                    if (!$isSuper) unset($fields['estado']);
+                    if (empty($fields)) continue;
                     try {
-                        Database::getInstance()->update('inscritos', $c['fields'], ['id' => (int) $c['id']]);
+                        Database::getInstance()->update('inscritos', $fields, ['id' => (int) $c['id']]);
                         $applied++;
                     } catch (\Throwable $e) {
                         $failed[] = ['id' => $c['id'], 'error' => $e->getMessage()];
@@ -248,7 +255,7 @@ final class InscritosImportController
      *   changedCols: array<string,int>
      * }
      */
-    private static function buildChanges(int $eventoId, array $headers, array $rows): array
+    private static function buildChanges(int $eventoId, array $headers, array $rows, bool $canEditEstado): array
     {
         $idIdx = array_search('id', $headers, true);
         if ($idIdx === false) {
@@ -258,28 +265,39 @@ final class InscritosImportController
                 'errors' => [['row' => 0, 'msg' => 'El CSV no té columna "ID". Descarrega el CSV d\'exportació com a plantilla.']],
                 'skipped' => 0,
                 'changedCols' => [],
+                'estadoIgnored' => false,
             ];
         }
 
         // Detectar quines columnes editables hi ha al CSV
         $colMap = [];
+        $estadoIgnored = false;
         foreach ($headers as $idx => $h) {
             $clean = preg_replace('/[^a-z0-9 ]+/u', '', strtolower($h));
             $clean = trim(preg_replace('/\s+/', ' ', $clean));
             if (isset(self::HEADER_MAP[$clean])) {
                 $col = self::HEADER_MAP[$clean];
+                // Només superadmin pot canviar l'estat per CSV
+                if ($col === 'estado' && !$canEditEstado) {
+                    $estadoIgnored = true;
+                    continue;
+                }
                 if (in_array($col, self::EDITABLE, true)) {
                     $colMap[$col] = $idx;
                 }
             }
         }
         if (empty($colMap)) {
+            $msg = $estadoIgnored
+                ? 'L\'única columna editable era "Estat", però només un superadmin pot canviar-la per CSV. Edita dorsal, talla, club, població o codi postal.'
+                : 'El CSV no conté cap columna editable (dorsal, talla, club, població, codi postal, estat).';
             return [
                 'totalRows' => count($rows),
                 'changes' => [],
-                'errors' => [['row' => 0, 'msg' => 'El CSV no conté cap columna editable (dorsal, talla, club, població, codi postal, estat).']],
+                'errors' => [['row' => 0, 'msg' => $msg]],
                 'skipped' => 0,
                 'changedCols' => [],
+                'estadoIgnored' => $estadoIgnored,
             ];
         }
 
@@ -365,6 +383,7 @@ final class InscritosImportController
             'errors'      => $errors,
             'skipped'     => $skipped,
             'changedCols' => $changedCols,
+            'estadoIgnored' => $estadoIgnored,
         ];
     }
 

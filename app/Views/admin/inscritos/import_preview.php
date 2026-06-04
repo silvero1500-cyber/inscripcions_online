@@ -6,6 +6,8 @@
 /** @var list<array{row:int,msg:string}> $errors */
 /** @var int $skipped */
 /** @var array<string,int> $changedCols */
+/** @var bool $estadoIgnored */
+$estadoIgnored = $estadoIgnored ?? false;
 
 $colsLabels = [
     'numero_dorsal' => 'Dorsal',
@@ -23,6 +25,10 @@ $colsLabels = [
     </div>
     <a class="btn" href="<?= e(base_url('/admin/eventos/' . (int)$evento['id'] . '/inscritos/import')) ?>">← Tornar</a>
 </section>
+
+<?php if ($estadoIgnored): ?>
+    <div class="alert alert-info">La columna <strong>Estat</strong> del CSV s'ha ignorat: només un superadmin pot canviar l'estat dels inscrits per importació.</div>
+<?php endif; ?>
 
 <!-- ── KPIs resum ─────────────────────────────────────────── -->
 <div class="kpi-grid kpi-grid-4" style="margin-bottom:1.2rem;">
