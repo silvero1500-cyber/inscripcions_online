@@ -1,4 +1,7 @@
-<?php /** @var App\Models\Usuario $user */ ?>
+<?php
+/** @var App\Models\Usuario $user */
+$isSuper = ($user->rol ?? '') === 'superadmin';
+?>
 <section class="page-head">
     <h1>Hola, <?= e($user->nombre) ?></h1>
     <p class="muted">Rol: <?= e($user->rol) ?></p>
@@ -16,14 +19,11 @@
         <div class="card-value"><?= (int)$stats['inscritos'] ?></div>
         <a class="card-link" href="<?= e(base_url('/admin/inscritos')) ?>">Veure</a>
     </div>
-
-    <div class="card">
-        <div class="card-label">Pendents de pagament</div>
-        <div class="card-value"><?= (int)$stats['pendientes'] ?></div>
-    </div>
 </section>
 
+<?php if ($isSuper && (int)$stats['eventos'] === 0): ?>
 <section class="empty-state">
     <p>Encara no hi ha cap esdeveniment creat. Comença afegint el primer per recollir inscripcions.</p>
     <a class="btn btn-primary" href="<?= e(base_url('/admin/eventos/nou')) ?>">+ Nou esdeveniment</a>
 </section>
+<?php endif; ?>
