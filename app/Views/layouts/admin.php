@@ -40,7 +40,7 @@ $currentUser = $currentUser ?? Auth::user();
         </div>
     </header>
 
-    <main class="content">
+    <main class="content<?= !empty($wide) ? ' content-wide' : '' ?>">
         <?= $content ?? '' ?>
     </main>
 

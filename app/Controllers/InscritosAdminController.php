@@ -72,6 +72,7 @@ final class InscritosAdminController
             'from'       => $from,
             'to'         => $to,
             'flash'      => Session::pullAllFlashes(),
+            'wide'       => true, // pàgina a tot l'ample (taula amb moltes columnes)
         ], layout: 'admin');
     }
 

@@ -226,6 +226,8 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
     width: 100%;
     margin: 0 auto;
 }
+/* Pàgines a tot l'ample (taules denses, p. ex. Inscrits) */
+.content-wide { max-width: none; }
 
 .footer {
     text-align: center;
