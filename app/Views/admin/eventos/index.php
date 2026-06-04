@@ -51,12 +51,6 @@ $showArchived = $showArchived ?? false;
                 <tr>
                     <td>
                         <strong><?= e($ev['titulo']) ?></strong>
-                        <div class="row-sub">
-                            <code><?= e($ev['slug']) ?></code>
-                            <?php if (!empty($ev['propietario_nombre'])): ?>
-                                · <?= e($ev['propietario_nombre']) ?>
-                            <?php endif; ?>
-                        </div>
                     </td>
                     <td><?= e(date('d/m/Y', strtotime((string)$ev['fecha_evento']))) ?></td>
                     <td>

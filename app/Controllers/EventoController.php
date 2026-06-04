@@ -39,6 +39,7 @@ final class EventoController
             'eventos'      => $eventos,
             'showArchived' => $showArchived,
             'flash'        => Session::pullAllFlashes(),
+            'wide'         => true, // a tot l'ample perquè les accions càpiguen en una línia
         ], layout: 'admin');
     }
 
