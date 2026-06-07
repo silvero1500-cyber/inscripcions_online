@@ -62,6 +62,12 @@ final class InscripcionController
         $data = self::extractCorredorData($_POST, $camposFijos);
         $v    = self::validateCorredor($data, $camposFijos);
 
+        // El correu electrònic s'ha de repetir igual (confirmació)
+        $emailConfirm = strtolower(trim((string) ($_POST['email_confirm'] ?? '')));
+        if ($v->first('email') === null && $emailConfirm !== (string) ($data['email'] ?? '')) {
+            $v->addError('email_confirm', t('form.email_mismatch'));
+        }
+
         // ── Validación campos personalizados ──────────────────
         $valoresCampos = [];
         foreach (CampoPersonalizado::getActivosPorEvento($eventoId) as $c) {

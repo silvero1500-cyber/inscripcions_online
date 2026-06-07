@@ -53,6 +53,8 @@ return [
     'form.label.dni'                   => 'DNI / NIE',
     'form.label.birth_date'            => 'Data de naixement',
     'form.label.email'                 => 'Correu electrònic',
+    'form.label.email_confirm'         => 'Repeteix el correu electrònic',
+    'form.email_mismatch'              => 'Els correus electrònics no coincideixen.',
     'form.label.phone'                 => 'Telèfon',
     'form.label.sex'                   => 'Sexe',
     'form.label.sex.choose'            => '— Tria —',

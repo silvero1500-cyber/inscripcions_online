@@ -53,6 +53,8 @@ return [
     'form.label.dni'                   => 'DNI / NIE',
     'form.label.birth_date'            => 'Fecha de nacimiento',
     'form.label.email'                 => 'Correo electrónico',
+    'form.label.email_confirm'         => 'Repite el correo electrónico',
+    'form.email_mismatch'              => 'Los correos electrónicos no coinciden.',
     'form.label.phone'                 => 'Teléfono',
     'form.label.sex'                   => 'Sexo',
     'form.label.sex.choose'            => '— Elige —',

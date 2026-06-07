@@ -248,6 +248,14 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
                     <?php endif; ?>
                 </div>
 
+                <div class="form-row">
+                    <label for="email_confirm"><?= e(t('form.label.email_confirm')) ?> <span class="req">*</span></label>
+                    <input type="email" id="email_confirm" name="email_confirm" required maxlength="255"
+                           autocomplete="off" onpaste="return false;" ondrop="return false;"
+                           value="<?= e($val('email_confirm')) ?>">
+                    <?php if ($err('email_confirm')): ?><div class="field-error"><?= e($err('email_confirm')) ?></div><?php endif; ?>
+                </div>
+
                 <div class="form-grid-2">
                     <?php if ($cfVis('sexo')): ?>
                     <div class="form-row">
@@ -298,13 +306,8 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
                     <input type="text" id="club" name="club" <?= $reqAttr('club') ?> maxlength="150" value="<?= e($val('club')) ?>">
                 </div>
                 <?php endif; ?>
-            </fieldset>
-        </div>
 
-        <?php if (count($campos) > 0): ?>
-            <div class="panel">
-                <fieldset>
-                    <legend><?= e(t('form.label.custom_fields')) ?></legend>
+                <?php if (count($campos) > 0): ?>
                     <?php foreach ($campos as $c):
                         $key = 'campo_' . (int)$c['id'];
                         $errC = $err($key);
@@ -365,9 +368,9 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
                         <?php if ($errC): ?><div class="field-error"><?= e($errC) ?></div><?php endif; ?>
                     </div>
                     <?php endforeach; ?>
-                </fieldset>
-            </div>
-        <?php endif; ?>
+                <?php endif; ?>
+            </fieldset>
+        </div>
 
         <!-- ── Codi de descompte (opcional) ── -->
         <div class="panel descompte-panel">
@@ -432,6 +435,8 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
             String(Math.floor(Math.random() * 28) + 1).padStart(2, '0'));
         fillIfEmpty(document.getElementById('email'),
             nom.toLowerCase() + '.' + cog.toLowerCase() + Math.floor(Math.random() * 999) + '@' + pick(dominis));
+        var emEl = document.getElementById('email'), emcEl = document.getElementById('email_confirm');
+        if (emEl && emcEl) emcEl.value = emEl.value;
         fillIfEmpty(document.getElementById('telefono'), '6' + Math.floor(10000000 + Math.random() * 89999999));
         fillIfEmpty(document.getElementById('sexo'), pick(['H', 'M', 'NB']));
         fillIfEmpty(document.getElementById('talla_camiseta'), pick(['S', 'M', 'L', 'XL']));
