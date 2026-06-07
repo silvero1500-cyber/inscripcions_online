@@ -238,23 +238,25 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
                                value="<?= e($val('email')) ?>">
                         <?php if ($err('email')): ?><div class="field-error"><?= e($err('email')) ?></div><?php endif; ?>
                     </div>
-                    <?php if ($cfVis('telefono')): ?>
+                    <div class="form-row">
+                        <label for="email_confirm"><?= e(t('form.label.email_confirm')) ?> <span class="req">*</span></label>
+                        <input type="email" id="email_confirm" name="email_confirm" required maxlength="255"
+                               autocomplete="off" onpaste="return false;" ondrop="return false;"
+                               value="<?= e($val('email_confirm')) ?>">
+                        <?php if ($err('email_confirm')): ?><div class="field-error"><?= e($err('email_confirm')) ?></div><?php endif; ?>
+                    </div>
+                </div>
+
+                <?php if ($cfVis('telefono')): ?>
+                <div class="form-grid-2">
                     <div class="form-row">
                         <label for="telefono"><?= e(t('form.label.phone')) ?><?= $reqMark('telefono') ?></label>
                         <input type="tel" id="telefono" name="telefono" <?= $reqAttr('telefono') ?> maxlength="15" autocomplete="tel"
                                placeholder="600123456" value="<?= e($val('telefono')) ?>">
                         <?php if ($err('telefono')): ?><div class="field-error"><?= e($err('telefono')) ?></div><?php endif; ?>
                     </div>
-                    <?php endif; ?>
                 </div>
-
-                <div class="form-row">
-                    <label for="email_confirm"><?= e(t('form.label.email_confirm')) ?> <span class="req">*</span></label>
-                    <input type="email" id="email_confirm" name="email_confirm" required maxlength="255"
-                           autocomplete="off" onpaste="return false;" ondrop="return false;"
-                           value="<?= e($val('email_confirm')) ?>">
-                    <?php if ($err('email_confirm')): ?><div class="field-error"><?= e($err('email_confirm')) ?></div><?php endif; ?>
-                </div>
+                <?php endif; ?>
 
                 <div class="form-grid-2">
                     <?php if ($cfVis('sexo')): ?>
