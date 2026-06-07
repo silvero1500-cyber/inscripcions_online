@@ -9,6 +9,7 @@ use App\Core\Router;
 use App\Controllers\AuthController;
 use App\Controllers\AdminController;
 use App\Controllers\CheckinController;
+use App\Controllers\RecollidaController;
 use App\Controllers\DescuentosController;
 use App\Controllers\EventoController;
 use App\Controllers\InscritosAdminController;
@@ -98,3 +99,10 @@ $router->get ('/admin/checkin',                      [CheckinController::class, 
 $router->get ('/admin/checkin/camera-test',          [CheckinController::class, 'cameraTest'], $auth);
 $router->get ('/admin/checkin/{token}',              [CheckinController::class, 'show'],       $auth);
 $router->post('/admin/checkin/{token}',              [CheckinController::class, 'mark'],       $auth);
+
+// Recollida de dorsal (entrega de dorsal/material)
+$router->get ('/admin/recollida',                    [RecollidaController::class, 'index'],    $auth);
+$router->get ('/admin/recollida/escanejar',          [RecollidaController::class, 'scanner'],  $auth);
+$router->post('/admin/recollida/{id}/marcar',        [RecollidaController::class, 'marcar'],   $auth);
+$router->post('/admin/recollida/{id}/desfer',        [RecollidaController::class, 'desfer'],   $auth);
+$router->post('/admin/recollida/{id}/dorsal',        [RecollidaController::class, 'dorsal'],   $auth);

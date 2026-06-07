@@ -125,10 +125,18 @@ final class Inscrito
         if (!empty($filters['club'])) {
             $where[] = 'i.club LIKE ?'; $params[] = '%' . $filters['club'] . '%';
         }
+        // Filtre de recollida de dorsal: 'fet' (ja recollit) | 'pendent' (encara no)
+        if (!empty($filters['recollida'])) {
+            if ($filters['recollida'] === 'fet') {
+                $where[] = 'i.dorsal_recollit_at IS NOT NULL';
+            } elseif ($filters['recollida'] === 'pendent') {
+                $where[] = 'i.dorsal_recollit_at IS NULL';
+            }
+        }
         if (!empty($filters['search'])) {
-            $where[] = '(i.nombre LIKE ? OR i.apellido LIKE ? OR i.email LIKE ? OR i.dni LIKE ?)';
+            $where[] = '(i.nombre LIKE ? OR i.apellido LIKE ? OR i.email LIKE ? OR i.dni LIKE ? OR CAST(i.numero_dorsal AS CHAR) LIKE ?)';
             $like = '%' . $filters['search'] . '%';
-            $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
+            $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
         }
         return [$where ? 'WHERE ' . implode(' AND ', $where) : '', $params];
     }
@@ -231,6 +239,105 @@ final class Inscrito
             'check_in_por' => $usuarioId,
         ], ['id' => $id]);
         return true;
+    }
+
+    // ── Recollida de dorsal ──────────────────────────────────
+
+    /**
+     * Marca la recollida del dorsal (timestamp + usuari). Idempotent:
+     * si ja estava recollit, no torna a tocar el timestamp i retorna false.
+     */
+    public static function marcarRecollida(int $id, int $usuarioId): bool
+    {
+        $db = Database::getInstance();
+        $row = $db->query('SELECT dorsal_recollit_at FROM inscritos WHERE id = ?', [$id])->fetch();
+        if (!$row || !empty($row['dorsal_recollit_at'])) {
+            return false;
+        }
+        $db->update('inscritos', [
+            'dorsal_recollit_at'  => date('Y-m-d H:i:s'),
+            'dorsal_recollit_por' => $usuarioId,
+        ], ['id' => $id]);
+        return true;
+    }
+
+    /**
+     * Desfà la recollida (per corregir un error).
+     */
+    public static function desferRecollida(int $id): void
+    {
+        Database::getInstance()->update('inscritos', [
+            'dorsal_recollit_at'  => null,
+            'dorsal_recollit_por' => null,
+        ], ['id' => $id]);
+    }
+
+    /**
+     * Assigna (o esborra, amb null) el número de dorsal d'un inscrit.
+     */
+    public static function setDorsal(int $id, ?int $dorsal): void
+    {
+        Database::getInstance()->update('inscritos', ['numero_dorsal' => $dorsal], ['id' => $id]);
+    }
+
+    /**
+     * ¿El dorsal ja l'usa un ALTRE inscrit del mateix esdeveniment?
+     * (Per validar abans d'assignar i donar un missatge clar.)
+     */
+    public static function dorsalEnUs(int $eventoId, int $dorsal, int $exceptId): bool
+    {
+        return (bool) Database::getInstance()->query(
+            'SELECT 1 FROM inscritos WHERE evento_id = ? AND numero_dorsal = ? AND id <> ? LIMIT 1',
+            [$eventoId, $dorsal, $exceptId]
+        )->fetchColumn();
+    }
+
+    /**
+     * Comptadors de recollida d'un esdeveniment (només confirmats).
+     * @return array{total:int, recollits:int, pendents:int}
+     */
+    public static function recollidaStats(int $eventoId): array
+    {
+        $row = Database::getInstance()->query(
+            "SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN dorsal_recollit_at IS NOT NULL THEN 1 ELSE 0 END) AS recollits
+             FROM inscritos
+             WHERE evento_id = ? AND estado = 'confirmado'",
+            [$eventoId]
+        )->fetch();
+
+        $total     = (int) ($row['total'] ?? 0);
+        $recollits = (int) ($row['recollits'] ?? 0);
+        return ['total' => $total, 'recollits' => $recollits, 'pendents' => $total - $recollits];
+    }
+
+    /**
+     * Desglossament de talles que encara NO s'han entregat (confirmats pendents
+     * de recollir). Per preparar el material del mostrador.
+     * @return array<string,int>  [talla => quantitat], ordenat per talla
+     */
+    public static function tallasPendents(int $eventoId): array
+    {
+        $rows = Database::getInstance()->query(
+            "SELECT COALESCE(talla_camiseta, '—') AS talla, COUNT(*) AS n
+             FROM inscritos
+             WHERE evento_id = ? AND estado = 'confirmado' AND dorsal_recollit_at IS NULL
+             GROUP BY talla",
+            [$eventoId]
+        )->fetchAll();
+
+        // Ordenar segons l'ordre natural de talles (XS<S<M<...), '—' al final
+        $orden = array_flip(self::TALLAS);
+        usort($rows, function ($a, $b) use ($orden) {
+            $pa = $orden[$a['talla']] ?? 99;
+            $pb = $orden[$b['talla']] ?? 99;
+            return $pa <=> $pb;
+        });
+
+        $out = [];
+        foreach ($rows as $r) $out[(string) $r['talla']] = (int) $r['n'];
+        return $out;
     }
 
     /**

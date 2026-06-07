@@ -23,6 +23,7 @@ $currentUser = $currentUser ?? Auth::user();
                 <a href="<?= e(base_url('/admin')) ?>">Panel</a>
                 <a href="<?= e(base_url('/admin/eventos')) ?>">Esdeveniments</a>
                 <a href="<?= e(base_url('/admin/checkin')) ?>">Check-in</a>
+                <a href="<?= e(base_url('/admin/recollida')) ?>">Recollida</a>
                 <a href="<?= e(base_url('/admin/inscritos')) ?>">Inscrits</a>
                 <?php if ($currentUser && $currentUser->rol === 'superadmin'): ?>
                     <a href="<?= e(base_url('/admin/usuarios')) ?>">Usuaris</a>

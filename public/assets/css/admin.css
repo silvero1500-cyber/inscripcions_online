@@ -1049,3 +1049,83 @@ li.col-manager-item label {
     margin: 0 !important;
     cursor: pointer;
 }
+
+/* ── Recollida de dorsal ───────────────────────────────── */
+.kpi-grid-3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 600px) { .kpi-grid-3 { grid-template-columns: 1fr; } }
+
+/* Talla destacada (entregar la samarreta correcta) */
+.talla-big {
+    display: inline-block;
+    min-width: 2.4rem;
+    text-align: center;
+    padding: .2rem .55rem;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: .02em;
+}
+
+/* Desglossament de talles pendents */
+.talla-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin: 0 0 1.2rem;
+}
+.talla-chips-label { font-size: .85rem; font-weight: 600; color: #6b7280; }
+.talla-chip {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    padding: .25rem .7rem;
+    font-size: .9rem;
+    color: #374151;
+}
+.talla-chip strong { color: #1e88c2; margin-right: .15rem; }
+
+/* Edició inline del dorsal a cada fila */
+.dorsal-edit { display: flex; align-items: center; gap: .25rem; }
+.dorsal-edit input[type="number"] {
+    width: 4.5rem;
+    padding: .3rem .4rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: .9rem;
+    text-align: center;
+}
+.recollida-grid tr.row-done { background: #f0fdf4; }
+.recollida-grid tr.row-done:hover { background: #dcfce7; }
+
+/* Targeta del corredor escanejat via QR */
+.recollida-scan-card {
+    background: #fff;
+    border: 2px solid #1e88c2;
+    border-radius: 14px;
+    padding: 1.3rem 1.5rem;
+    margin-bottom: 1.4rem;
+    box-shadow: 0 4px 14px rgba(30,136,194,.12);
+}
+.recollida-scan-card.is-done { border-color: #16a34a; box-shadow: 0 4px 14px rgba(22,163,74,.12); }
+.recollida-scan-card .rsc-head { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; }
+.recollida-scan-card .rsc-head h2 { margin: 0; font-size: 1.4rem; color: #1f2937; }
+.rsc-tag {
+    background: #1e88c2; color: #fff; font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em; padding: .2rem .6rem; border-radius: 999px;
+}
+.recollida-scan-card.is-done .rsc-tag { background: #16a34a; }
+.rsc-facts {
+    display: flex; flex-wrap: wrap; gap: 1.5rem;
+    margin: 1rem 0 1.2rem;
+}
+.rsc-facts > div { display: flex; flex-direction: column; gap: .2rem; }
+.rsc-facts span { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #9ca3af; font-weight: 600; }
+.rsc-facts strong { font-size: 1.05rem; color: #1f2937; }
+.rsc-action { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
+.rsc-action label { display: flex; flex-direction: column; gap: .3rem; font-size: .8rem; font-weight: 600; color: #374151; }
+.rsc-action input { padding: .55rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1.05rem; text-align: center; }
+.rsc-done { font-size: 1rem; color: #15803d; margin-bottom: 1rem; }
+.btn-lg { padding: .7rem 1.4rem; font-size: 1.05rem; }
