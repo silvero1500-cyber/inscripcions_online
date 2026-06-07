@@ -60,48 +60,58 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
         <?php endif; ?>
 
         <div class="evt-info">
-            <h2><?= e(t('event.info_title')) ?></h2>
-
-            <div class="evt-info-section">
-                <div class="evt-info-label"><?= e(format_date_ca((string)$evento['fecha_evento'], true)) ?></div>
-                <div class="evt-info-box">
-                    <strong><?= e(t('event.event_label')) ?>:</strong> <?= e($evento['titulo']) ?>
-                </div>
-            </div>
-
-            <?php if (!empty($evento['localizacion'])): ?>
-                <div class="evt-info-section">
-                    <div class="evt-info-label"><?= e(t('event.location_label')) ?></div>
-                    <div class="evt-info-box">
-                        <strong><?= e(t('event.location_label')) ?>:</strong>
-                        <a href="https://www.google.com/maps/search/?api=1&query=<?= e(urlencode((string)$evento['localizacion'])) ?>"
-                           target="_blank" rel="noopener"><?= e($evento['localizacion']) ?></a>
-                    </div>
-                </div>
-            <?php endif; ?>
-
-            <?php if (!empty($evento['fecha_limite_inscripcion'])): ?>
-                <div class="evt-info-section">
-                    <div class="evt-info-label"><?= e(t('event.dates_label')) ?></div>
-                    <div class="evt-info-box">
-                        <strong><?= e(t('event.dates_end')) ?>:</strong> <?= e(format_date_ca((string)$evento['fecha_limite_inscripcion'])) ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($plazasDisponibles !== null): ?>
-                <div class="evt-info-section">
-                    <div class="evt-info-label"><?= e(t('event.capacity_label')) ?></div>
-                    <div class="evt-info-box">
-                        <?= e(t('event.capacity_value', ['n' => (int)$plazasDisponibles])) ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-
             <div class="evt-tags">
                 <span class="evt-tag evt-tag-primary">Running</span>
                 <span class="evt-tag evt-tag-muted"><?= current_locale() === 'es' ? 'Carrera popular' : 'Cursa popular' ?></span>
             </div>
+
+            <ul class="evt-facts">
+                <li class="evt-fact">
+                    <span class="evt-fact-ic" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    </span>
+                    <span class="evt-fact-txt">
+                        <span class="evt-fact-label"><?= current_locale() === 'es' ? 'Fecha' : 'Data' ?></span>
+                        <span class="evt-fact-val"><?= e(format_date_ca((string)$evento['fecha_evento'], true)) ?></span>
+                    </span>
+                </li>
+
+                <?php if (!empty($evento['localizacion'])): ?>
+                <li class="evt-fact">
+                    <span class="evt-fact-ic" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    </span>
+                    <span class="evt-fact-txt">
+                        <span class="evt-fact-label"><?= e(t('event.location_label')) ?></span>
+                        <span class="evt-fact-val"><a href="https://www.google.com/maps/search/?api=1&query=<?= e(urlencode((string)$evento['localizacion'])) ?>" target="_blank" rel="noopener"><?= e($evento['localizacion']) ?></a></span>
+                    </span>
+                </li>
+                <?php endif; ?>
+
+                <?php if (!empty($evento['fecha_limite_inscripcion'])): ?>
+                <li class="evt-fact">
+                    <span class="evt-fact-ic" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>
+                    </span>
+                    <span class="evt-fact-txt">
+                        <span class="evt-fact-label"><?= e(t('event.dates_label')) ?></span>
+                        <span class="evt-fact-val"><?= e(format_date_ca((string)$evento['fecha_limite_inscripcion'])) ?></span>
+                    </span>
+                </li>
+                <?php endif; ?>
+
+                <?php if ($plazasDisponibles !== null): ?>
+                <li class="evt-fact">
+                    <span class="evt-fact-ic" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"></path><line x1="12" y1="5" x2="12" y2="19" stroke-dasharray="2 3"></line></svg>
+                    </span>
+                    <span class="evt-fact-txt">
+                        <span class="evt-fact-label"><?= e(t('event.capacity_label')) ?></span>
+                        <span class="evt-fact-val"><?= e(t('event.capacity_value', ['n' => (int)$plazasDisponibles])) ?></span>
+                    </span>
+                </li>
+                <?php endif; ?>
+            </ul>
 
             <?php if (!empty($evento['reglamento_url']) || !empty($evento['web_oficial_url'])): ?>
                 <div class="evt-links">
