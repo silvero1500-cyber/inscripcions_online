@@ -68,18 +68,22 @@ final class Inscrito
      *
      * @return list<array<string,mixed>>
      */
-    public static function findConfirmadosByDniOrEmail(string $needle): array
+    public static function findConfirmadosByDniOrEmail(string $needle, ?int $eventoId = null): array
     {
         $needle = trim($needle);
         if ($needle === '') return [];
 
-        return Database::getInstance()->query(
-            "SELECT * FROM inscritos
-             WHERE estado = 'confirmado' AND (dni = ? OR email = ?)
-             ORDER BY id DESC
-             LIMIT 20",
-            [strtoupper($needle), strtolower($needle)]
-        )->fetchAll();
+        $sql = "SELECT * FROM inscritos
+                WHERE estado = 'confirmado' AND (dni = ? OR email = ?)";
+        $params = [strtoupper($needle), strtolower($needle)];
+
+        if ($eventoId !== null) {
+            $sql .= " AND evento_id = ?";
+            $params[] = $eventoId;
+        }
+        $sql .= " ORDER BY id DESC LIMIT 20";
+
+        return Database::getInstance()->query($sql, $params)->fetchAll();
     }
 
     /**

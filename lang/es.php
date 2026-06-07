@@ -142,6 +142,7 @@ return [
     'recover.submit'                   => '✉ Envíame el justificante',
     'recover.found'                    => '¡Inscripción encontrada! Te hemos enviado el justificante a {email}. Revisa la bandeja de entrada (y el correo no deseado).',
     'recover.notfound'                 => 'No hemos encontrado ninguna inscripción confirmada con ese DNI o correo.',
+    'recover.notfound_event'           => 'No hemos encontrado ninguna inscripción confirmada con ese DNI o correo en esta carrera.',
     'recover.empty'                    => 'Introduce tu DNI o correo electrónico.',
     'recover.expired'                  => 'La sesión ha expirado. Inténtalo de nuevo.',
     'recover.send_error'               => 'Encontramos la inscripción pero ahora mismo no se pudo enviar el correo. Inténtalo más tarde.',

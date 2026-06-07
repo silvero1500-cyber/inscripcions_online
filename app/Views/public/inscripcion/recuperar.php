@@ -1,14 +1,19 @@
 <?php
+/** @var array|null $evento */
 /** @var string $old */
 /** @var array $flash */
 use App\Core\Csrf;
+$evento = $evento ?? null;
 $old = $old ?? '';
 $flash = $flash ?? [];
 ?>
 <section class="container" style="max-width:600px;">
     <div class="panel">
         <h1 class="panel-title" style="font-size:1.5rem;"><?= e(t('recover.title')) ?></h1>
-        <p class="muted" style="margin-top:.25rem;"><?= e(t('recover.desc')) ?></p>
+        <?php if ($evento): ?>
+            <p class="muted" style="margin:.35rem 0 0;font-weight:600;color:#1f2937;"><?= e($evento['titulo']) ?></p>
+        <?php endif; ?>
+        <p class="muted" style="margin-top:.5rem;"><?= e(t('recover.desc')) ?></p>
 
         <?php if (!empty($flash['success'])): ?>
             <div class="alert alert-success"><?= e($flash['success']) ?></div>
@@ -19,6 +24,9 @@ $flash = $flash ?? [];
 
         <form method="post" action="<?= e(base_url('/comprovant')) ?>" novalidate>
             <?= Csrf::field() ?>
+            <?php if ($evento): ?>
+                <input type="hidden" name="evento_slug" value="<?= e($evento['slug']) ?>">
+            <?php endif; ?>
 
             <!-- Anti-bot honeypot: ha de quedar buit -->
             <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">

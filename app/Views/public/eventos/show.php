@@ -115,7 +115,7 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
             <?php endif; ?>
 
             <p class="evt-recover">
-                <a href="<?= e(base_url('/comprovant')) ?>">📄 <?= e(t('recover.link')) ?></a>
+                <a href="<?= e(base_url('/comprovant?e=' . urlencode((string)$evento['slug']))) ?>">📄 <?= e(t('recover.link')) ?></a>
             </p>
         </div>
     </div>

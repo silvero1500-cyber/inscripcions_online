@@ -275,22 +275,32 @@ final class InscripcionController
      */
     public function comprovantForm(Request $req): void
     {
+        // L'esdeveniment es pren automàticament del link (?e=slug) si ve d'una fitxa de carrera
+        $slug   = trim((string) $req->query('e', ''));
+        $evento = $slug !== '' ? Evento::findBySlug($slug) : null;
+
         View::render('public/inscripcion/recuperar', [
-            'old'   => (string) Session::pullFlash('recover_old'),
-            'flash' => Session::pullAllFlashes(),
+            'evento' => $evento,
+            'old'    => (string) Session::pullFlash('recover_old'),
+            'flash'  => Session::pullAllFlashes(),
         ], layout: 'public');
     }
 
     public function comprovantSend(Request $req): void
     {
+        // Esdeveniment d'origen (si el formulari ve d'una carrera concreta)
+        $slug    = trim((string) $req->post('evento_slug', ''));
+        $evento  = $slug !== '' ? Evento::findBySlug($slug) : null;
+        $backUrl = base_url('/comprovant' . ($slug !== '' ? '?e=' . urlencode($slug) : ''));
+
         if (!Csrf::verify($req->post('_csrf'))) {
             Session::flash('error', t('recover.expired'));
-            Response::redirect(base_url('/comprovant'));
+            Response::redirect($backUrl);
         }
 
         // Honeypot anti-bot: si ve omplert, descartar en silenci
         if (trim((string) ($_POST['website'] ?? '')) !== '') {
-            Response::redirect(base_url('/comprovant'));
+            Response::redirect($backUrl);
         }
 
         $needle = trim((string) $req->post('dni_email', ''));
@@ -298,13 +308,14 @@ final class InscripcionController
 
         if ($needle === '') {
             Session::flash('error', t('recover.empty'));
-            Response::redirect(base_url('/comprovant'));
+            Response::redirect($backUrl);
         }
 
-        $inscritos = Inscrito::findConfirmadosByDniOrEmail($needle);
+        $eventoId  = $evento !== null ? (int) $evento['id'] : null;
+        $inscritos = Inscrito::findConfirmadosByDniOrEmail($needle, $eventoId);
         if (count($inscritos) === 0) {
-            Session::flash('error', t('recover.notfound'));
-            Response::redirect(base_url('/comprovant'));
+            Session::flash('error', $evento !== null ? t('recover.notfound_event') : t('recover.notfound'));
+            Response::redirect($backUrl);
         }
 
         // Reenviar el comprovant a cada correu trobat
@@ -317,12 +328,12 @@ final class InscripcionController
 
         if (count($emailsEnviats) === 0) {
             Session::flash('error', t('recover.send_error'));
-            Response::redirect(base_url('/comprovant'));
+            Response::redirect($backUrl);
         }
 
         $masked = implode(', ', array_map([self::class, 'maskEmail'], array_keys($emailsEnviats)));
         Session::flash('success', t('recover.found', ['email' => $masked]));
-        Response::redirect(base_url('/comprovant'));
+        Response::redirect($backUrl);
     }
 
     /** Carrega context i envia l'email de confirmació amb QR per a un inscrit. */

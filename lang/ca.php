@@ -142,6 +142,7 @@ return [
     'recover.submit'                   => "✉ Envia'm el comprovant",
     'recover.found'                    => "Inscripció trobada! T'hem enviat el comprovant a {email}. Revisa la safata d'entrada (i el correu brossa).",
     'recover.notfound'                 => 'No hem trobat cap inscripció confirmada amb aquest DNI o correu.',
+    'recover.notfound_event'           => 'No hem trobat cap inscripció confirmada amb aquest DNI o correu en aquesta cursa.',
     'recover.empty'                    => 'Introdueix el teu DNI o correu electrònic.',
     'recover.expired'                  => 'La sessió ha expirat. Torna-ho a provar.',
     'recover.send_error'               => "Hem trobat la inscripció però ara mateix no s'ha pogut enviar el correu. Torna-ho a provar més tard.",
