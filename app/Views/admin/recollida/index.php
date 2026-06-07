@@ -84,7 +84,7 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
                 <button type="submit" class="btn btn-secondary">↩ Desfer recollida</button>
             </form>
         <?php else: ?>
-            <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/marcar')) ?>" class="rsc-action">
+            <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/marcar')) ?>" class="rsc-action" onsubmit="return confirmRecollit(this)">
                 <?= Csrf::field() ?>
                 <label>Dorsal
                     <input type="number" name="dorsal" min="1" inputmode="numeric"
@@ -229,7 +229,7 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
                                     <button type="submit" class="btn-tiny" title="Desfer recollida">↩ Desfer</button>
                                 </form>
                             <?php else: ?>
-                                <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $i['id'] . '/marcar')) ?>" class="inline">
+                                <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $i['id'] . '/marcar')) ?>" class="inline" onsubmit="return confirmRecollit(this)">
                                     <?= $actionHidden() ?>
                                     <button type="submit" class="btn btn-primary btn-tiny">✓ Recollit</button>
                                 </form>
@@ -243,3 +243,17 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
         <?php $renderPagination(); ?>
     <?php endif; ?>
 <?php endif; ?>
+
+<script>
+// Avisa si es marca "recollit" sense cap dorsal assignat.
+function confirmRecollit(form) {
+    var own = form.querySelector('input[name="dorsal"]');          // targeta QR
+    var row = form.closest('tr');                                   // fila del llistat
+    var input = own || (row ? row.querySelector('input[name="dorsal"]') : null);
+    var val = input ? input.value.trim() : '';
+    if (val === '') {
+        return confirm('Aquest corredor no té cap dorsal assignat.\n\nVols marcar-lo com a recollit igualment?');
+    }
+    return true;
+}
+</script>
