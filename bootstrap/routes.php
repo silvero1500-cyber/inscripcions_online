@@ -30,6 +30,8 @@ $router->get ('/',                                    [PublicController::class, 
 $router->get ('/eventos/{slug}',                      [PublicController::class,       'show']);
 $router->post('/eventos/{slug}/inscriure',            [InscripcionController::class,  'store']);
 $router->get ('/eventos/{slug}/gracies',              [InscripcionController::class,  'exito']);
+$router->get ('/comprovant',                          [InscripcionController::class,  'comprovantForm']);
+$router->post('/comprovant',                          [InscripcionController::class,  'comprovantSend']);
 $router->get ('/comprovant/{token}',                  [InscripcionController::class,  'comprovant']);
 
 // ── Pagament (Redsys: targeta + Bizum) ─────────────────

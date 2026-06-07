@@ -134,6 +134,19 @@ return [
     'comprovant.dorsal'                => 'Dorsal',
     'comprovant.instructions'          => 'Presenta este justificante o el código QR a la organización el día del evento.',
 
+    // Recuperar justificante (público)
+    'recover.title'                    => 'Recupera tu justificante',
+    'recover.desc'                     => 'Introduce tu DNI o el correo electrónico con el que te inscribiste y te enviaremos el justificante de inscripción al correo.',
+    'recover.field'                    => 'DNI o correo electrónico',
+    'recover.placeholder'              => '12345678A o tu-correo@ejemplo.com',
+    'recover.submit'                   => '✉ Envíame el justificante',
+    'recover.found'                    => '¡Inscripción encontrada! Te hemos enviado el justificante a {email}. Revisa la bandeja de entrada (y el correo no deseado).',
+    'recover.notfound'                 => 'No hemos encontrado ninguna inscripción confirmada con ese DNI o correo.',
+    'recover.empty'                    => 'Introduce tu DNI o correo electrónico.',
+    'recover.expired'                  => 'La sesión ha expirado. Inténtalo de nuevo.',
+    'recover.send_error'               => 'Encontramos la inscripción pero ahora mismo no se pudo enviar el correo. Inténtalo más tarde.',
+    'recover.link'                     => '¿Ya estás inscrito? Recupera tu justificante',
+
     // Email confirmación
     'email.subject'                    => 'Inscripción confirmada · {event}',
     'email.header_title'               => 'Inscripción confirmada ✓',

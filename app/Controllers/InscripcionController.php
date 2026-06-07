@@ -269,6 +269,99 @@ final class InscripcionController
         ]);
     }
 
+    /**
+     * Pàgina pública per recuperar el comprovant: l'inscrit posa el seu DNI o
+     * correu i li reenviem el comprovant per email.
+     */
+    public function comprovantForm(Request $req): void
+    {
+        View::render('public/inscripcion/recuperar', [
+            'old'   => (string) Session::pullFlash('recover_old'),
+            'flash' => Session::pullAllFlashes(),
+        ], layout: 'public');
+    }
+
+    public function comprovantSend(Request $req): void
+    {
+        if (!Csrf::verify($req->post('_csrf'))) {
+            Session::flash('error', t('recover.expired'));
+            Response::redirect(base_url('/comprovant'));
+        }
+
+        // Honeypot anti-bot: si ve omplert, descartar en silenci
+        if (trim((string) ($_POST['website'] ?? '')) !== '') {
+            Response::redirect(base_url('/comprovant'));
+        }
+
+        $needle = trim((string) $req->post('dni_email', ''));
+        Session::flash('recover_old', $needle);
+
+        if ($needle === '') {
+            Session::flash('error', t('recover.empty'));
+            Response::redirect(base_url('/comprovant'));
+        }
+
+        $inscritos = Inscrito::findConfirmadosByDniOrEmail($needle);
+        if (count($inscritos) === 0) {
+            Session::flash('error', t('recover.notfound'));
+            Response::redirect(base_url('/comprovant'));
+        }
+
+        // Reenviar el comprovant a cada correu trobat
+        $emailsEnviats = [];
+        foreach ($inscritos as $ins) {
+            if (self::enviarComprovantEmail($ins)) {
+                $emailsEnviats[mb_strtolower((string) $ins['email'])] = true;
+            }
+        }
+
+        if (count($emailsEnviats) === 0) {
+            Session::flash('error', t('recover.send_error'));
+            Response::redirect(base_url('/comprovant'));
+        }
+
+        $masked = implode(', ', array_map([self::class, 'maskEmail'], array_keys($emailsEnviats)));
+        Session::flash('success', t('recover.found', ['email' => $masked]));
+        Response::redirect(base_url('/comprovant'));
+    }
+
+    /** Carrega context i envia l'email de confirmació amb QR per a un inscrit. */
+    private static function enviarComprovantEmail(array $inscrito): bool
+    {
+        try {
+            if (empty($inscrito['email'])) return false;
+            $evento = Evento::findById((int) $inscrito['evento_id']);
+            $tarifa = Tarifa::findById((int) $inscrito['tarifa_id']);
+            if ($evento === null || $tarifa === null) return false;
+
+            $pago = Database::getInstance()->query(
+                'SELECT * FROM pagos WHERE inscrito_id = ? ORDER BY id DESC LIMIT 1',
+                [(int) $inscrito['id']]
+            )->fetch() ?: [];
+
+            Inscrito::ensureQrToken((int) $inscrito['id']);
+            $inscrito = Inscrito::findById((int) $inscrito['id']); // recarregar amb qr_token
+
+            EmailService::sendConfirmacionInscripcion($inscrito, $evento, $tarifa, $pago);
+            return true;
+        } catch (\Throwable $e) {
+            error_log('[Comprovant recover] ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /** Emmascara un email: "sergio@hotmail.com" → "ser***@hotmail.com". */
+    private static function maskEmail(string $email): string
+    {
+        $email = trim($email);
+        $at = strpos($email, '@');
+        if ($at === false) return '***';
+        $local  = substr($email, 0, $at);
+        $domain = substr($email, $at);
+        $keep = mb_strlen($local) <= 3 ? 1 : min(3, (int) floor(mb_strlen($local) / 2));
+        return mb_substr($local, 0, $keep) . '***' . $domain;
+    }
+
     // ────────────────────────────────────────────────────────
     // Helpers privados
     // ────────────────────────────────────────────────────────

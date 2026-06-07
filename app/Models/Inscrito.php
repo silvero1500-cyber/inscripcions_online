@@ -62,6 +62,27 @@ final class Inscrito
     }
 
     /**
+     * Inscrits CONFIRMATS que coincideixen amb un DNI o un email (per recuperar
+     * el comprovant). El mateix valor es compara contra dni (majúscules) i email
+     * (minúscules), així funciona tant si l'usuari escriu el DNI com el correu.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public static function findConfirmadosByDniOrEmail(string $needle): array
+    {
+        $needle = trim($needle);
+        if ($needle === '') return [];
+
+        return Database::getInstance()->query(
+            "SELECT * FROM inscritos
+             WHERE estado = 'confirmado' AND (dni = ? OR email = ?)
+             ORDER BY id DESC
+             LIMIT 20",
+            [strtoupper($needle), strtolower($needle)]
+        )->fetchAll();
+    }
+
+    /**
      * Cuenta cuántas plazas hay confirmadas o pendientes (para verificar aforo).
      */
     public static function countActivasByEvento(int $eventoId): int

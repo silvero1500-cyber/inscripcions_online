@@ -134,6 +134,19 @@ return [
     'comprovant.dorsal'                => 'Dorsal',
     'comprovant.instructions'          => "Presenta aquest comprovant o el codi QR a l'organització el dia de l'esdeveniment.",
 
+    // Recuperar comprovant (públic)
+    'recover.title'                    => 'Recupera el teu comprovant',
+    'recover.desc'                     => "Introdueix el teu DNI o el correu electrònic amb què et vas inscriure i t'enviarem el comprovant d'inscripció al correu.",
+    'recover.field'                    => 'DNI o correu electrònic',
+    'recover.placeholder'              => '12345678A o el-teu-correu@exemple.com',
+    'recover.submit'                   => "✉ Envia'm el comprovant",
+    'recover.found'                    => "Inscripció trobada! T'hem enviat el comprovant a {email}. Revisa la safata d'entrada (i el correu brossa).",
+    'recover.notfound'                 => 'No hem trobat cap inscripció confirmada amb aquest DNI o correu.',
+    'recover.empty'                    => 'Introdueix el teu DNI o correu electrònic.',
+    'recover.expired'                  => 'La sessió ha expirat. Torna-ho a provar.',
+    'recover.send_error'               => "Hem trobat la inscripció però ara mateix no s'ha pogut enviar el correu. Torna-ho a provar més tard.",
+    'recover.link'                     => 'Ja estàs inscrit? Recupera el teu comprovant',
+
     // Email confirmacio
     'email.subject'                    => 'Inscripció confirmada · {event}',
     'email.header_title'               => 'Inscripció confirmada ✓',
