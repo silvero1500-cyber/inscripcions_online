@@ -66,6 +66,7 @@
                 </tr>
 
                 <!-- QR -->
+                <?php $comprovantUrl = base_url('/comprovant/' . $inscrito['qr_token']); ?>
                 <tr>
                     <td style="padding:28px 32px 16px;text-align:center;">
                         <h2 style="margin:0 0 12px;font-size:18px;color:#1f2937;font-weight:700;"><?= e(t('email.qr.title')) ?></h2>
@@ -73,6 +74,16 @@
                             <?= e(t('email.qr.desc')) ?>
                         </p>
                         <img src="cid:<?= e($qrCid) ?>" alt="<?= e(t('email.qr.alt')) ?>" width="240" height="240" style="display:inline-block;border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#ffffff;">
+
+                        <!-- Botó a la versió web (funciona encara que el client bloquegi les imatges, p.ex. a spam) -->
+                        <div style="margin-top:20px;">
+                            <a href="<?= e($comprovantUrl) ?>" target="_blank" style="display:inline-block;background:#1e88c2;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:8px;">
+                                <?= e(t('email.qr.button')) ?>
+                            </a>
+                        </div>
+                        <p style="margin:14px 0 0;font-size:13px;color:#9ca3af;line-height:1.55;">
+                            <?= e(t('email.qr.spam_note')) ?>
+                        </p>
                     </td>
                 </tr>
 

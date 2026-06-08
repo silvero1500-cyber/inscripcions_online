@@ -163,6 +163,8 @@ return [
     'email.qr.title'                   => 'El teu QR de check-in',
     'email.qr.desc'                    => "Mostra aquest codi a l'organització el dia de l'esdeveniment. Guarda aquest correu o fes una captura.",
     'email.qr.alt'                     => 'QR Check-in',
+    'email.qr.button'                  => '🎫 Veure el QR al navegador',
+    'email.qr.spam_note'               => "No veus el QR? Si aquest correu ha anat a la carpeta de correu brossa (spam), el client bloqueja les imatges. Clica el botó de dalt per obrir-lo al navegador, o mou aquest correu a la safata d'entrada.",
     'email.footer.contact'             => 'Si tens qualsevol dubte, respon a aquest correu.',
 
     // Errors / flashes
