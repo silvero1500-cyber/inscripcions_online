@@ -176,6 +176,8 @@ final class Tarifa
                     'precio'        => $t['precio'],
                     'aforo_maximo'  => $t['aforo_maximo'],
                     'grupo_aforo_id' => $t['grupo_aforo_id'] ?? null,
+                    'anio_nac_min'  => $t['anio_nac_min'] ?? null,
+                    'anio_nac_max'  => $t['anio_nac_max'] ?? null,
                     'fecha_inicio'  => $t['fecha_inicio'],
                     'fecha_fin'     => $t['fecha_fin'],
                     'orden'         => $orden,

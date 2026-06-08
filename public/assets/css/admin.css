@@ -540,6 +540,17 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 .tarifa-grupo { margin-top: .75rem; }
 .tarifa-grupo label { font-size: .8rem; margin: 0 0 .25rem; }
 
+/* Restricció per any de naixement de la tarifa */
+.tarifa-edat { margin-top: .75rem; }
+.tarifa-edat-title {
+    display: block;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin: 0 0 .35rem;
+}
+.tarifa-edat .tarifa-grid-2 { grid-template-columns: 1fr 1fr; }
+
 /* En pantalles mitjanes, el constructor passa a una sola columna */
 @media (max-width: 860px) {
     .builder { grid-template-columns: 1fr; }

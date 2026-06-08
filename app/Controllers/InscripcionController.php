@@ -51,8 +51,9 @@ final class InscripcionController
         $eventoId = (int) $evento['id'];
 
         // ── Pre-check tarifa (sin bloqueo, respuesta rápida) ──
-        $tarifaId = (int) ($_POST['tarifa_id'] ?? 0);
-        if ($tarifaId <= 0 || Tarifa::findDisponibleForEvento($tarifaId, $eventoId) === null) {
+        $tarifaId  = (int) ($_POST['tarifa_id'] ?? 0);
+        $tarifaRow = $tarifaId > 0 ? Tarifa::findDisponibleForEvento($tarifaId, $eventoId) : null;
+        if ($tarifaRow === null) {
             Session::flash('error', 'Tria una tarifa vàlida.');
             Response::redirect(base_url('/eventos/' . $slug) . '#formulari');
         }
@@ -67,6 +68,9 @@ final class InscripcionController
         if ($v->first('email') === null && $emailConfirm !== (string) ($data['email'] ?? '')) {
             $v->addError('email_confirm', t('form.email_mismatch'));
         }
+
+        // Restricció d'any de naixement de la tarifa triada (infantil, veterans, …)
+        self::validateAnioNacimiento($v, $tarifaRow, (string) ($data['fecha_nacimiento'] ?? ''));
 
         // ── Validación campos personalizados ──────────────────
         $valoresCampos = [];
@@ -494,5 +498,36 @@ final class InscripcionController
         }
 
         return $v;
+    }
+
+    /**
+     * Valida que l'any de naixement del corredor entri dins del rang permès per
+     * la tarifa (p.ex. infantil/veterans). Si la tarifa no té restricció, no fa res.
+     * Els errors s'adjunten al camp `tarifa_id` (es mostren al costat del selector).
+     */
+    private static function validateAnioNacimiento(Validator $v, array $tarifa, string $fechaNac): void
+    {
+        $min = isset($tarifa['anio_nac_min']) && $tarifa['anio_nac_min'] !== null ? (int) $tarifa['anio_nac_min'] : null;
+        $max = isset($tarifa['anio_nac_max']) && $tarifa['anio_nac_max'] !== null ? (int) $tarifa['anio_nac_max'] : null;
+        if ($min === null && $max === null) return;
+
+        $fechaNac = trim($fechaNac);
+        if ($fechaNac === '') {
+            $v->addError('tarifa_id', t('form.tarifa.nac_msg_need'));
+            return;
+        }
+        $ts = strtotime($fechaNac);
+        if ($ts === false) return; // data invàlida: ja ho controla la validació de fecha_nacimiento
+
+        $year = (int) date('Y', $ts);
+        if (($min !== null && $year < $min) || ($max !== null && $year > $max)) {
+            if ($min !== null && $max !== null) {
+                $v->addError('tarifa_id', t('form.tarifa.nac_msg_between', ['min' => $min, 'max' => $max]));
+            } elseif ($min !== null) {
+                $v->addError('tarifa_id', t('form.tarifa.nac_msg_from', ['min' => $min]));
+            } else {
+                $v->addError('tarifa_id', t('form.tarifa.nac_msg_until', ['max' => $max]));
+            }
+        }
     }
 }

@@ -173,11 +173,21 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
                 <label for="tarifa_id"><?= e(t('form.tarifa.label')) ?> <span class="req">*</span></label>
                 <select id="tarifa_id" name="tarifa_id" required>
                     <option value=""><?= e(t('form.tarifa.placeholder')) ?></option>
-                    <?php foreach ($tarifas as $t): $ag = !empty($t['_agotada']); ?>
+                    <?php foreach ($tarifas as $t): $ag = !empty($t['_agotada']);
+                        $nMin = isset($t['anio_nac_min']) && $t['anio_nac_min'] !== null ? (int)$t['anio_nac_min'] : null;
+                        $nMax = isset($t['anio_nac_max']) && $t['anio_nac_max'] !== null ? (int)$t['anio_nac_max'] : null;
+                        $nacHint = '';
+                        if ($nMin !== null && $nMax !== null)      $nacHint = t('form.tarifa.nac_hint_between', ['min' => $nMin, 'max' => $nMax]);
+                        elseif ($nMin !== null)                    $nacHint = t('form.tarifa.nac_hint_from',  ['min' => $nMin]);
+                        elseif ($nMax !== null)                    $nacHint = t('form.tarifa.nac_hint_until', ['max' => $nMax]);
+                    ?>
                         <option value="<?= (int)$t['id'] ?>"
+                                data-nac-min="<?= $nMin !== null ? $nMin : '' ?>"
+                                data-nac-max="<?= $nMax !== null ? $nMax : '' ?>"
                                 <?= $ag ? 'disabled' : '' ?>
                                 <?= (!$ag && (int)$val('tarifa_id') === (int)$t['id']) ? 'selected' : '' ?>>
                             <?= e($t['nombre']) ?> · <?= e(format_price((float)$t['precio'])) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
+                                if ($nacHint !== '') echo ' · ' . e($nacHint);
                                 if ($ag) {
                                     echo ' — ' . e(t('form.tarifa.soldout'));
                                 } elseif (isset($t['_plazas']) && $t['_plazas'] !== null && $t['_plazas'] <= 10) {
@@ -188,6 +198,7 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
                     <?php endforeach; ?>
                 </select>
                 <?php if ($err('tarifa_id')): ?><div class="field-error"><?= e($err('tarifa_id')) ?></div><?php endif; ?>
+                <div id="tarifa-age-msg" class="field-error" style="display:none;margin-top:.4rem;"></div>
             </div>
         </div>
 
@@ -395,6 +406,69 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
 
     <?php endif; ?>
 </section>
+
+<script>
+// Restricció d'any de naixement per tarifa (validació en viu + bloqueig a l'enviar).
+(function () {
+    var sel  = document.getElementById('tarifa_id');
+    var fn   = document.getElementById('fecha_nacimiento');
+    var msg  = document.getElementById('tarifa-age-msg');
+    var form = document.getElementById('formulari');
+    if (!sel || !msg) return;
+
+    var M = {
+        between: <?= json_encode(t('form.tarifa.nac_msg_between')) ?>,
+        from:    <?= json_encode(t('form.tarifa.nac_msg_from')) ?>,
+        until:   <?= json_encode(t('form.tarifa.nac_msg_until')) ?>,
+        need:    <?= json_encode(t('form.tarifa.nac_msg_need')) ?>
+    };
+
+    function birthYear() {
+        if (!fn || !fn.value) return null;
+        var m = String(fn.value).match(/^(\d{4})-\d{2}-\d{2}$/);
+        return m ? parseInt(m[1], 10) : null;
+    }
+    function selRange() {
+        var opt = sel.options[sel.selectedIndex];
+        var mn = opt ? opt.getAttribute('data-nac-min') : '';
+        var mx = opt ? opt.getAttribute('data-nac-max') : '';
+        return { min: mn ? parseInt(mn, 10) : null, max: mx ? parseInt(mx, 10) : null };
+    }
+    function show(text) { msg.textContent = text; msg.style.display = ''; }
+    function hide() { msg.textContent = ''; msg.style.display = 'none'; }
+
+    function check(onSubmit) {
+        var r = selRange();
+        if (r.min === null && r.max === null) { hide(); return true; }
+        var by = birthYear();
+        if (by === null) {
+            if (onSubmit) { show(M.need); return false; }
+            hide(); return true;
+        }
+        var bad = (r.min !== null && by < r.min) || (r.max !== null && by > r.max);
+        if (bad) {
+            var tpl = (r.min !== null && r.max !== null) ? M.between : (r.min !== null ? M.from : M.until);
+            show(tpl.replace('{min}', r.min).replace('{max}', r.max));
+            return false;
+        }
+        hide(); return true;
+    }
+
+    sel.addEventListener('change', function () { check(false); });
+    if (fn) {
+        fn.addEventListener('change', function () { check(false); });
+        fn.addEventListener('input',  function () { check(false); });
+    }
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            if (!check(true)) {
+                e.preventDefault();
+                msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }
+})();
+</script>
 
 <?php if (!empty($mostraAutofill)): ?>
 <script>

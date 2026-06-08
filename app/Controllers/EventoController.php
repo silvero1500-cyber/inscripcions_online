@@ -468,6 +468,8 @@ final class EventoController
                         'precio'        => $t['precio'],
                         'aforo_maximo'  => $t['aforo_maximo'],
                         'grupo_aforo_id' => $grupoId,
+                        'anio_nac_min'  => $t['anio_nac_min'] ?? null,
+                        'anio_nac_max'  => $t['anio_nac_max'] ?? null,
                         'fecha_inicio'  => $t['fecha_inicio'],
                         'fecha_fin'     => $t['fecha_fin'],
                         'activo'        => (int) $t['activo'],
@@ -531,6 +533,18 @@ final class EventoController
             return $value . ':00';
         }
         return $value;
+    }
+
+    /**
+     * Normaliza un any de naixement: vacío o fuera de rango plausible → null.
+     */
+    private static function normalizeAnioNac(mixed $value): ?int
+    {
+        $s = trim((string) $value);
+        if ($s === '' || !ctype_digit($s)) return null;
+        $y = (int) $s;
+        $max = (int) date('Y');
+        return ($y >= 1900 && $y <= $max) ? $y : null;
     }
 
     /**
@@ -600,6 +614,13 @@ final class EventoController
             $fIni  = self::normalizeDateTime(trim((string)($t['fecha_inicio'] ?? '')));
             $fFin  = self::normalizeDateTime(trim((string)($t['fecha_fin']    ?? '')));
 
+            // Restricció d'any de naixement (opcional). Sanititzem a un rang plausible.
+            $nacMin = self::normalizeAnioNac($t['anio_nac_min'] ?? '');
+            $nacMax = self::normalizeAnioNac($t['anio_nac_max'] ?? '');
+            if ($nacMin !== null && $nacMax !== null && $nacMin > $nacMax) {
+                [$nacMin, $nacMax] = [$nacMax, $nacMin]; // si venen al revés, els ordenem
+            }
+
             $out[] = [
                 'id'           => !empty($t['id']) ? (int)$t['id'] : null,
                 'nombre'       => mb_substr($nombre, 0, 100),
@@ -607,6 +628,8 @@ final class EventoController
                 'precio'       => number_format($precio, 2, '.', ''),
                 'aforo_maximo' => $aforo === '' ? null : max(1, (int)$aforo),
                 'grupo_cid'    => trim((string)($t['grupo_cid'] ?? '')),
+                'anio_nac_min' => $nacMin,
+                'anio_nac_max' => $nacMax,
                 'fecha_inicio' => $fIni,
                 'fecha_fin'    => $fFin,
                 'activo'       => isset($t['activo']) ? 1 : 0,

@@ -230,6 +230,19 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                            <div class="tarifa-edat">
+                                <span class="tarifa-edat-title">Restricció per any de naixement (opcional)</span>
+                                <div class="tarifa-grid-2">
+                                    <div>
+                                        <label>Nascuts des de (any)</label>
+                                        <input type="number" name="tarifas[<?= (int)$idx ?>][anio_nac_min]" value="<?= e((string)($t['anio_nac_min'] ?? '')) ?>" min="1900" max="<?= (int)date('Y') ?>" placeholder="Sense límit">
+                                    </div>
+                                    <div>
+                                        <label>Nascuts fins a (any)</label>
+                                        <input type="number" name="tarifas[<?= (int)$idx ?>][anio_nac_max]" value="<?= e((string)($t['anio_nac_max'] ?? '')) ?>" min="1900" max="<?= (int)date('Y') ?>" placeholder="Sense límit">
+                                    </div>
+                                </div>
+                            </div>
                             <div class="tarifa-grid-2">
                                 <div>
                                     <label>Descripció (opcional)</label>
@@ -435,6 +448,19 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
             <select name="tarifas[__IDX__][grupo_cid]" class="tarifa-grupo-select">
                 <option value="">— Independent (aforament propi) —</option>
             </select>
+        </div>
+        <div class="tarifa-edat">
+            <span class="tarifa-edat-title">Restricció per any de naixement (opcional)</span>
+            <div class="tarifa-grid-2">
+                <div>
+                    <label>Nascuts des de (any)</label>
+                    <input type="number" name="tarifas[__IDX__][anio_nac_min]" min="1900" max="<?= (int)date('Y') ?>" placeholder="Sense límit">
+                </div>
+                <div>
+                    <label>Nascuts fins a (any)</label>
+                    <input type="number" name="tarifas[__IDX__][anio_nac_max]" min="1900" max="<?= (int)date('Y') ?>" placeholder="Sense límit">
+                </div>
+            </div>
         </div>
         <div class="tarifa-grid-2">
             <div>
