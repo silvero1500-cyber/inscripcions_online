@@ -234,33 +234,35 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
     width: 18px; height: 18px;
 }
 
-/* ── Grid principal del detall (poster + info) ───────────── */
+/* ── Grid principal del detall (banner ample a dalt + info a sota) ─ */
 .evt-grid {
     display: grid;
-    grid-template-columns: 320px minmax(0, 1fr);
-    gap: 2.5rem;
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
     align-items: start;
     margin-bottom: 3rem;
 }
-@media (max-width: 800px) {
-    .evt-grid { grid-template-columns: 1fr; gap: 1.8rem; }
-}
 
 .evt-poster {
+    width: 100%;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
     background: #e5e7eb;
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 16 / 9;
+    max-height: 480px;
     background-size: cover;
     background-position: center;
     box-shadow: var(--shadow-md);
 }
 .evt-poster-placeholder {
+    width: 100%;
+    border-radius: var(--radius-lg);
     background: linear-gradient(135deg, #1e88c2 0%, #1976a8 100%);
     display: flex; align-items: center; justify-content: center;
     color: #fff;
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 16 / 9;
+    max-height: 480px;
 }
 .evt-poster-placeholder::after {
     content: '🏃';
