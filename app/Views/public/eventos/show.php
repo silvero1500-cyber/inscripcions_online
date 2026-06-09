@@ -327,7 +327,7 @@ $multi   = $maxPart >= 2;
                         $opts = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null);
                         $req = (int)$c['requerido'] === 1;
                     ?>
-                    <div class="form-row" data-camp-tarifa="<?= (int)($c['tarifa_id'] ?? 0) ?>">
+                    <div class="form-row" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
                         <label><?= e($c['etiqueta']) ?><?= $req ? ' <span class="req">*</span>' : '' ?></label>
 
                         <?php if ($c['tipo'] === 'textarea'): ?>
@@ -541,7 +541,7 @@ $multi   = $maxPart >= 2;
                 $creq  = (int) $c['requerido'] === 1;
                 $cvalC = $pv($ckey);
             ?>
-                <div class="form-row" data-camp-tarifa="<?= (int)($c['tarifa_id'] ?? 0) ?>">
+                <div class="form-row" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
                     <label><?= e($c['etiqueta']) ?><?= $creq ? ' <span class="req">*</span>' : '' ?></label>
                     <?php if ($c['tipo'] === 'textarea'): ?>
                         <textarea name="<?= e($nm($ckey)) ?>" rows="3" <?= $creq ? 'required' : '' ?>><?= e($cvalC) ?></textarea>
@@ -917,10 +917,10 @@ $multi   = $maxPart >= 2;
     // ── Camps condicionals segons la tarifa (mostra/amaga + activa/desactiva) ──
     window.filterCampsByTarifa = function (scope, tarifaVal) {
         if (!scope) return;
-        scope.querySelectorAll('[data-camp-tarifa]').forEach(function (row) {
-            var t = row.getAttribute('data-camp-tarifa');
-            if (!t || t === '0') return; // sempre visible
-            var show = (t === String(tarifaVal));
+        scope.querySelectorAll('[data-camp-tarifes]').forEach(function (row) {
+            var t = row.getAttribute('data-camp-tarifes');
+            if (!t) return; // buit = sempre visible
+            var show = t.split(',').indexOf(String(tarifaVal)) !== -1;
             row.style.display = show ? '' : 'none';
             row.querySelectorAll('input, select, textarea').forEach(function (el) {
                 if (show) { if (el.getAttribute('data-was-req') === '1') el.required = true; el.disabled = false; }

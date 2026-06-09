@@ -320,12 +320,18 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
         <legend>Camps personalitzats del formulari</legend>
         <p class="muted">A part dels camps estàndard del corredor (nom, DNI, email...), pots afegir camps extra que es mostraran al formulari d'inscripció. Arrossega'ls o fes servir les fletxes per ordenar-los.</p>
         <?php
-        // Opcions del selector "només per a la tarifa" (condicional). Només tarifes ja desades.
-        $tarifaCondOptions = function (?int $sel) use ($tarifas): string {
-            $h = '<option value="">— Totes les tarifes —</option>';
+        // Checkboxes de tarifes per al camp condicional (només tarifes ja desades).
+        // $idx pot ser un enter (camp existent) o '__IDX__' (plantilla).
+        $tarifaCondChecks = function (array $selectedIds, $idx) use ($tarifas): string {
+            $ambId = array_filter($tarifas, fn($t) => !empty($t['id']));
+            if (count($ambId) === 0) {
+                return '<span class="muted">Desa l\'esdeveniment per poder assignar tarifes a aquest camp.</span>';
+            }
+            $h = '';
             foreach ($tarifas as $t) {
                 if (empty($t['id'])) continue;
-                $h .= '<option value="' . (int) $t['id'] . '"' . ((int) $sel === (int) $t['id'] ? ' selected' : '') . '>' . e((string) $t['nombre']) . '</option>';
+                $checked = in_array((int) $t['id'], $selectedIds, true) ? ' checked' : '';
+                $h .= '<label class="inline-check" style="margin-right:.8rem;"><input type="checkbox" name="campos[' . $idx . '][tarifa_ids][]" value="' . (int) $t['id'] . '"' . $checked . '> ' . e((string) $t['nombre']) . '</label>';
             }
             return $h;
         };
@@ -386,12 +392,11 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                                 </div>
                             </div>
                             <div class="campo-grid-2">
-                                <div>
-                                    <label>Mostrar només per a la tarifa <span class="muted">(condicional)</span></label>
-                                    <select name="campos[<?= (int)$idx ?>][tarifa_id]"><?= $tarifaCondOptions(isset($c['tarifa_id']) ? (int)$c['tarifa_id'] : null) ?></select>
-                                    <small class="muted">Si tries una tarifa, el camp només apareix quan s'hi inscriu (p.ex. franja horària per a la Mitja marató).</small>
+                                <div style="grid-column:1 / -1;">
+                                    <label>Mostrar només per a aquestes tarifes <span class="muted">(condicional)</span></label>
+                                    <div class="campo-tarifes-checks"><?= $tarifaCondChecks(CampoPersonalizado::tarifasDeCampo($c), (int)$idx) ?></div>
+                                    <small class="muted">Marca una o més tarifes i el camp només apareix quan se'n tria alguna (p.ex. franja horària per a Mitja i 10K). Cap marcada = sempre.</small>
                                 </div>
-                                <div></div>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -455,12 +460,11 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
             </div>
         </div>
         <div class="campo-grid-2">
-            <div>
-                <label>Mostrar només per a la tarifa <span class="muted">(condicional)</span></label>
-                <select name="campos[__IDX__][tarifa_id]"><?= $tarifaCondOptions(null) ?></select>
-                <small class="muted">Si tries una tarifa, el camp només apareix quan s'hi inscriu (p.ex. franja horària per a la Mitja marató).</small>
+            <div style="grid-column:1 / -1;">
+                <label>Mostrar només per a aquestes tarifes <span class="muted">(condicional)</span></label>
+                <div class="campo-tarifes-checks"><?= $tarifaCondChecks([], '__IDX__') ?></div>
+                <small class="muted">Marca una o més tarifes i el camp només apareix quan se'n tria alguna. Cap marcada = sempre.</small>
             </div>
-            <div></div>
         </div>
     </div>
 </template>

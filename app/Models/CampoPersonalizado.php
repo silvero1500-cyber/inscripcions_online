@@ -58,13 +58,18 @@ final class CampoPersonalizado
 
             $db->query('DELETE FROM campos_personalizados WHERE evento_id = ?', [$eventoId]);
             foreach ($campos as $orden => $c) {
-                $tarifaId = isset($c['tarifa_id']) && $c['tarifa_id'] !== null ? (int) $c['tarifa_id'] : null;
-                if ($tarifaId !== null && !in_array($tarifaId, $tarifasValides, true)) {
-                    $tarifaId = null; // tarifa inexistent → camp sense condició
+                // Llista de tarifes (condicional): només les vàlides de l'esdeveniment
+                $tarifaIds = [];
+                foreach ((array) ($c['tarifa_ids'] ?? []) as $tid) {
+                    $tid = (int) $tid;
+                    if ($tid > 0 && in_array($tid, $tarifasValides, true)) $tarifaIds[] = $tid;
                 }
+                $tarifaIds = array_values(array_unique($tarifaIds));
+
                 $db->insert('campos_personalizados', [
                     'evento_id'    => $eventoId,
-                    'tarifa_id'    => $tarifaId,
+                    'tarifa_id'    => null,
+                    'tarifa_ids'   => $tarifaIds ? (string) json_encode($tarifaIds) : null,
                     'nombre_campo' => $c['nombre_campo'],
                     'etiqueta'     => $c['etiqueta'],
                     'tipo'         => $c['tipo'],
@@ -91,6 +96,24 @@ final class CampoPersonalizado
         }
         if ($clean === []) return null;
         return json_encode(array_values(array_unique($clean)), JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Llista d'ids de tarifa per a les quals es mostra el camp (buit = totes).
+     * Llegeix `tarifa_ids` (JSON) amb fallback a l'antic `tarifa_id`.
+     * @return list<int>
+     */
+    public static function tarifasDeCampo(array $campo): array
+    {
+        $raw = $campo['tarifa_ids'] ?? null;
+        if (!empty($raw)) {
+            $arr = json_decode((string) $raw, true);
+            if (is_array($arr)) {
+                return array_values(array_filter(array_map('intval', $arr), fn($n) => $n > 0));
+            }
+        }
+        if (!empty($campo['tarifa_id'])) return [(int) $campo['tarifa_id']];
+        return [];
     }
 
     /** @return list<string> */

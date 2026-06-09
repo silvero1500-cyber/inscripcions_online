@@ -84,8 +84,9 @@ final class InscripcionController
         // ── Validación campos personalizados ──────────────────
         $valoresCampos = [];
         foreach (CampoPersonalizado::getActivosPorEvento($eventoId) as $c) {
-            // Camp condicional: si té tarifa i no és la triada, s'ignora (ni valida ni desa)
-            if (!empty($c['tarifa_id']) && (int) $c['tarifa_id'] !== $tarifaId) continue;
+            // Camp condicional: si està limitat a unes tarifes i no és la triada, s'ignora
+            $ct = CampoPersonalizado::tarifasDeCampo($c);
+            if (!empty($ct) && !in_array($tarifaId, $ct, true)) continue;
             $key = 'campo_' . (int) $c['id'];
             $raw = $_POST[$key] ?? null;
 
@@ -298,7 +299,8 @@ final class InscripcionController
             // Camps personalitzats d'aquest participant
             $valores = [];
             foreach ($camposPers as $c) {
-                if (!empty($c['tarifa_id']) && (int) $c['tarifa_id'] !== $tarifaId) continue;
+                $ct = CampoPersonalizado::tarifasDeCampo($c);
+                if (!empty($ct) && !in_array($tarifaId, $ct, true)) continue;
                 $key = 'campo_' . (int) $c['id'];
                 $raw = $p[$key] ?? null;
                 if ((int) $c['requerido'] === 1) {
