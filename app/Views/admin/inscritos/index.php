@@ -146,6 +146,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
     <?php
     $colDefs = [
         ['key' => 'id',          'label' => '#'],
+        ['key' => 'pedido',      'label' => 'Comanda'],
         ['key' => 'created_at',  'label' => 'Data'],
         ['key' => 'nombre',      'label' => 'Nom'],
         ['key' => 'apellido',    'label' => 'Cognoms'],
@@ -193,6 +194,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
             <thead>
                 <tr>
                     <th data-col="id">#</th>
+                    <th data-col="pedido">Comanda</th>
                     <th data-col="created_at">Data</th>
                     <th data-col="nombre">Nom</th>
                     <th data-col="apellido">Cognoms</th>
@@ -216,6 +218,13 @@ $pageUrl = function (int $p) use ($filtersClean): string {
             <?php foreach ($inscritos as $i): ?>
                 <tr>
                     <td data-col="id"><?= (int)$i['id'] ?></td>
+                    <td data-col="pedido">
+                        <?php if (!empty($i['pedido_id'])): $pid = (int)$i['pedido_id']; $hue = ($pid * 47) % 360; ?>
+                            <span class="badge" style="background:hsl(<?= $hue ?>,65%,92%);color:hsl(<?= $hue ?>,70%,28%);" title="Inscrits de la mateixa comanda (compra conjunta)">#<?= $pid ?></span>
+                        <?php else: ?>
+                            <span class="muted">—</span>
+                        <?php endif; ?>
+                    </td>
                     <td data-col="created_at"><?= e(date('d/m/Y H:i', strtotime((string)$i['created_at']))) ?></td>
                     <td data-col="nombre"><strong><?= e($i['nombre']) ?></strong></td>
                     <td data-col="apellido"><?= e($i['apellido']) ?></td>

@@ -199,7 +199,7 @@ final class InscritosAdminController
 
         // Capçaleres
         fputcsv($out, [
-            'ID', 'Data inscripció', 'Nom', 'Cognoms', 'DNI', 'Sexe', 'Data naixement',
+            'ID', 'Comanda', 'Data inscripció', 'Nom', 'Cognoms', 'DNI', 'Sexe', 'Data naixement',
             'Email', 'Telèfon', 'Club', 'Població', 'Codi postal', 'Talla',
             'Tarifa', 'Preu', 'Estat', 'Check-in', 'Dorsal'
         ], ';');
@@ -207,6 +207,7 @@ final class InscritosAdminController
         foreach ($inscritos as $i) {
             fputcsv($out, [
                 $i['id'],
+                !empty($i['pedido_id']) ? '#' . (int) $i['pedido_id'] : '',
                 $i['created_at'],
                 $i['nombre'],
                 $i['apellido'],
