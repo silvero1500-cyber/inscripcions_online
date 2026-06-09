@@ -23,7 +23,9 @@
                 <dt><?= e(t('payment.ok.summary.status')) ?></dt><dd><span class="badge badge-warning"><?= e(t('payment.ko.summary.status_pending')) ?></span></dd>
             </dl>
         </div>
+    <?php endif; ?>
 
+    <?php if ($evento): ?>
         <p class="muted"><?= e(t('payment.ko.kept')) ?></p>
 
         <div class="actions" style="display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;">

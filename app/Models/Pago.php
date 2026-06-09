@@ -49,6 +49,41 @@ final class Pago
         return (bool) $row;
     }
 
+    public static function hayPagoCompletadoPedido(int $pedidoId): bool
+    {
+        $row = Database::getInstance()->query(
+            "SELECT 1 FROM pagos
+             WHERE pedido_id = ? AND estado = 'completado'
+             LIMIT 1",
+            [$pedidoId]
+        )->fetchColumn();
+        return (bool) $row;
+    }
+
+    /**
+     * Crea un pago 'iniciado' per a un PEDIDO (grup). `inscrito_id` apunta al
+     * primer participant (representant) per compatibilitat amb la columna NOT NULL.
+     */
+    public static function crearIniciadoPedido(
+        int $pedidoId,
+        int $inscritoRepId,
+        string $dsOrder,
+        float $importe,
+        string $merchantCode,
+        string $terminal
+    ): int {
+        return Database::getInstance()->insert('pagos', [
+            'inscrito_id'      => $inscritoRepId,
+            'pedido_id'        => $pedidoId,
+            'ds_order'         => $dsOrder,
+            'ds_merchant_code' => $merchantCode,
+            'ds_terminal'      => $terminal,
+            'importe'          => number_format($importe, 2, '.', ''),
+            'moneda'           => 'EUR',
+            'estado'           => self::ESTADO_INICIADO,
+        ]);
+    }
+
     /**
      * Crea un registro de pago en estado 'iniciado'.
      */

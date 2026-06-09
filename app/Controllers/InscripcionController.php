@@ -172,6 +172,7 @@ final class InscripcionController
             Response::redirect(base_url('/eventos/' . $slug) . '#formulari');
         }
 
+        Session::forget('ultimo_pedido');
         Session::set('ultima_inscripcion', [
             'id'         => $inscritoId,
             'evento_id'  => $eventoId,
@@ -396,6 +397,7 @@ final class InscripcionController
         $pedidoId = (int) $result['pedido_id'];
         $total    = (float) $result['total'];
 
+        Session::forget('ultima_inscripcion');
         Session::set('ultimo_pedido', ['pedido_id' => $pedidoId, 'slug' => $slug, 'pay_method' => null]);
 
         // Gratuït (total 0): confirmar tot el pedido + email amb tots els QR

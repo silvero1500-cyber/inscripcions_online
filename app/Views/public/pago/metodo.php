@@ -10,7 +10,7 @@ use App\Core\Csrf;
     <div class="pago-card">
         <h1><?= e(t('payment.choose_title')) ?></h1>
         <p class="muted pago-resum">
-            <strong><?= e($evento['titulo']) ?></strong> · <?= e($tarifa['nombre']) ?>
+            <strong><?= e($evento['titulo']) ?></strong> · <?= e($concepto ?? ($tarifa['nombre'] ?? '')) ?>
             · <strong><?= e(format_price($importe)) ?></strong>
         </p>
 

@@ -13,6 +13,7 @@ use App\Core\View;
 use App\Models\Evento;
 use App\Models\Inscrito;
 use App\Models\Pago;
+use App\Models\Pedido;
 use App\Models\RedsysNotificacion;
 use App\Models\Tarifa;
 use App\Services\EmailService;
@@ -25,6 +26,23 @@ final class PagoController
      */
     public function metodo(Request $req): void
     {
+        // ── Grup (pedido) ──
+        $ctxP = self::cargarContextoPedido();
+        if ($ctxP !== null) {
+            if ($ctxP['pedido']['estado'] === 'confirmado'
+                || Pago::hayPagoCompletadoPedido((int) $ctxP['pedido']['id'])) {
+                Response::redirect(base_url('/eventos/' . $ctxP['evento']['slug'] . '/gracies'));
+            }
+            $n = count($ctxP['inscritos']);
+            View::render('public/pago/metodo', [
+                'evento'   => $ctxP['evento'],
+                'concepto' => $n . ' ' . mb_strtolower(t('group.participants_title')),
+                'importe'  => (float) $ctxP['pedido']['importe_total'],
+                'error'    => Session::pullFlash('pago_metodo_error'),
+            ], layout: 'public');
+            return;
+        }
+
         $ctx = self::cargarContextoSesion();
         if ($ctx === null) {
             Response::redirect(base_url('/'));
@@ -38,6 +56,7 @@ final class PagoController
 
         View::render('public/pago/metodo', [
             'evento'   => $ctx['evento'],
+            'concepto' => $ctx['tarifa']['nombre'],
             'tarifa'   => $ctx['tarifa'],
             'inscrito' => $ctx['inscrito'],
             'importe'  => (float) $ctx['tarifa']['precio'],
@@ -61,12 +80,14 @@ final class PagoController
             Response::redirect(base_url('/pago/metodo'));
         }
 
-        $ult = Session::get('ultima_inscripcion');
+        // Funciona tant per a inscripció individual com per a pedido (grup)
+        $key = is_array(Session::get('ultimo_pedido')) ? 'ultimo_pedido' : 'ultima_inscripcion';
+        $ult = Session::get($key);
         if (!is_array($ult)) {
             Response::redirect(base_url('/'));
         }
         $ult['pay_method'] = $metodo;
-        Session::set('ultima_inscripcion', $ult);
+        Session::set($key, $ult);
 
         Response::redirect(base_url('/pago/iniciar'));
     }
@@ -77,6 +98,82 @@ final class PagoController
      */
     public function iniciar(Request $req): void
     {
+        // ── Grup (pedido): un sol pagament pel total ──
+        $ctxP = self::cargarContextoPedido();
+        if ($ctxP !== null) {
+            $pedido = $ctxP['pedido']; $evento = $ctxP['evento']; $inscritos = $ctxP['inscritos'];
+
+            $payMethod = (string) ($ctxP['ult']['pay_method'] ?? '');
+            if (!in_array($payMethod, [RedsysService::PAY_METHOD_CARD, RedsysService::PAY_METHOD_BIZUM], true)) {
+                Response::redirect(base_url('/pago/metodo'));
+            }
+            if ($pedido['estado'] === 'confirmado' || Pago::hayPagoCompletadoPedido((int) $pedido['id'])) {
+                Response::redirect(base_url('/eventos/' . $evento['slug'] . '/gracies'));
+            }
+
+            try {
+                $redsys = new RedsysService();
+            } catch (\Throwable $e) {
+                error_log('[Redsys] Configuración inválida: ' . $e->getMessage());
+                View::render('public/pago/error_config', [], layout: 'public');
+                return;
+            }
+
+            $importeFinal = (float) $pedido['importe_total'];
+            $importeCents = (int) round($importeFinal * 100);
+            $repId = (int) $inscritos[0]['id'];
+
+            $order = ''; $pagoId = 0;
+            for ($i = 0; $i < 5; $i++) {
+                try {
+                    $order  = RedsysService::generateOrder();
+                    $pagoId = Pago::crearIniciadoPedido(
+                        (int) $pedido['id'], $repId, $order, $importeFinal,
+                        (string) (\App\Core\Env::get('REDSYS_MERCHANT_CODE', '')),
+                        (string) (\App\Core\Env::get('REDSYS_TERMINAL', ''))
+                    );
+                    break;
+                } catch (\Throwable $e) {
+                    if ($i === 4) { error_log('[Redsys] No se pudo generar ds_order (pedido): ' . $e->getMessage()); Response::serverError('No se pudo iniciar el pago.'); }
+                }
+            }
+
+            $redsysLang = match ((string) ($pedido['locale'] ?? 'ca')) { 'es' => '001', 'en' => '002', default => '003' };
+            $titular = trim($inscritos[0]['nombre'] . ' ' . (string) ($inscritos[0]['apellido'] ?? ''));
+
+            try {
+                $form = $redsys->buildPaymentForm([
+                    'order'            => $order,
+                    'amount_cents'     => $importeCents,
+                    'description'      => $evento['titulo'] . ' · ' . count($inscritos) . ' participants',
+                    'titular'          => $titular !== '' ? $titular : (string) $pedido['email'],
+                    'url_notification' => base_url('/pago/notificacion'),
+                    'url_ok'           => base_url('/pago/ok?o=' . $order),
+                    'url_ko'           => base_url('/pago/ko?o=' . $order),
+                    'language'         => $redsysLang,
+                    'pay_method'       => $payMethod,
+                ]);
+            } catch (\Throwable $e) {
+                error_log('[Redsys] Error preparando formulario (pedido): ' . $e->getMessage());
+                Response::serverError('No se pudo iniciar el pago.');
+            }
+
+            Session::set('pago_actual', [
+                'pago_id'   => $pagoId,
+                'ds_order'  => $order,
+                'pedido_id' => (int) $pedido['id'],
+            ]);
+
+            View::render('public/pago/redirigir', [
+                'url'        => $form['url'],
+                'fields'     => $form['fields'],
+                'evento'     => $evento,
+                'importe'    => $importeFinal,
+                'pay_method' => $payMethod,
+            ], layout: 'public');
+            return;
+        }
+
         $ctx = self::cargarContextoSesion();
         if ($ctx === null) {
             Response::redirect(base_url('/'));
@@ -229,6 +326,34 @@ final class PagoController
     }
 
     /**
+     * Context d'un PEDIDO (grup) des de la sessió `ultimo_pedido`.
+     *
+     * @return array{ult:array<string,mixed>, pedido:array<string,mixed>, evento:array<string,mixed>, inscritos:list<array<string,mixed>>}|null
+     */
+    private static function cargarContextoPedido(): ?array
+    {
+        $ult = Session::get('ultimo_pedido');
+        if (!is_array($ult) || empty($ult['pedido_id']) || empty($ult['slug'])) {
+            return null;
+        }
+        $pedido = Pedido::findById((int) $ult['pedido_id']);
+        $evento = Evento::findBySlug((string) $ult['slug']);
+        if ($pedido === null || $evento === null) {
+            return null;
+        }
+        $inscritos = Pedido::inscritos((int) $pedido['id']);
+        if (count($inscritos) === 0) {
+            return null;
+        }
+        return [
+            'ult'       => $ult,
+            'pedido'    => $pedido,
+            'evento'    => $evento,
+            'inscritos' => $inscritos,
+        ];
+    }
+
+    /**
      * IPN (Instant Payment Notification): Redsys nos hace POST server-to-server
      * con el resultado. Aquí actualizamos el estado del pago y la inscripción.
      *
@@ -274,7 +399,15 @@ final class PagoController
         Database::getInstance()->transaction(function () use ($pago, $params, $resultado): void {
             if ($resultado['success']) {
                 Pago::marcarCompletado((int) $pago['id'], $params);
-                Inscrito::marcarConfirmado((int) $pago['inscrito_id']);
+                if (!empty($pago['pedido_id'])) {
+                    // Grup: confirmar el pedido i TOTS els seus participants
+                    Pedido::marcarConfirmado((int) $pago['pedido_id']);
+                    foreach (Pedido::inscritos((int) $pago['pedido_id']) as $ins) {
+                        Inscrito::marcarConfirmado((int) $ins['id']);
+                    }
+                } else {
+                    Inscrito::marcarConfirmado((int) $pago['inscrito_id']);
+                }
             } else {
                 Pago::marcarFallido((int) $pago['id'], $params);
                 // No cancelamos la inscripción automáticamente:
@@ -288,7 +421,11 @@ final class PagoController
         // logueamos pero devolvemos OK a Redsys igualmente para no reintentar.
         if ($resultado['success']) {
             try {
-                self::enviarConfirmacion((int) $pago['inscrito_id'], (int) $pago['id']);
+                if (!empty($pago['pedido_id'])) {
+                    InscripcionController::enviarConfirmacionPedido((int) $pago['pedido_id']);
+                } else {
+                    self::enviarConfirmacion((int) $pago['inscrito_id'], (int) $pago['id']);
+                }
             } catch (\Throwable $e) {
                 error_log('[PagoController] Email confirmación falló: ' . $e->getMessage());
             }
@@ -309,6 +446,28 @@ final class PagoController
         if ($pago === null) {
             // Sin contexto, mandamos al inicio
             Response::redirect(base_url('/'));
+        }
+
+        // ── Grup (pedido) ──
+        if (!empty($pago['pedido_id'])) {
+            $pedido = Pedido::findById((int) $pago['pedido_id']);
+            $evento = $pedido ? Evento::findById((int) $pedido['evento_id']) : null;
+            if ($pedido === null || $evento === null) {
+                Response::redirect(base_url('/'));
+            }
+            Session::forget('pago_actual');
+            if ($pedido['estado'] === 'confirmado') {
+                Session::set('ultimo_pedido', ['pedido_id' => (int) $pedido['id'], 'slug' => $evento['slug'], 'pay_method' => null]);
+                Response::redirect(base_url('/eventos/' . $evento['slug'] . '/gracies'));
+            }
+            // Encara esperant la confirmació (IPN)
+            View::render('public/pago/ok', [
+                'pago'      => $pago,
+                'evento'    => $evento,
+                'esperando' => true,
+                'qrToken'   => null,
+            ], layout: 'public');
+            return;
         }
 
         $inscrito = Inscrito::findById((int) $pago['inscrito_id']);
@@ -345,6 +504,19 @@ final class PagoController
     {
         $order = (string) $req->query('o', '');
         $pago  = $order !== '' ? Pago::findByOrder($order) : null;
+
+        // ── Grup (pedido) ──
+        if ($pago && !empty($pago['pedido_id'])) {
+            $pedido = Pedido::findById((int) $pago['pedido_id']);
+            $evento = $pedido ? Evento::findById((int) $pedido['evento_id']) : null;
+            View::render('public/pago/ko', [
+                'pago'     => $pago,
+                'evento'   => $evento,
+                'inscrito' => null,
+                'tarifa'   => null,
+            ], layout: 'public');
+            return;
+        }
 
         $inscrito = $pago ? Inscrito::findById((int) $pago['inscrito_id']) : null;
         $evento   = $inscrito ? Evento::findById((int) $inscrito['evento_id']) : null;
