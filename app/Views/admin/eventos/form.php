@@ -78,6 +78,14 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
         </div>
 
         <div class="form-row">
+            <label for="max_participantes">Màxim de participants per inscripció</label>
+            <input type="number" id="max_participantes" name="max_participantes" min="1" max="50"
+                   placeholder="1 (individual)" value="<?= e($val('max_participantes')) ?>">
+            <small class="muted">Permet inscriure diverses persones en una sola compra (família/grup). Buit o 1 = inscripció individual.</small>
+            <?php if ($err('max_participantes')): ?><div class="field-error"><?= e($err('max_participantes')) ?></div><?php endif; ?>
+        </div>
+
+        <div class="form-row">
             <label for="localizacion">Localització</label>
             <input type="text" id="localizacion" name="localizacion" maxlength="255"
                    placeholder="Ex: Plaça Major, 08001 Barcelona" value="<?= e($val('localizacion')) ?>">

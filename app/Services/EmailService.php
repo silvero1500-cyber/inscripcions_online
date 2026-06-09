@@ -112,6 +112,51 @@ final class EmailService
     }
 
     /**
+     * Email de confirmació d'un PEDIDO (grup): un sol correu al contacte amb
+     * el QR de check-in de cada participant.
+     *
+     * @param array $pedido  Fila de pedidos (email, locale, ...)
+     * @param array $evento
+     * @param list<array{inscrito:array<string,mixed>, tarifa:array<string,mixed>|null}> $items
+     */
+    public static function sendConfirmacionPedido(array $pedido, array $evento, array $items): void
+    {
+        // Un QR per participant
+        $attachments = [];
+        $itemsView   = [];
+        foreach ($items as $idx => $it) {
+            $ins = $it['inscrito'];
+            $cid = 'qr_' . $idx;
+            $png = QrService::pngBytes(base_url('/admin/checkin/' . $ins['qr_token']), 240);
+            $attachments[] = ['cid' => $cid, 'bytes' => $png, 'name' => 'qr_' . $idx . '.png', 'type' => 'image/png'];
+            $itemsView[]   = ['inscrito' => $ins, 'tarifa' => $it['tarifa'], 'qrCid' => $cid];
+        }
+
+        // Forçar locale del pedido per renderitzar email + subject en el seu idioma
+        $localePedido   = !empty($pedido['locale']) ? (string) $pedido['locale'] : \App\Core\Lang::DEFAULT_LOCALE;
+        $localeOriginal = $_COOKIE['IO_LOCALE'] ?? null;
+        $_COOKIE['IO_LOCALE'] = $localePedido;
+        \App\Core\Lang::reset();
+
+        $html = View::renderToString('emails/confirmacion_pedido', [
+            'pedido'  => $pedido,
+            'evento'  => $evento,
+            'items'   => $itemsView,
+            'baseUrl' => base_url('/'),
+        ]);
+        $subject = \App\Core\Lang::t('email.subject', ['event' => $evento['titulo']]);
+
+        if ($localeOriginal !== null) {
+            $_COOKIE['IO_LOCALE'] = $localeOriginal;
+        } else {
+            unset($_COOKIE['IO_LOCALE']);
+        }
+        \App\Core\Lang::reset();
+
+        self::send((string) $pedido['email'], $subject, $html, $attachments);
+    }
+
+    /**
      * Envía un email de prueba al destinatario indicado.
      */
     public static function sendTest(string $to): void

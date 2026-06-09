@@ -83,6 +83,18 @@ return [
     'form.test.banner_desc'            => 'clica per omplir el formulari amb dades aleatòries vàlides.',
     'form.test.fill'                   => '🧪 Omplir prova',
 
+    // Inscripció de grup (diversos participants)
+    'group.contact_title'              => 'Dades de contacte',
+    'group.contact_desc'               => 'Qui rep el comprovant amb els QR de tots els participants.',
+    'group.participants_title'         => 'Participants',
+    'group.participant'                => 'Participant',
+    'group.add'                        => 'Afegir participant',
+    'group.remove'                     => 'Treure',
+    'group.total'                      => 'Total',
+    'group.min_one'                    => 'Cal almenys un participant.',
+    'group.too_many'                   => 'Hi ha massa participants per a aquesta inscripció.',
+    'group.success_lead'               => 'Gràcies! Hem rebut la inscripció de {n} participants a {event}.',
+
     // Payment method selector
     'payment.choose_title'             => 'Tria com vols pagar',
     'payment.method.card'              => 'Targeta',
@@ -162,6 +174,8 @@ return [
     'email.header_title'               => 'Inscripció confirmada ✓',
     'email.greeting'                   => 'Hola {name},',
     'email.intro'                      => "La teva inscripció a {event} ha estat confirmada correctament. Aquí tens els detalls i el QR que hauràs de mostrar el dia de l'esdeveniment per fer el check-in.",
+    'email.greeting_generic'           => 'Hola!',
+    'email.pedido_intro'               => "Aquí tens els comprovants dels {n} participants de la teva inscripció a {event}. Cada participant té el seu propi QR per fer el check-in el dia de l'esdeveniment.",
     'email.field.event'                => 'Esdeveniment',
     'email.field.date'                 => 'Data',
     'email.field.tarifa'               => 'Tarifa',

@@ -102,6 +102,7 @@ final class EventoController
                     'fecha_evento'             => $data['fecha_evento'],
                     'fecha_limite_inscripcion' => $data['fecha_limite_inscripcion'],
                     'aforo_maximo'             => $data['aforo_maximo'],
+                    'max_participantes'        => $data['max_participantes'],
                     'imagen_portada'           => $imagePath,
                     'activo'                   => $data['activo'],
                     'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
@@ -174,6 +175,7 @@ final class EventoController
             'fecha_evento'             => $data['fecha_evento'],
             'fecha_limite_inscripcion' => $data['fecha_limite_inscripcion'],
             'aforo_maximo'             => $data['aforo_maximo'],
+            'max_participantes'        => $data['max_participantes'],
             'activo'                   => $data['activo'],
             'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
             'campos_fijos'             => $data['campos_fijos'],
@@ -440,6 +442,7 @@ final class EventoController
                     'fecha_evento'             => $evento['fecha_evento'],
                     'fecha_limite_inscripcion' => $evento['fecha_limite_inscripcion'],
                     'aforo_maximo'             => $evento['aforo_maximo'],
+                    'max_participantes'        => $evento['max_participantes'] ?? null,
                     'imagen_portada'           => ImageUploader::copyEventImage($evento['imagen_portada'] ?? null),
                     'activo'                   => 0, // la còpia comença inactiva
                     'inscripciones_abiertas'   => (int) $evento['inscripciones_abiertas'],
@@ -503,6 +506,7 @@ final class EventoController
     private static function extractEventoData(array $post): array
     {
         $aforo  = trim((string)($post['aforo_maximo'] ?? ''));
+        $maxPart = trim((string)($post['max_participantes'] ?? ''));
         $fechaLimite = self::normalizeDateTime(trim((string)($post['fecha_limite_inscripcion'] ?? '')));
 
         return [
@@ -514,6 +518,7 @@ final class EventoController
             'fecha_evento'             => trim((string)($post['fecha_evento'] ?? '')),
             'fecha_limite_inscripcion' => $fechaLimite,
             'aforo_maximo'             => $aforo === '' ? null : (int)$aforo,
+            'max_participantes'        => $maxPart === '' ? null : max(1, (int)$maxPart),
             'activo'                   => isset($post['activo']) ? 1 : 0,
             'inscripciones_abiertas'   => isset($post['inscripciones_abiertas']) ? 1 : 0,
             'campos_fijos'             => CamposFijos::fromPost($post),
@@ -578,6 +583,9 @@ final class EventoController
         }
         if (isset($data['aforo_maximo']) && $data['aforo_maximo'] !== null) {
             $v->integer('aforo_maximo', 1, 100000);
+        }
+        if (isset($data['max_participantes']) && $data['max_participantes'] !== null) {
+            $v->integer('max_participantes', 1, 50);
         }
         return $v;
     }

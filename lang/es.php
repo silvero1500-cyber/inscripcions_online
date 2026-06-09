@@ -83,6 +83,18 @@ return [
     'form.test.banner_desc'            => 'clica para rellenar el formulario con datos aleatorios válidos.',
     'form.test.fill'                   => '🧪 Rellenar prueba',
 
+    // Inscripción de grupo (varios participantes)
+    'group.contact_title'              => 'Datos de contacto',
+    'group.contact_desc'               => 'Quien recibe el justificante con los QR de todos los participantes.',
+    'group.participants_title'         => 'Participantes',
+    'group.participant'                => 'Participante',
+    'group.add'                        => 'Añadir participante',
+    'group.remove'                     => 'Quitar',
+    'group.total'                      => 'Total',
+    'group.min_one'                    => 'Hace falta al menos un participante.',
+    'group.too_many'                   => 'Hay demasiados participantes para esta inscripción.',
+    'group.success_lead'               => '¡Gracias! Hemos recibido la inscripción de {n} participantes en {event}.',
+
     // Payment method selector
     'payment.choose_title'             => 'Elige cómo quieres pagar',
     'payment.method.card'              => 'Tarjeta',
@@ -162,6 +174,8 @@ return [
     'email.header_title'               => 'Inscripción confirmada ✓',
     'email.greeting'                   => 'Hola {name},',
     'email.intro'                      => 'Tu inscripción a {event} ha sido confirmada correctamente. Aquí tienes los detalles y el QR que tendrás que mostrar el día del evento para hacer el check-in.',
+    'email.greeting_generic'           => '¡Hola!',
+    'email.pedido_intro'               => 'Aquí tienes los justificantes de los {n} participantes de tu inscripción a {event}. Cada participante tiene su propio QR para hacer el check-in el día del evento.',
     'email.field.event'                => 'Evento',
     'email.field.date'                 => 'Fecha',
     'email.field.tarifa'               => 'Tarifa',

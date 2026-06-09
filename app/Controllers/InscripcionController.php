@@ -17,6 +17,7 @@ use App\Models\DescuentoEvento;
 use App\Models\Evento;
 use App\Models\GrupoAforo;
 use App\Models\Inscrito;
+use App\Models\Pedido;
 use App\Models\Tarifa;
 use App\Services\EmailService;
 use App\Services\QrService;
@@ -46,6 +47,12 @@ final class InscripcionController
         if (!PublicController::inscripcionesAbiertas($evento)) {
             Session::flash('error', 'Les inscripcions per a aquest esdeveniment estan tancades.');
             Response::redirect(base_url('/eventos/' . $slug));
+        }
+
+        // Inscripció de grup (diversos participants en una sola compra)
+        if ($req->post('grupo') === '1' && (int) ($evento['max_participantes'] ?? 1) >= 2) {
+            $this->storeGrupo($req, $evento, $slug);
+            return; // storeGrupo redirigeix sempre
         }
 
         $eventoId = (int) $evento['id'];
@@ -213,11 +220,265 @@ final class InscripcionController
         }
     }
 
+    /**
+     * Alta d'una inscripció de GRUP: un contacte + N participants, un sol pagament.
+     * Crea un `pedido` i N `inscritos` (tot o res respecte de l'aforament).
+     */
+    private function storeGrupo(Request $req, array $evento, string $slug): void
+    {
+        $eventoId = (int) $evento['id'];
+        $maxPart  = max(1, (int) ($evento['max_participantes'] ?? 1));
+
+        // Honeypot ja comprovat a store(). Contacte + participants del POST.
+        $contacto = is_array($_POST['contacto'] ?? null) ? $_POST['contacto'] : [];
+        $participantsRaw = is_array($_POST['participants'] ?? null)
+            ? array_values(array_filter($_POST['participants'], 'is_array'))
+            : [];
+
+        $errors = [];
+
+        $contactEmail        = strtolower(trim((string) ($contacto['email'] ?? '')));
+        $contactEmailConfirm = strtolower(trim((string) ($contacto['email_confirm'] ?? '')));
+        $contactTel          = preg_replace('/\s+/', '', trim((string) ($contacto['telefono'] ?? ''))) ?? '';
+
+        if ($contactEmail === '' || !filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
+            $errors['contacto.email'] = ['Correu electrònic no vàlid.'];
+        } elseif ($contactEmailConfirm !== $contactEmail) {
+            $errors['contacto.email_confirm'] = [t('form.email_mismatch')];
+        }
+        if (count($participantsRaw) < 1) {
+            $errors['contacto.email'] = [t('group.min_one')];
+        } elseif (count($participantsRaw) > $maxPart) {
+            $errors['contacto.email'] = [t('group.too_many')];
+        }
+
+        $camposFijos = CamposFijos::resolve($evento['campos_fijos'] ?? null);
+
+        // Telèfon: és del contacte (no de cada participant)
+        if (CamposFijos::visible($camposFijos, 'telefono')) {
+            if (CamposFijos::requerido($camposFijos, 'telefono') && $contactTel === '') {
+                $errors['contacto.telefono'] = ['El telèfon és obligatori.'];
+            } elseif ($contactTel !== '' && !preg_match('/^\+?\d{9,15}$/', $contactTel)) {
+                $errors['contacto.telefono'] = ['Número de telèfon no vàlid.'];
+            }
+        }
+
+        $camposPers  = CampoPersonalizado::getActivosPorEvento($eventoId);
+
+        // Validar cada participant i preparar les dades
+        $prepared = [];
+        foreach ($participantsRaw as $i => $p) {
+            $tarifaId  = (int) ($p['tarifa_id'] ?? 0);
+            $tarifaRow = $tarifaId > 0 ? Tarifa::findDisponibleForEvento($tarifaId, $eventoId) : null;
+            if ($tarifaRow === null) {
+                $errors["participants.$i.tarifa_id"] = ['Tria una tarifa vàlida.'];
+            }
+
+            // Dades del corredor (l'email/telèfon són del contacte, no del participant)
+            $pPost = $p;
+            $pPost['email']    = $contactEmail;
+            $pPost['telefono'] = $contactTel;
+            $data = self::extractCorredorData($pPost, $camposFijos);
+            $v    = self::validateCorredor($data, $camposFijos);
+            if ($tarifaRow !== null) {
+                self::validateAnioNacimiento($v, $tarifaRow, (string) ($data['fecha_nacimiento'] ?? ''));
+            }
+            foreach ($v->errors() as $field => $msgs) {
+                // email/email_confirm/telefono són del contacte, no de cada participant
+                if (in_array($field, ['email', 'email_confirm', 'telefono'], true)) continue;
+                $errors["participants.$i.$field"] = $msgs;
+            }
+
+            // Camps personalitzats d'aquest participant
+            $valores = [];
+            foreach ($camposPers as $c) {
+                $key = 'campo_' . (int) $c['id'];
+                $raw = $p[$key] ?? null;
+                if ((int) $c['requerido'] === 1) {
+                    $vacio = ($raw === null) || (is_string($raw) && trim($raw) === '') || (is_array($raw) && count($raw) === 0);
+                    if ($vacio) { $errors["participants.$i.$key"] = ['El camp "' . $c['etiqueta'] . '" és obligatori.']; continue; }
+                }
+                if ($raw === null || $raw === '') continue;
+                $valores[(int) $c['id']] = is_array($raw)
+                    ? implode(', ', array_map('strval', $raw))
+                    : mb_substr((string) $raw, 0, 1000);
+            }
+
+            $prepared[] = [
+                'data'      => $data,
+                'tarifaId'  => $tarifaId,
+                'valores'   => $valores,
+                'descuento' => strtoupper(trim((string) ($p['descuento_codigo'] ?? ''))),
+            ];
+        }
+
+        if (!empty($errors)) {
+            $post = $_POST; unset($post['_csrf']);
+            Session::flash('insc_old', (string) json_encode($post, JSON_UNESCAPED_UNICODE));
+            Session::flash('insc_errors', (string) json_encode($errors, JSON_UNESCAPED_UNICODE));
+            Response::redirect(base_url('/eventos/' . $slug) . '#formulari');
+        }
+
+        // ── Secció crítica: pedido + N inscritos en una transacció (tot o res) ──
+        try {
+            $result = Database::getInstance()->transaction(
+                function () use ($eventoId, $contactEmail, $contactTel, $prepared, $req): array {
+                    $pedidoId = Pedido::crear([
+                        'token'         => Pedido::generarToken(),
+                        'evento_id'     => $eventoId,
+                        'email'         => $contactEmail,
+                        'telefono'      => $contactTel !== '' ? $contactTel : null,
+                        'importe_total' => 0,
+                        'estado'        => 'pendiente',
+                        'locale'        => current_locale(),
+                        'ip_registro'   => $req->ip,
+                    ]);
+
+                    $total = 0.0;
+                    $inscritoIds = [];
+                    foreach ($prepared as $p) {
+                        // Bloqueja la tarifa i comprova capacitat (les insercions prèvies
+                        // d'aquesta mateixa transacció ja compten → "tot o res").
+                        $tarifa = Tarifa::findAndLockForInscripcion($p['tarifaId'], $eventoId);
+                        if ($tarifa === null) throw new \DomainException('tarifa_invalida');
+                        $capacidadOk = !empty($tarifa['grupo_aforo_id'])
+                            ? GrupoAforo::tieneCapacidad((int) $tarifa['grupo_aforo_id'])
+                            : Tarifa::tieneCapacidad($tarifa);
+                        if (!$capacidadOk) throw new \DomainException('tarifa_esgotada');
+
+                        $precio = (float) $tarifa['precio'];
+                        $datos = array_merge($p['data'], [
+                            'evento_id'   => $eventoId,
+                            'tarifa_id'   => $p['tarifaId'],
+                            'pedido_id'   => $pedidoId,
+                            'estado'      => 'pendiente',
+                            'ip_registro' => $req->ip,
+                            'locale'      => current_locale(),
+                            'email'       => $contactEmail,
+                            'telefono'    => $contactTel !== '' ? $contactTel : null,
+                        ]);
+
+                        // Cupó per participant (un codi descompta NOMÉS aquest participant)
+                        if ($p['descuento'] !== '') {
+                            $desc = DescuentoEvento::findAndLockForUse($eventoId, $p['descuento']);
+                            if ($desc === null) throw new \DomainException('descuento_invalid');
+                            $check = DescuentoEvento::checkUsable($desc);
+                            if (!$check['valid']) throw new \DomainException('descuento_' . str_replace([' ', '\''], ['_', ''], $check['error']));
+                            $datos['descuento_id']         = (int) $desc['id'];
+                            $datos['descuento_codigo']     = $desc['codigo'];
+                            $datos['descuento_porcentaje'] = $desc['porcentaje'];
+                            DescuentoEvento::incrementarUsos((int) $desc['id']);
+                            $precio = round($precio * (1 - (float) $desc['porcentaje'] / 100), 2);
+                        }
+
+                        $inscritoIds[] = Inscrito::createWithCustomFields($datos, $p['valores']);
+                        $total += $precio;
+                    }
+
+                    Pedido::actualizarTotal($pedidoId, $total);
+                    return ['pedido_id' => $pedidoId, 'inscrito_ids' => $inscritoIds, 'total' => $total];
+                }
+            );
+        } catch (\DomainException $e) {
+            $code = $e->getMessage();
+            $msg = match (true) {
+                $code === 'tarifa_esgotada'          => 'Alguna tarifa triada està esgotada per al nombre de participants.',
+                $code === 'descuento_invalid'        => 'Un codi de descompte no és vàlid per a aquest esdeveniment.',
+                str_starts_with($code, 'descuento_') => 'Codi de descompte: ' . str_replace(['descuento_', '_'], ['', ' '], $code),
+                default                              => 'Tria una tarifa vàlida.',
+            };
+            Session::flash('error', $msg);
+            $post = $_POST; unset($post['_csrf']);
+            Session::flash('insc_old', (string) json_encode($post, JSON_UNESCAPED_UNICODE));
+            Response::redirect(base_url('/eventos/' . $slug) . '#formulari');
+        }
+
+        $pedidoId = (int) $result['pedido_id'];
+        $total    = (float) $result['total'];
+
+        Session::set('ultimo_pedido', ['pedido_id' => $pedidoId, 'slug' => $slug, 'pay_method' => null]);
+
+        // Gratuït (total 0): confirmar tot el pedido + email amb tots els QR
+        if ($total <= 0.01) {
+            Pedido::marcarConfirmado($pedidoId);
+            foreach ($result['inscrito_ids'] as $iid) Inscrito::marcarConfirmado((int) $iid);
+            self::enviarConfirmacionPedido($pedidoId);
+            Response::redirect(base_url('/eventos/' . $slug . '/gracies'));
+        }
+
+        // De pagament: passa a la passarel·la (gestió de grup → Fase pagament)
+        Response::redirect(base_url('/pago/metodo'));
+    }
+
+    /**
+     * Envia un sol email al contacte del pedido amb el QR de cada participant.
+     * No bloqueja si falla (la confirmació ja està feta).
+     */
+    public static function enviarConfirmacionPedido(int $pedidoId): void
+    {
+        try {
+            $pedido = Pedido::findById($pedidoId);
+            if ($pedido === null || empty($pedido['email'])) return;
+
+            $evento    = Evento::findById((int) $pedido['evento_id']);
+            $inscritos = Pedido::inscritos($pedidoId);
+            if ($evento === null || count($inscritos) === 0) return;
+
+            // Assegurar qr_token + carregar tarifa de cada participant
+            $items = [];
+            foreach ($inscritos as $ins) {
+                Inscrito::ensureQrToken((int) $ins['id']);
+                $ins = Inscrito::findById((int) $ins['id']);
+                $items[] = [
+                    'inscrito' => $ins,
+                    'tarifa'   => Tarifa::findById((int) $ins['tarifa_id']),
+                ];
+            }
+
+            EmailService::sendConfirmacionPedido($pedido, $evento, $items);
+        } catch (\Throwable $e) {
+            error_log('[InscripcionController] Email confirmació pedido fallit: ' . $e->getMessage());
+        }
+    }
+
     public function exito(Request $req, array $params): void
     {
         $slug = (string) ($params['slug'] ?? '');
         $evento = Evento::findBySlug($slug);
         if ($evento === null) Response::notFound();
+
+        // Grup: si l'última acció va ser un pedido d'aquest esdeveniment
+        $ped = Session::get('ultimo_pedido');
+        if (is_array($ped) && (string) ($ped['slug'] ?? '') === $slug) {
+            $pedido = Pedido::findById((int) ($ped['pedido_id'] ?? 0));
+            if ($pedido !== null && (int) $pedido['evento_id'] === (int) $evento['id']) {
+                $items = [];
+                foreach (Pedido::inscritos((int) $pedido['id']) as $ins) {
+                    $qrDataUri = null;
+                    if (($ins['estado'] ?? '') === 'confirmado') {
+                        try {
+                            $tk = Inscrito::ensureQrToken((int) $ins['id']);
+                            $ins['qr_token'] = $tk;
+                            $png = QrService::pngBytes(base_url('/admin/checkin/' . $tk), 280);
+                            $qrDataUri = 'data:image/png;base64,' . base64_encode($png);
+                        } catch (\Throwable $e) {
+                            error_log('[InscripcionController] QR gràcies pedido fallit: ' . $e->getMessage());
+                        }
+                    }
+                    $items[] = [
+                        'inscrito'  => $ins,
+                        'tarifa'    => Tarifa::findById((int) $ins['tarifa_id']),
+                        'qrDataUri' => $qrDataUri,
+                    ];
+                }
+                View::render('public/inscripcion/exito_pedido', [
+                    'evento' => $evento,
+                    'pedido' => $pedido,
+                    'items'  => $items,
+                ], layout: 'public');
+                return;
+            }
+        }
 
         $ult = Session::get('ultima_inscripcion');
         if (!is_array($ult) || (string) ($ult['slug'] ?? '') !== $slug) {

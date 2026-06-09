@@ -24,6 +24,10 @@ $cfVis   = fn(string $k): bool => CamposFijos::visible($cf, $k);
 $cfReq   = fn(string $k): bool => CamposFijos::requerido($cf, $k);
 $reqMark = fn(string $k): string => CamposFijos::requerido($cf, $k) ? ' <span class="req">*</span>' : '';
 $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required' : '';
+
+// Inscripció de grup: si l'esdeveniment permet >1 participant per inscripció
+$maxPart = (int) ($evento['max_participantes'] ?? 1);
+$multi   = $maxPart >= 2;
 ?>
 
 <section class="container">
@@ -156,7 +160,7 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
                 <?php endif; ?>
             </p>
         </div>
-    <?php else: ?>
+    <?php elseif (!$multi): ?>
 
     <form id="formulari" method="post" action="<?= e(base_url('/eventos/' . $evento['slug'] . '/inscriure')) ?>" class="form-publico" novalidate>
         <?= Csrf::field() ?>
@@ -403,6 +407,360 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
         <button type="submit" class="btn btn-primary btn-block btn-large"><?= e(t('form.submit')) ?></button>
         <p class="form-note"><?= e(t('form.submit.note')) ?></p>
     </form>
+
+    <?php else: /* ───────── Formulari de GRUP (max_participantes >= 2) ───────── */ ?>
+    <?php
+    $pold = is_array($old['participants'] ?? null) ? array_values($old['participants']) : [];
+    $cval = fn(string $k, string $d = ''): string => (string) ($old['contacto'][$k] ?? $d);
+    $cerr = fn(string $k): ?string => $errors["contacto.$k"][0] ?? null;
+
+    // Renderitza UN participant. $i és int per als reals, '__I__' per a la plantilla.
+    $renderParticipant = function ($i, array $pd = []) use ($cf, $cfVis, $campos, $tarifas, $errors): void {
+        $isTpl = !is_int($i);
+        $nm  = fn(string $f): string => 'participants[' . $i . '][' . $f . ']';
+        $idf = fn(string $f): string => 'p_' . $i . '_' . $f;
+        $pv  = fn(string $f, string $d = ''): string => (string) ($pd[$f] ?? $d);
+        $pe  = fn(string $f): ?string => (!$isTpl && isset($errors["participants.$i.$f"])) ? (string) $errors["participants.$i.$f"][0] : null;
+        $rm  = fn(string $k): string => CamposFijos::requerido($cf, $k) ? ' <span class="req">*</span>' : '';
+        $ra  = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required' : '';
+        ?>
+        <div class="participant" data-participant>
+            <div class="participant-head">
+                <h3 class="participant-title"><?= e(t('group.participant', ['n' => ''])) ?> <span class="participant-num"></span></h3>
+                <button type="button" class="btn-link participant-remove" data-remove>🗑 <?= e(t('group.remove')) ?></button>
+            </div>
+
+            <div class="form-row">
+                <label for="<?= e($idf('tarifa_id')) ?>"><?= e(t('form.tarifa.label')) ?> <span class="req">*</span></label>
+                <select id="<?= e($idf('tarifa_id')) ?>" name="<?= e($nm('tarifa_id')) ?>" class="p-tarifa" required>
+                    <option value="" data-precio="0"><?= e(t('form.tarifa.placeholder')) ?></option>
+                    <?php foreach ($tarifas as $t): $ag = !empty($t['_agotada']);
+                        $nMin = isset($t['anio_nac_min']) && $t['anio_nac_min'] !== null ? (int) $t['anio_nac_min'] : null;
+                        $nMax = isset($t['anio_nac_max']) && $t['anio_nac_max'] !== null ? (int) $t['anio_nac_max'] : null;
+                        $nacHint = '';
+                        if ($nMin !== null && $nMax !== null)      $nacHint = t('form.tarifa.nac_hint_between', ['min' => $nMin, 'max' => $nMax]);
+                        elseif ($nMin !== null)                    $nacHint = t('form.tarifa.nac_hint_from',  ['min' => $nMin]);
+                        elseif ($nMax !== null)                    $nacHint = t('form.tarifa.nac_hint_until', ['max' => $nMax]);
+                    ?>
+                        <option value="<?= (int) $t['id'] ?>"
+                                data-precio="<?= (float) $t['precio'] ?>"
+                                data-nac-min="<?= $nMin !== null ? $nMin : '' ?>"
+                                data-nac-max="<?= $nMax !== null ? $nMax : '' ?>"
+                                <?= $ag ? 'disabled' : '' ?>
+                                <?= (!$ag && (int) $pv('tarifa_id') === (int) $t['id']) ? 'selected' : '' ?>>
+                            <?= e($t['nombre']) ?> · <?= e(format_price((float) $t['precio'])) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
+                                if ($nacHint !== '') echo ' · ' . e($nacHint);
+                                if ($ag) echo ' — ' . e(t('form.tarifa.soldout'));
+                            ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php $e = $pe('tarifa_id'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                <div class="tarifa-age-msg field-error" style="display:none;margin-top:.4rem;"></div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-row">
+                    <label for="<?= e($idf('nombre')) ?>"><?= e(t('form.label.name')) ?> <span class="req">*</span></label>
+                    <input type="text" id="<?= e($idf('nombre')) ?>" name="<?= e($nm('nombre')) ?>" required maxlength="100" value="<?= e($pv('nombre')) ?>">
+                    <?php $e = $pe('nombre'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                </div>
+                <?php if ($cfVis('apellido')): ?>
+                <div class="form-row">
+                    <label for="<?= e($idf('apellido')) ?>"><?= e(t('form.label.surname')) ?><?= $rm('apellido') ?></label>
+                    <input type="text" id="<?= e($idf('apellido')) ?>" name="<?= e($nm('apellido')) ?>" <?= $ra('apellido') ?> maxlength="150" value="<?= e($pv('apellido')) ?>">
+                    <?php $e = $pe('apellido'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="form-grid-2">
+                <?php if ($cfVis('dni')): ?>
+                <div class="form-row">
+                    <label for="<?= e($idf('dni')) ?>"><?= e(t('form.label.dni')) ?><?= $rm('dni') ?></label>
+                    <input type="text" id="<?= e($idf('dni')) ?>" name="<?= e($nm('dni')) ?>" <?= $ra('dni') ?> maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($pv('dni'))) ?>">
+                    <?php $e = $pe('dni'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                </div>
+                <?php endif; ?>
+                <?php if ($cfVis('fecha_nacimiento')): ?>
+                <div class="form-row">
+                    <label for="<?= e($idf('fecha_nacimiento')) ?>"><?= e(t('form.label.birth_date')) ?><?= $rm('fecha_nacimiento') ?></label>
+                    <input type="date" id="<?= e($idf('fecha_nacimiento')) ?>" name="<?= e($nm('fecha_nacimiento')) ?>" class="p-fnac" <?= $ra('fecha_nacimiento') ?> value="<?= e($pv('fecha_nacimiento')) ?>">
+                    <?php $e = $pe('fecha_nacimiento'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="form-grid-2">
+                <?php if ($cfVis('sexo')): ?>
+                <div class="form-row">
+                    <label for="<?= e($idf('sexo')) ?>"><?= e(t('form.label.sex')) ?><?= $rm('sexo') ?></label>
+                    <select id="<?= e($idf('sexo')) ?>" name="<?= e($nm('sexo')) ?>" <?= $ra('sexo') ?>>
+                        <option value=""><?= e(t('form.label.sex.choose')) ?></option>
+                        <option value="H" <?= $pv('sexo') === 'H' ? 'selected' : '' ?>><?= e(t('form.label.sex.male')) ?></option>
+                        <option value="M" <?= $pv('sexo') === 'M' ? 'selected' : '' ?>><?= e(t('form.label.sex.female')) ?></option>
+                        <option value="NB" <?= $pv('sexo') === 'NB' ? 'selected' : '' ?>><?= e(t('form.label.sex.nonbinary')) ?></option>
+                    </select>
+                </div>
+                <?php endif; ?>
+                <?php if ($cfVis('talla_camiseta')): ?>
+                <div class="form-row">
+                    <label for="<?= e($idf('talla_camiseta')) ?>"><?= e(t('form.label.shirt')) ?><?= $rm('talla_camiseta') ?></label>
+                    <select id="<?= e($idf('talla_camiseta')) ?>" name="<?= e($nm('talla_camiseta')) ?>" <?= $ra('talla_camiseta') ?>>
+                        <option value=""><?= e(t('form.label.shirt.none')) ?></option>
+                        <?php foreach (Inscrito::TALLAS as $tl): ?>
+                            <option value="<?= e($tl) ?>" <?= $pv('talla_camiseta') === $tl ? 'selected' : '' ?>><?= e($tl) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="form-grid-2">
+                <?php if ($cfVis('poblacion')): ?>
+                <div class="form-row">
+                    <label for="<?= e($idf('poblacion')) ?>"><?= e(t('form.label.city')) ?><?= $rm('poblacion') ?></label>
+                    <input type="text" id="<?= e($idf('poblacion')) ?>" name="<?= e($nm('poblacion')) ?>" <?= $ra('poblacion') ?> maxlength="120" value="<?= e($pv('poblacion')) ?>">
+                </div>
+                <?php endif; ?>
+                <?php if ($cfVis('codigo_postal')): ?>
+                <div class="form-row">
+                    <label for="<?= e($idf('codigo_postal')) ?>"><?= e(t('form.label.postal_code')) ?><?= $rm('codigo_postal') ?></label>
+                    <input type="text" id="<?= e($idf('codigo_postal')) ?>" name="<?= e($nm('codigo_postal')) ?>" <?= $ra('codigo_postal') ?> maxlength="10" placeholder="08001" value="<?= e($pv('codigo_postal')) ?>">
+                    <?php $e = $pe('codigo_postal'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($cfVis('club')): ?>
+            <div class="form-row">
+                <label for="<?= e($idf('club')) ?>"><?= e(t('form.label.club')) ?></label>
+                <input type="text" id="<?= e($idf('club')) ?>" name="<?= e($nm('club')) ?>" <?= $ra('club') ?> maxlength="150" value="<?= e($pv('club')) ?>">
+            </div>
+            <?php endif; ?>
+
+            <?php foreach ($campos as $c):
+                $ckey = 'campo_' . (int) $c['id'];
+                $copts = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null);
+                $creq  = (int) $c['requerido'] === 1;
+                $cvalC = $pv($ckey);
+            ?>
+                <div class="form-row">
+                    <label><?= e($c['etiqueta']) ?><?= $creq ? ' <span class="req">*</span>' : '' ?></label>
+                    <?php if ($c['tipo'] === 'textarea'): ?>
+                        <textarea name="<?= e($nm($ckey)) ?>" rows="3" <?= $creq ? 'required' : '' ?>><?= e($cvalC) ?></textarea>
+                    <?php elseif ($c['tipo'] === 'select'): ?>
+                        <select name="<?= e($nm($ckey)) ?>" <?= $creq ? 'required' : '' ?>>
+                            <option value="">— Tria —</option>
+                            <?php foreach ($copts as $o): ?>
+                                <option value="<?= e($o) ?>" <?= $cvalC === $o ? 'selected' : '' ?>><?= e($o) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php elseif ($c['tipo'] === 'radio'): ?>
+                        <div class="radio-group">
+                            <?php foreach ($copts as $o): ?>
+                                <label class="inline-check"><input type="radio" name="<?= e($nm($ckey)) ?>" value="<?= e($o) ?>" <?= $cvalC === $o ? 'checked' : '' ?> <?= $creq ? 'required' : '' ?>> <?= e($o) ?></label>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php elseif ($c['tipo'] === 'checkbox' && count($copts) > 0): ?>
+                        <div class="radio-group">
+                            <?php foreach ($copts as $o): ?>
+                                <label class="inline-check"><input type="checkbox" name="<?= e($nm($ckey)) ?>[]" value="<?= e($o) ?>"> <?= e($o) ?></label>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php elseif ($c['tipo'] === 'checkbox'): ?>
+                        <label class="inline-check"><input type="checkbox" name="<?= e($nm($ckey)) ?>" value="1" <?= $cvalC === '1' ? 'checked' : '' ?> <?= $creq ? 'required' : '' ?>> <?= e($c['etiqueta']) ?></label>
+                    <?php else: ?>
+                        <input type="<?= e($c['tipo']) ?>" name="<?= e($nm($ckey)) ?>" value="<?= e($cvalC) ?>" <?= $creq ? 'required' : '' ?> <?= !empty($c['placeholder']) ? 'placeholder="' . e($c['placeholder']) . '"' : '' ?>>
+                    <?php endif; ?>
+                    <?php if (!empty($c['ayuda'])): ?><small class="muted"><?= e($c['ayuda']) ?></small><?php endif; ?>
+                    <?php $e = $pe($ckey); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+
+            <details class="participant-discount">
+                <summary><?= e(t('form.label.discount_question')) ?></summary>
+                <div class="form-row" style="margin-top:.6rem;margin-bottom:0;">
+                    <input type="text" name="<?= e($nm('descuento_codigo')) ?>" maxlength="40" placeholder="EX: EARLY-A4F2X9B1" style="text-transform:uppercase;" value="<?= e(strtoupper($pv('descuento_codigo'))) ?>">
+                    <?php $e = $pe('descuento_codigo'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                </div>
+            </details>
+        </div>
+        <?php
+    };
+
+    $initial = count($pold) > 0 ? $pold : [[]];
+    ?>
+
+    <form id="formulari-grup" method="post" action="<?= e(base_url('/eventos/' . $evento['slug'] . '/inscriure')) ?>" class="form-publico" novalidate>
+        <?= Csrf::field() ?>
+        <input type="hidden" name="grupo" value="1">
+
+        <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">
+            <label for="website">No omplir aquest camp</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" value="">
+        </div>
+
+        <!-- ── Contacte ── -->
+        <div class="panel">
+            <h2 class="panel-title"><?= e(t('group.contact_title')) ?></h2>
+            <p class="muted" style="margin-top:-.4rem;"><?= e(t('group.contact_desc')) ?></p>
+            <div class="form-grid-2">
+                <div class="form-row">
+                    <label for="c_email"><?= e(t('form.label.email')) ?> <span class="req">*</span></label>
+                    <input type="email" id="c_email" name="contacto[email]" required maxlength="255" autocomplete="email" value="<?= e($cval('email')) ?>">
+                    <?php if ($cerr('email')): ?><div class="field-error"><?= e($cerr('email')) ?></div><?php endif; ?>
+                </div>
+                <div class="form-row">
+                    <label for="c_email_confirm"><?= e(t('form.label.email_confirm')) ?> <span class="req">*</span></label>
+                    <input type="email" id="c_email_confirm" name="contacto[email_confirm]" required maxlength="255" autocomplete="off" onpaste="return false;" ondrop="return false;" value="<?= e($cval('email_confirm')) ?>">
+                    <?php if ($cerr('email_confirm')): ?><div class="field-error"><?= e($cerr('email_confirm')) ?></div><?php endif; ?>
+                </div>
+            </div>
+            <?php if ($cfVis('telefono')): ?>
+            <div class="form-grid-2">
+                <div class="form-row">
+                    <label for="c_telefono"><?= e(t('form.label.phone')) ?><?= $reqMark('telefono') ?></label>
+                    <input type="tel" id="c_telefono" name="contacto[telefono]" <?= $reqAttr('telefono') ?> maxlength="15" autocomplete="tel" placeholder="600123456" value="<?= e($cval('telefono')) ?>">
+                    <?php if ($cerr('telefono')): ?><div class="field-error"><?= e($cerr('telefono')) ?></div><?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- ── Participants ── -->
+        <div class="panel">
+            <h2 class="panel-title"><?= e(t('group.participants_title')) ?></h2>
+            <div id="participants" data-max="<?= (int) $maxPart ?>">
+                <?php foreach ($initial as $idx => $pd) $renderParticipant((int) $idx, is_array($pd) ? $pd : []); ?>
+            </div>
+            <button type="button" id="add-participant" class="btn btn-secondary">➕ <?= e(t('group.add')) ?> <span class="muted">(<span id="pcount"><?= count($initial) ?></span>/<?= (int) $maxPart ?>)</span></button>
+        </div>
+
+        <div class="panel group-total-panel">
+            <div class="group-total"><span><?= e(t('group.total')) ?></span> <strong id="group-total-val">—</strong></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-large"><?= e(t('form.submit')) ?></button>
+        <p class="form-note"><?= e(t('form.submit.note')) ?></p>
+    </form>
+
+    <template id="participant-tpl"><?php $renderParticipant('__I__'); ?></template>
+
+    <script>
+    (function () {
+        var cont = document.getElementById('participants');
+        var tpl  = document.getElementById('participant-tpl');
+        var addBtn = document.getElementById('add-participant');
+        var form = document.getElementById('formulari-grup');
+        if (!cont || !tpl || !form) return;
+
+        var MAX = parseInt(cont.getAttribute('data-max'), 10) || 1;
+        var seq = cont.querySelectorAll('[data-participant]').length; // següent índex per a nous
+        var T = {
+            participant: <?= json_encode(t('group.participant', ['n' => '%N%'])) ?>,
+            between: <?= json_encode(t('form.tarifa.nac_msg_between')) ?>,
+            from:    <?= json_encode(t('form.tarifa.nac_msg_from')) ?>,
+            until:   <?= json_encode(t('form.tarifa.nac_msg_until')) ?>,
+            need:    <?= json_encode(t('form.tarifa.nac_msg_need')) ?>
+        };
+
+        function fmtPrice(n) {
+            return n.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+        }
+        function recalcTotal() {
+            var tot = 0;
+            cont.querySelectorAll('.p-tarifa').forEach(function (s) {
+                var o = s.options[s.selectedIndex];
+                if (o) tot += parseFloat(o.getAttribute('data-precio') || '0') || 0;
+            });
+            var el = document.getElementById('group-total-val');
+            if (el) el.textContent = fmtPrice(tot);
+        }
+        function renumber() {
+            var blocks = cont.querySelectorAll('[data-participant]');
+            blocks.forEach(function (b, idx) {
+                var num = b.querySelector('.participant-num');
+                if (num) num.textContent = (idx + 1);
+                var rm = b.querySelector('[data-remove]');
+                if (rm) rm.style.display = blocks.length > 1 ? '' : 'none';
+            });
+            var pc = document.getElementById('pcount');
+            if (pc) pc.textContent = blocks.length;
+            addBtn.disabled = blocks.length >= MAX;
+            addBtn.style.opacity = addBtn.disabled ? '.5' : '';
+        }
+
+        function birthYearOf(block) {
+            var fn = block.querySelector('.p-fnac');
+            if (!fn || !fn.value) return null;
+            var m = String(fn.value).match(/^(\d{4})-\d{2}-\d{2}$/);
+            return m ? parseInt(m[1], 10) : null;
+        }
+        function checkAge(block, onSubmit) {
+            var sel = block.querySelector('.p-tarifa');
+            var msg = block.querySelector('.tarifa-age-msg');
+            if (!sel || !msg) return true;
+            var opt = sel.options[sel.selectedIndex];
+            var mn = opt ? opt.getAttribute('data-nac-min') : '';
+            var mx = opt ? opt.getAttribute('data-nac-max') : '';
+            var min = mn ? parseInt(mn, 10) : null;
+            var max = mx ? parseInt(mx, 10) : null;
+            if (min === null && max === null) { msg.style.display = 'none'; return true; }
+            var by = birthYearOf(block);
+            if (by === null) {
+                if (onSubmit) { msg.textContent = T.need; msg.style.display = ''; return false; }
+                msg.style.display = 'none'; return true;
+            }
+            var bad = (min !== null && by < min) || (max !== null && by > max);
+            if (bad) {
+                var tplStr = (min !== null && max !== null) ? T.between : (min !== null ? T.from : T.until);
+                msg.textContent = tplStr.replace('{min}', min).replace('{max}', max);
+                msg.style.display = '';
+                return false;
+            }
+            msg.style.display = 'none'; return true;
+        }
+
+        function bind(block) {
+            var sel = block.querySelector('.p-tarifa');
+            var fn  = block.querySelector('.p-fnac');
+            if (sel) sel.addEventListener('change', function () { checkAge(block, false); recalcTotal(); });
+            if (fn) { fn.addEventListener('change', function () { checkAge(block, false); }); fn.addEventListener('input', function () { checkAge(block, false); }); }
+            var rm = block.querySelector('[data-remove]');
+            if (rm) rm.addEventListener('click', function () {
+                if (cont.querySelectorAll('[data-participant]').length <= 1) return;
+                block.remove(); renumber(); recalcTotal();
+            });
+        }
+
+        cont.querySelectorAll('[data-participant]').forEach(bind);
+
+        addBtn.addEventListener('click', function () {
+            if (cont.querySelectorAll('[data-participant]').length >= MAX) return;
+            var html = tpl.innerHTML.replace(/__I__/g, String(seq++));
+            var wrap = document.createElement('div');
+            wrap.innerHTML = html.trim();
+            var block = wrap.firstElementChild;
+            cont.appendChild(block);
+            bind(block);
+            renumber(); recalcTotal();
+        });
+
+        form.addEventListener('submit', function (ev) {
+            var ok = true, first = null;
+            cont.querySelectorAll('[data-participant]').forEach(function (b) {
+                if (!checkAge(b, true) && !first) { ok = false; first = b; }
+            });
+            if (!ok) {
+                ev.preventDefault();
+                if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+
+        renumber(); recalcTotal();
+    })();
+    </script>
 
     <?php endif; ?>
 </section>
