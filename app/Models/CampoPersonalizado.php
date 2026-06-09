@@ -50,10 +50,21 @@ final class CampoPersonalizado
     {
         $db = Database::getInstance();
         $db->transaction(function ($db) use ($eventoId, $campos): void {
+            // Tarifes vàlides de l'esdeveniment (per validar el camp condicional)
+            $tarifasValides = array_map('intval', $db->query(
+                'SELECT id FROM tarifas_evento WHERE evento_id = ?',
+                [$eventoId]
+            )->fetchAll(\PDO::FETCH_COLUMN));
+
             $db->query('DELETE FROM campos_personalizados WHERE evento_id = ?', [$eventoId]);
             foreach ($campos as $orden => $c) {
+                $tarifaId = isset($c['tarifa_id']) && $c['tarifa_id'] !== null ? (int) $c['tarifa_id'] : null;
+                if ($tarifaId !== null && !in_array($tarifaId, $tarifasValides, true)) {
+                    $tarifaId = null; // tarifa inexistent → camp sense condició
+                }
                 $db->insert('campos_personalizados', [
                     'evento_id'    => $eventoId,
+                    'tarifa_id'    => $tarifaId,
                     'nombre_campo' => $c['nombre_campo'],
                     'etiqueta'     => $c['etiqueta'],
                     'tipo'         => $c['tipo'],

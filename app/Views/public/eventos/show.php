@@ -327,7 +327,7 @@ $multi   = $maxPart >= 2;
                         $opts = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null);
                         $req = (int)$c['requerido'] === 1;
                     ?>
-                    <div class="form-row">
+                    <div class="form-row" data-camp-tarifa="<?= (int)($c['tarifa_id'] ?? 0) ?>">
                         <label><?= e($c['etiqueta']) ?><?= $req ? ' <span class="req">*</span>' : '' ?></label>
 
                         <?php if ($c['tipo'] === 'textarea'): ?>
@@ -541,7 +541,7 @@ $multi   = $maxPart >= 2;
                 $creq  = (int) $c['requerido'] === 1;
                 $cvalC = $pv($ckey);
             ?>
-                <div class="form-row">
+                <div class="form-row" data-camp-tarifa="<?= (int)($c['tarifa_id'] ?? 0) ?>">
                     <label><?= e($c['etiqueta']) ?><?= $creq ? ' <span class="req">*</span>' : '' ?></label>
                     <?php if ($c['tipo'] === 'textarea'): ?>
                         <textarea name="<?= e($nm($ckey)) ?>" rows="3" <?= $creq ? 'required' : '' ?>><?= e($cvalC) ?></textarea>
@@ -721,7 +721,8 @@ $multi   = $maxPart >= 2;
         function bind(block) {
             var sel = block.querySelector('.p-tarifa');
             var fn  = block.querySelector('.p-fnac');
-            if (sel) sel.addEventListener('change', function () { checkAge(block, false); recalcTotal(); });
+            if (sel) sel.addEventListener('change', function () { checkAge(block, false); recalcTotal(); if (window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value); });
+            if (sel && window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value);
             if (fn) { fn.addEventListener('change', function () { checkAge(block, false); }); fn.addEventListener('input', function () { checkAge(block, false); }); }
             var sx = block.querySelector('.p-sexo'), tll = block.querySelector('.p-talla');
             if (sx && tll && window.filterTallasBySexo) { window.filterTallasBySexo(sx, tll); sx.addEventListener('change', function () { window.filterTallasBySexo(sx, tll); }); }
@@ -913,13 +914,33 @@ $multi   = $maxPart >= 2;
         var o0 = document.createElement('option'); o0.value = fv; o0.text = ft; tallaEl.appendChild(o0);
         allow.forEach(function (t) { var o = document.createElement('option'); o.value = t; o.text = t; if (t === cur) o.selected = true; tallaEl.appendChild(o); });
     };
+    // ── Camps condicionals segons la tarifa (mostra/amaga + activa/desactiva) ──
+    window.filterCampsByTarifa = function (scope, tarifaVal) {
+        if (!scope) return;
+        scope.querySelectorAll('[data-camp-tarifa]').forEach(function (row) {
+            var t = row.getAttribute('data-camp-tarifa');
+            if (!t || t === '0') return; // sempre visible
+            var show = (t === String(tarifaVal));
+            row.style.display = show ? '' : 'none';
+            row.querySelectorAll('input, select, textarea').forEach(function (el) {
+                if (show) { if (el.getAttribute('data-was-req') === '1') el.required = true; el.disabled = false; }
+                else { if (el.required) { el.setAttribute('data-was-req', '1'); el.required = false; } el.disabled = true; }
+            });
+        });
+    };
+
     // Formulari individual
     var s = document.getElementById('sexo'), tl = document.getElementById('talla_camiseta');
     if (s && tl) { window.filterTallasBySexo(s, tl); s.addEventListener('change', function () { window.filterTallasBySexo(s, tl); }); }
+    var fform = document.getElementById('formulari'), tsel = document.getElementById('tarifa_id');
+    if (fform && tsel) { window.filterCampsByTarifa(fform, tsel.value); tsel.addEventListener('change', function () { window.filterCampsByTarifa(fform, tsel.value); }); }
+
     // Participants inicials del formulari de grup
     document.querySelectorAll('#participants [data-participant]').forEach(function (block) {
         var sx = block.querySelector('.p-sexo'), tll = block.querySelector('.p-talla');
         if (sx && tll) { window.filterTallasBySexo(sx, tll); sx.addEventListener('change', function () { window.filterTallasBySexo(sx, tll); }); }
+        var pt = block.querySelector('.p-tarifa');
+        if (pt) window.filterCampsByTarifa(block, pt.value);
     });
 })();
 </script>

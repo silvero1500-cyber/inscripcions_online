@@ -319,6 +319,17 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
     <fieldset>
         <legend>Camps personalitzats del formulari</legend>
         <p class="muted">A part dels camps estàndard del corredor (nom, DNI, email...), pots afegir camps extra que es mostraran al formulari d'inscripció. Arrossega'ls o fes servir les fletxes per ordenar-los.</p>
+        <?php
+        // Opcions del selector "només per a la tarifa" (condicional). Només tarifes ja desades.
+        $tarifaCondOptions = function (?int $sel) use ($tarifas): string {
+            $h = '<option value="">— Totes les tarifes —</option>';
+            foreach ($tarifas as $t) {
+                if (empty($t['id'])) continue;
+                $h .= '<option value="' . (int) $t['id'] . '"' . ((int) $sel === (int) $t['id'] ? ' selected' : '') . '>' . e((string) $t['nombre']) . '</option>';
+            }
+            return $h;
+        };
+        ?>
 
         <div class="builder">
             <aside class="builder-side">
@@ -373,6 +384,14 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                                     <label>Text d'ajuda</label>
                                     <input type="text" name="campos[<?= (int)$idx ?>][ayuda]" value="<?= e((string)($c['ayuda'] ?? '')) ?>">
                                 </div>
+                            </div>
+                            <div class="campo-grid-2">
+                                <div>
+                                    <label>Mostrar només per a la tarifa <span class="muted">(condicional)</span></label>
+                                    <select name="campos[<?= (int)$idx ?>][tarifa_id]"><?= $tarifaCondOptions(isset($c['tarifa_id']) ? (int)$c['tarifa_id'] : null) ?></select>
+                                    <small class="muted">Si tries una tarifa, el camp només apareix quan s'hi inscriu (p.ex. franja horària per a la Mitja marató).</small>
+                                </div>
+                                <div></div>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -434,6 +453,14 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                 <label>Text d'ajuda</label>
                 <input type="text" name="campos[__IDX__][ayuda]">
             </div>
+        </div>
+        <div class="campo-grid-2">
+            <div>
+                <label>Mostrar només per a la tarifa <span class="muted">(condicional)</span></label>
+                <select name="campos[__IDX__][tarifa_id]"><?= $tarifaCondOptions(null) ?></select>
+                <small class="muted">Si tries una tarifa, el camp només apareix quan s'hi inscriu (p.ex. franja horària per a la Mitja marató).</small>
+            </div>
+            <div></div>
         </div>
     </div>
 </template>

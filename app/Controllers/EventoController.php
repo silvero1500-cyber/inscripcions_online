@@ -752,12 +752,15 @@ final class EventoController
                 $opcionesJson = CampoPersonalizado::opcionesToJson($opcionesArr);
             }
 
+            $tarifaId = (int)($c['tarifa_id'] ?? 0);
+
             $out[] = [
                 'nombre_campo' => substr($nombre, 0, 100),
                 'etiqueta'     => substr($etiqueta, 0, 255),
                 'tipo'         => $tipo,
                 'opciones'     => $opcionesJson,
                 'requerido'    => !empty($c['requerido']) ? 1 : 0,
+                'tarifa_id'    => $tarifaId > 0 ? $tarifaId : null,
                 'placeholder'  => substr(trim((string)($c['placeholder'] ?? '')), 0, 255) ?: null,
                 'ayuda'        => substr(trim((string)($c['ayuda'] ?? '')), 0, 500) ?: null,
             ];
