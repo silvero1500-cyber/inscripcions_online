@@ -140,12 +140,6 @@ $multi   = $maxPart >= 2;
         </div>
     <?php endif; ?>
 
-    <?php if (!empty($evento['descripcion'])): ?>
-        <div class="panel">
-            <h2 class="panel-title"><?= e(t('event.description_title')) ?></h2>
-            <div class="event-description"><?= nl2br(e((string)$evento['descripcion'])) ?></div>
-        </div>
-    <?php endif; ?>
 
     <?php if (!$abierto): ?>
         <div class="panel">

@@ -28,9 +28,6 @@ use App\Services\ImageUploader;
                     <div class="event-card-body">
                         <div class="event-card-date"><?= e(format_date_ca((string)$ev['fecha_evento'])) ?></div>
                         <h3 class="event-card-title"><?= e($ev['titulo']) ?></h3>
-                        <?php if (!empty($ev['descripcion'])): ?>
-                            <p class="event-card-desc"><?= e(mb_substr(strip_tags((string)$ev['descripcion']), 0, 140)) ?>…</p>
-                        <?php endif; ?>
                         <div class="event-card-footer">
                             <?php if ($ev['precio_min'] !== null): ?>
                                 <span class="price"><?= e(t('home.card.from')) ?> <strong><?= number_format((float)$ev['precio_min'], 2, ',', '.') ?> €</strong></span>

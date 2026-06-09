@@ -95,7 +95,6 @@ final class EventoController
                     'propietario_id'           => $user->id,
                     'titulo'                   => $data['titulo'],
                     'slug'                     => $slug,
-                    'descripcion'              => $data['descripcion'],
                     'localizacion'             => $data['localizacion'],
                     'reglamento_url'           => $data['reglamento_url'],
                     'web_oficial_url'          => $data['web_oficial_url'],
@@ -168,7 +167,6 @@ final class EventoController
 
         $update = [
             'titulo'                   => $data['titulo'],
-            'descripcion'              => $data['descripcion'],
             'localizacion'             => $data['localizacion'],
             'reglamento_url'           => $data['reglamento_url'],
             'web_oficial_url'          => $data['web_oficial_url'],
@@ -511,7 +509,6 @@ final class EventoController
 
         return [
             'titulo'                   => trim((string)($post['titulo'] ?? '')),
-            'descripcion'              => trim((string)($post['descripcion'] ?? '')),
             'localizacion'             => trim((string)($post['localizacion'] ?? '')) ?: null,
             'reglamento_url'           => self::normalizeUrl((string)($post['reglamento_url'] ?? '')),
             'web_oficial_url'          => self::normalizeUrl((string)($post['web_oficial_url'] ?? '')),

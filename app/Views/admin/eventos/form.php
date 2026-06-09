@@ -111,11 +111,6 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
         </div>
 
         <div class="form-row">
-            <label for="descripcion">Descripció</label>
-            <textarea id="descripcion" name="descripcion" rows="6"><?= e($val('descripcion')) ?></textarea>
-        </div>
-
-        <div class="form-row">
             <label for="imagen">Imatge de portada</label>
             <?php if ($isEdit && !empty($evento['imagen_portada'])): ?>
                 <div class="current-image">
