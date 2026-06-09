@@ -760,15 +760,30 @@ final class EventoController
                 }
             }
 
+            // Opcions específiques per tarifa: campos[i][opciones_tarifa][tarifaId] = "A | B | C"
+            $opcTarifa = [];
+            if (!empty($c['opciones_tarifa']) && is_array($c['opciones_tarifa'])) {
+                foreach ($c['opciones_tarifa'] as $tid => $str) {
+                    $tid = (int) $tid;
+                    $str = trim((string) $str);
+                    if ($tid > 0 && $str !== '') {
+                        $list = preg_split('/\s*\|\s*/', $str) ?: [];
+                        $list = array_values(array_filter(array_map('trim', $list), fn($o) => $o !== ''));
+                        if ($list) $opcTarifa[$tid] = $list;
+                    }
+                }
+            }
+
             $out[] = [
-                'nombre_campo' => substr($nombre, 0, 100),
-                'etiqueta'     => substr($etiqueta, 0, 255),
-                'tipo'         => $tipo,
-                'opciones'     => $opcionesJson,
-                'requerido'    => !empty($c['requerido']) ? 1 : 0,
-                'tarifa_ids'   => $tarifaIds,
-                'placeholder'  => substr(trim((string)($c['placeholder'] ?? '')), 0, 255) ?: null,
-                'ayuda'        => substr(trim((string)($c['ayuda'] ?? '')), 0, 500) ?: null,
+                'nombre_campo'    => substr($nombre, 0, 100),
+                'etiqueta'        => substr($etiqueta, 0, 255),
+                'tipo'            => $tipo,
+                'opciones'        => $opcionesJson,
+                'opciones_tarifa' => $opcTarifa,
+                'requerido'       => !empty($c['requerido']) ? 1 : 0,
+                'tarifa_ids'      => $tarifaIds,
+                'placeholder'     => substr(trim((string)($c['placeholder'] ?? '')), 0, 255) ?: null,
+                'ayuda'           => substr(trim((string)($c['ayuda'] ?? '')), 0, 500) ?: null,
             ];
         }
 

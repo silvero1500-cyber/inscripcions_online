@@ -335,6 +335,22 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
             }
             return $h;
         };
+
+        // Inputs d'opcions diferents per tarifa (per a camps select/radio/checkbox).
+        $opcTarifaInputs = function (array $campo, $idx) use ($tarifas): string {
+            if (count(array_filter($tarifas, fn($t) => !empty($t['id']))) === 0) return '';
+            $map = \App\Models\CampoPersonalizado::opcionesPorTarifa($campo);
+            $h  = '<details class="campo-opc-tarifa" style="margin-top:.6rem;"><summary style="cursor:pointer;color:var(--color-primary,#1e88c2);">Opcions diferents per tarifa (opcional)</summary>';
+            $h .= '<small class="muted" style="display:block;margin:.3rem 0 .5rem;">Per a select/radio/checkbox: si omples les opcions d\'una tarifa, substitueixen les generals quan es tria aquesta tarifa. Separa amb <code>|</code>.</small>';
+            foreach ($tarifas as $t) {
+                if (empty($t['id'])) continue;
+                $tid = (int) $t['id'];
+                $val = isset($map[$tid]) ? implode(' | ', $map[$tid]) : '';
+                $h .= '<div style="margin-bottom:.4rem;"><label style="font-size:.85rem;font-weight:600;">' . e((string) $t['nombre']) . '</label>';
+                $h .= '<input type="text" name="campos[' . $idx . '][opciones_tarifa][' . $tid . ']" value="' . e($val) . '" placeholder="Opció 1 | Opció 2 | Opció 3"></div>';
+            }
+            return $h . '</details>';
+        };
         ?>
 
         <div class="builder">
@@ -396,6 +412,7 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                                     <label>Mostrar només per a aquestes tarifes <span class="muted">(condicional)</span></label>
                                     <div class="campo-tarifes-checks"><?= $tarifaCondChecks(CampoPersonalizado::tarifasDeCampo($c), (int)$idx) ?></div>
                                     <small class="muted">Marca una o més tarifes i el camp només apareix quan se'n tria alguna (p.ex. franja horària per a Mitja i 10K). Cap marcada = sempre.</small>
+                                    <?= $opcTarifaInputs($c, (int)$idx) ?>
                                 </div>
                             </div>
                         </div>
@@ -464,6 +481,7 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                 <label>Mostrar només per a aquestes tarifes <span class="muted">(condicional)</span></label>
                 <div class="campo-tarifes-checks"><?= $tarifaCondChecks([], '__IDX__') ?></div>
                 <small class="muted">Marca una o més tarifes i el camp només apareix quan se'n tria alguna. Cap marcada = sempre.</small>
+                <?= $opcTarifaInputs([], '__IDX__') ?>
             </div>
         </div>
     </div>

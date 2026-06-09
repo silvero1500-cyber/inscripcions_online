@@ -66,15 +66,25 @@ final class CampoPersonalizado
                 }
                 $tarifaIds = array_values(array_unique($tarifaIds));
 
+                // Opcions específiques per tarifa (només tarifes vàlides)
+                $opcTarifa = [];
+                foreach ((array) ($c['opciones_tarifa'] ?? []) as $tid => $opts) {
+                    $tid = (int) $tid;
+                    if ($tid > 0 && in_array($tid, $tarifasValides, true) && is_array($opts) && $opts) {
+                        $opcTarifa[$tid] = array_values($opts);
+                    }
+                }
+
                 $db->insert('campos_personalizados', [
-                    'evento_id'    => $eventoId,
-                    'tarifa_id'    => null,
-                    'tarifa_ids'   => $tarifaIds ? (string) json_encode($tarifaIds) : null,
-                    'nombre_campo' => $c['nombre_campo'],
-                    'etiqueta'     => $c['etiqueta'],
-                    'tipo'         => $c['tipo'],
-                    'opciones'     => $c['opciones'],
-                    'requerido'    => $c['requerido'],
+                    'evento_id'       => $eventoId,
+                    'tarifa_id'       => null,
+                    'tarifa_ids'      => $tarifaIds ? (string) json_encode($tarifaIds) : null,
+                    'nombre_campo'    => $c['nombre_campo'],
+                    'etiqueta'        => $c['etiqueta'],
+                    'tipo'            => $c['tipo'],
+                    'opciones'        => $c['opciones'],
+                    'opciones_tarifa' => $opcTarifa ? (string) json_encode($opcTarifa, JSON_UNESCAPED_UNICODE) : null,
+                    'requerido'       => $c['requerido'],
                     'orden'        => $orden,
                     'activo'       => 1,
                     'placeholder'  => $c['placeholder'] ?? null,
@@ -123,5 +133,39 @@ final class CampoPersonalizado
         $arr = json_decode($json, true);
         if (!is_array($arr)) return [];
         return array_values(array_map('strval', $arr));
+    }
+
+    /**
+     * Map d'opcions específiques per tarifa: {tarifa_id:int => list<string>}.
+     * (camp `opciones_tarifa`, JSON).
+     * @return array<int, list<string>>
+     */
+    public static function opcionesPorTarifa(array $campo): array
+    {
+        $raw = $campo['opciones_tarifa'] ?? null;
+        if (empty($raw)) return [];
+        $arr = json_decode((string) $raw, true);
+        if (!is_array($arr)) return [];
+        $out = [];
+        foreach ($arr as $tid => $opts) {
+            $tid = (int) $tid;
+            if ($tid > 0 && is_array($opts)) {
+                $list = array_values(array_filter(array_map(fn($o) => trim((string) $o), $opts), fn($o) => $o !== ''));
+                if ($list) $out[$tid] = $list;
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Opcions a mostrar per a una tarifa concreta: les específiques d'aquesta
+     * tarifa si n'hi ha, si no les generals (`opciones`).
+     * @return list<string>
+     */
+    public static function opcionesParaTarifa(array $campo, ?int $tarifaId): array
+    {
+        $map = self::opcionesPorTarifa($campo);
+        if ($tarifaId !== null && isset($map[$tarifaId])) return $map[$tarifaId];
+        return self::opcionesFromJson($campo['opciones'] ?? null);
     }
 }

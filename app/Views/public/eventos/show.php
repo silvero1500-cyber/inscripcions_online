@@ -334,7 +334,7 @@ $multi   = $maxPart >= 2;
                             <textarea name="<?= e($key) ?>" rows="3" <?= $req ? 'required' : '' ?>><?= e($valC) ?></textarea>
 
                         <?php elseif ($c['tipo'] === 'select'): ?>
-                            <select name="<?= e($key) ?>" <?= $req ? 'required' : '' ?>>
+                            <select name="<?= e($key) ?>" data-camp-id="<?= (int)$c['id'] ?>" <?= $req ? 'required' : '' ?>>
                                 <option value="">— Tria —</option>
                                 <?php foreach ($opts as $o): ?>
                                     <option value="<?= e($o) ?>" <?= $valC === $o ? 'selected' : '' ?>><?= e($o) ?></option>
@@ -546,7 +546,7 @@ $multi   = $maxPart >= 2;
                     <?php if ($c['tipo'] === 'textarea'): ?>
                         <textarea name="<?= e($nm($ckey)) ?>" rows="3" <?= $creq ? 'required' : '' ?>><?= e($cvalC) ?></textarea>
                     <?php elseif ($c['tipo'] === 'select'): ?>
-                        <select name="<?= e($nm($ckey)) ?>" <?= $creq ? 'required' : '' ?>>
+                        <select name="<?= e($nm($ckey)) ?>" data-camp-id="<?= (int)$c['id'] ?>" <?= $creq ? 'required' : '' ?>>
                             <option value="">— Tria —</option>
                             <?php foreach ($copts as $o): ?>
                                 <option value="<?= e($o) ?>" <?= $cvalC === $o ? 'selected' : '' ?>><?= e($o) ?></option>
@@ -915,6 +915,34 @@ $multi   = $maxPart >= 2;
         allow.forEach(function (t) { var o = document.createElement('option'); o.value = t; o.text = t; if (t === cur) o.selected = true; tallaEl.appendChild(o); });
     };
     // ── Camps condicionals segons la tarifa (mostra/amaga + activa/desactiva) ──
+    // Opcions d'un camp segons la tarifa: {campId: {def:[...], byTarifa:{tarifaId:[...]}}}
+    window.IO_CAMP_OPTS = <?php
+        $campOptsJs = [];
+        foreach ($campos as $cc) {
+            $por = CampoPersonalizado::opcionesPorTarifa($cc);
+            if (!empty($por)) {
+                $campOptsJs[(int) $cc['id']] = [
+                    'def'      => CampoPersonalizado::opcionesFromJson($cc['opciones'] ?? null),
+                    'byTarifa' => $por,
+                ];
+            }
+        }
+        echo json_encode($campOptsJs, JSON_UNESCAPED_UNICODE) ?: '{}';
+    ?>;
+    window.applyCampOptions = function (scope, tarifaVal) {
+        if (!scope || !window.IO_CAMP_OPTS) return;
+        scope.querySelectorAll('select[data-camp-id]').forEach(function (sel) {
+            var cfg = window.IO_CAMP_OPTS[sel.getAttribute('data-camp-id')];
+            if (!cfg) return;
+            var opts = (cfg.byTarifa && cfg.byTarifa[String(tarifaVal)]) ? cfg.byTarifa[String(tarifaVal)] : (cfg.def || []);
+            var cur = sel.value;
+            var firstTxt = sel.options.length ? sel.options[0].text : '— Tria —';
+            sel.innerHTML = '';
+            var o0 = document.createElement('option'); o0.value = ''; o0.text = firstTxt; sel.appendChild(o0);
+            opts.forEach(function (o) { var op = document.createElement('option'); op.value = o; op.text = o; if (o === cur) op.selected = true; sel.appendChild(op); });
+        });
+    };
+
     window.filterCampsByTarifa = function (scope, tarifaVal) {
         if (!scope) return;
         scope.querySelectorAll('[data-camp-tarifes]').forEach(function (row) {
@@ -927,6 +955,7 @@ $multi   = $maxPart >= 2;
                 else { if (el.required) { el.setAttribute('data-was-req', '1'); el.required = false; } el.disabled = true; }
             });
         });
+        if (window.applyCampOptions) window.applyCampOptions(scope, tarifaVal);
     };
 
     // Formulari individual
