@@ -44,6 +44,7 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
     </div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
         <a class="btn btn-primary" href="<?= e(base_url('/admin/recollida/escanejar')) ?>">📷 Escanejar QR</a>
+        <a class="btn btn-secondary" href="<?= e(base_url('/admin/checkin')) ?>">✓ Check-in (dia de cursa)</a>
     </div>
 </section>
 
