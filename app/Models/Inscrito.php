@@ -11,6 +11,40 @@ final class Inscrito
     public const TALLAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
     public const SEXOS  = ['H', 'M', 'NB'];
 
+    /**
+     * Decodifica la config `eventos.tallas_sexo` (JSON {"H":[...],"M":[...]}).
+     * Només retorna sexes amb restricció real (llista no buida i vàlida).
+     * @return array<string, list<string>>
+     */
+    public static function tallasSexoDecode(?string $json): array
+    {
+        if (empty($json)) return [];
+        $data = json_decode($json, true);
+        if (!is_array($data)) return [];
+        $out = [];
+        foreach (['H', 'M'] as $s) {
+            if (!empty($data[$s]) && is_array($data[$s])) {
+                $list = array_values(array_intersect(self::TALLAS, $data[$s]));
+                if ($list) $out[$s] = $list;
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Talles disponibles per a un sexe segons la config de l'esdeveniment.
+     * Sense restricció (o sexe 'NB'/buit) → totes.
+     * @return list<string>
+     */
+    public static function tallasParaSexo(?string $json, ?string $sexo): array
+    {
+        $map = self::tallasSexoDecode($json);
+        if ($sexo !== null && isset($map[$sexo]) && $map[$sexo]) {
+            return $map[$sexo];
+        }
+        return self::TALLAS;
+    }
+
     public static function findById(int $id): ?array
     {
         $row = Database::getInstance()

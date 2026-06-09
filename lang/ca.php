@@ -62,6 +62,7 @@ return [
     'form.label.email'                 => 'Correu electrònic',
     'form.label.email_confirm'         => 'Repeteix el correu electrònic',
     'form.email_mismatch'              => 'Els correus electrònics no coincideixen.',
+    'form.talla_sexo_invalid'          => 'Aquesta talla no està disponible per al sexe seleccionat.',
     'form.label.phone'                 => 'Telèfon',
     'form.label.sex'                   => 'Sexe',
     'form.label.sex.choose'            => '— Tria —',

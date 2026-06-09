@@ -16,6 +16,7 @@ use App\Models\Evento;
 use App\Models\CampoPersonalizado;
 use App\Models\CamposFijos;
 use App\Models\GrupoAforo;
+use App\Models\Inscrito;
 use App\Models\Tarifa;
 use App\Services\ImageUploader;
 use App\Services\Slugger;
@@ -102,6 +103,7 @@ final class EventoController
                     'fecha_limite_inscripcion' => $data['fecha_limite_inscripcion'],
                     'aforo_maximo'             => $data['aforo_maximo'],
                     'max_participantes'        => $data['max_participantes'],
+                    'tallas_sexo'              => $data['tallas_sexo'],
                     'imagen_portada'           => $imagePath,
                     'activo'                   => $data['activo'],
                     'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
@@ -174,6 +176,7 @@ final class EventoController
             'fecha_limite_inscripcion' => $data['fecha_limite_inscripcion'],
             'aforo_maximo'             => $data['aforo_maximo'],
             'max_participantes'        => $data['max_participantes'],
+            'tallas_sexo'              => $data['tallas_sexo'],
             'activo'                   => $data['activo'],
             'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
             'campos_fijos'             => $data['campos_fijos'],
@@ -441,6 +444,7 @@ final class EventoController
                     'fecha_limite_inscripcion' => $evento['fecha_limite_inscripcion'],
                     'aforo_maximo'             => $evento['aforo_maximo'],
                     'max_participantes'        => $evento['max_participantes'] ?? null,
+                    'tallas_sexo'              => $evento['tallas_sexo'] ?? null,
                     'imagen_portada'           => ImageUploader::copyEventImage($evento['imagen_portada'] ?? null),
                     'activo'                   => 0, // la còpia comença inactiva
                     'inscripciones_abiertas'   => (int) $evento['inscripciones_abiertas'],
@@ -516,6 +520,7 @@ final class EventoController
             'fecha_limite_inscripcion' => $fechaLimite,
             'aforo_maximo'             => $aforo === '' ? null : (int)$aforo,
             'max_participantes'        => $maxPart === '' ? null : max(1, (int)$maxPart),
+            'tallas_sexo'              => self::extractTallasSexo($post),
             'activo'                   => isset($post['activo']) ? 1 : 0,
             'inscripciones_abiertas'   => isset($post['inscripciones_abiertas']) ? 1 : 0,
             'campos_fijos'             => CamposFijos::fromPost($post),
@@ -535,6 +540,28 @@ final class EventoController
             return $value . ':00';
         }
         return $value;
+    }
+
+    /**
+     * Construeix el JSON de talles per sexe a partir del POST
+     * (tallas_sexo[H][] / tallas_sexo[M][]). Només es desa la restricció real:
+     * si un sexe té totes (o cap) marcades → sense restricció (s'omet).
+     */
+    private static function extractTallasSexo(array $post): ?string
+    {
+        $raw = $post['tallas_sexo'] ?? null;
+        if (!is_array($raw)) return null;
+        $out = [];
+        foreach (['H', 'M'] as $s) {
+            $list = (isset($raw[$s]) && is_array($raw[$s]))
+                ? array_values(array_intersect(Inscrito::TALLAS, $raw[$s]))
+                : [];
+            // Només és una restricció si en treu alguna (ni totes ni cap)
+            if (count($list) > 0 && count($list) < count(Inscrito::TALLAS)) {
+                $out[$s] = $list;
+            }
+        }
+        return $out ? (string) json_encode($out, JSON_UNESCAPED_UNICODE) : null;
     }
 
     /**

@@ -288,6 +288,32 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                 </div>
             <?php endforeach; ?>
         </div>
+
+        <?php
+        // Talles per sexe (opcional) — config a eventos.tallas_sexo
+        $tsMap = \App\Models\Inscrito::tallasSexoDecode($evento['tallas_sexo'] ?? null);
+        if (isset($old['tallas_sexo']) && is_array($old['tallas_sexo'])) {
+            $tsMap = [];
+            foreach (['H', 'M'] as $s) {
+                if (!empty($old['tallas_sexo'][$s]) && is_array($old['tallas_sexo'][$s])) {
+                    $tsMap[$s] = array_values(array_intersect(\App\Models\Inscrito::TALLAS, $old['tallas_sexo'][$s]));
+                }
+            }
+        }
+        $tsChecked = fn(string $s, string $t): bool => !isset($tsMap[$s]) || in_array($t, $tsMap[$s], true);
+        ?>
+        <div class="cf-tallas-sexe" style="margin-top:1.2rem;">
+            <label style="font-weight:600;">Talles de samarreta per sexe <span class="muted">(opcional)</span></label>
+            <small class="muted" style="display:block;margin:.2rem 0 .6rem;">Marca quines talles s'ofereixen a cada sexe. Si les deixes <strong>totes</strong> marcades, no hi ha restricció. «No binari» sempre veu totes.</small>
+            <?php foreach (['H' => 'Home', 'M' => 'Dona'] as $sx => $lbl): ?>
+                <div class="tallas-sexe-row" style="margin-bottom:.4rem;">
+                    <strong style="display:inline-block;min-width:3.5rem;"><?= e($lbl) ?>:</strong>
+                    <?php foreach (\App\Models\Inscrito::TALLAS as $tl): ?>
+                        <label class="inline-check" style="margin-right:.7rem;"><input type="checkbox" name="tallas_sexo[<?= $sx ?>][]" value="<?= e($tl) ?>" <?= $tsChecked($sx, $tl) ? 'checked' : '' ?>> <?= e($tl) ?></label>
+                    <?php endforeach; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
     </fieldset>
 
     <fieldset>

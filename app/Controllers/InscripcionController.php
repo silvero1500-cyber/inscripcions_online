@@ -78,6 +78,8 @@ final class InscripcionController
 
         // Restricció d'any de naixement de la tarifa triada (infantil, veterans, …)
         self::validateAnioNacimiento($v, $tarifaRow, (string) ($data['fecha_nacimiento'] ?? ''));
+        // Talla disponible per al sexe
+        self::validateTallaSexo($v, $evento['tallas_sexo'] ?? null, (string) ($data['sexo'] ?? ''), (string) ($data['talla_camiseta'] ?? ''));
 
         // ── Validación campos personalizados ──────────────────
         $valoresCampos = [];
@@ -284,6 +286,7 @@ final class InscripcionController
             if ($tarifaRow !== null) {
                 self::validateAnioNacimiento($v, $tarifaRow, (string) ($data['fecha_nacimiento'] ?? ''));
             }
+            self::validateTallaSexo($v, $evento['tallas_sexo'] ?? null, (string) ($data['sexo'] ?? ''), (string) ($data['talla_camiseta'] ?? ''));
             foreach ($v->errors() as $field => $msgs) {
                 // email/email_confirm/telefono són del contacte, no de cada participant
                 if (in_array($field, ['email', 'email_confirm', 'telefono'], true)) continue;
@@ -791,6 +794,18 @@ final class InscripcionController
             } else {
                 $v->addError('tarifa_id', t('form.tarifa.nac_msg_until', ['max' => $max]));
             }
+        }
+    }
+
+    /**
+     * Valida que la talla triada estigui disponible per al sexe (config
+     * `eventos.tallas_sexo`). Sense restricció / sexe 'NB' / buit → no fa res.
+     */
+    private static function validateTallaSexo(Validator $v, ?string $tallasSexoJson, ?string $sexo, ?string $talla): void
+    {
+        if (empty($talla) || empty($sexo)) return;
+        if (!in_array($talla, Inscrito::tallasParaSexo($tallasSexoJson, $sexo), true)) {
+            $v->addError('talla_camiseta', t('form.talla_sexo_invalid'));
         }
     }
 }

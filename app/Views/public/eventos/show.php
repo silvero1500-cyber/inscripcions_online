@@ -289,6 +289,7 @@ $multi   = $maxPart >= 2;
                                 <option value="<?= e($t) ?>" <?= $val('talla_camiseta') === $t ? 'selected' : '' ?>><?= e($t) ?></option>
                             <?php endforeach; ?>
                         </select>
+                        <?php if ($err('talla_camiseta')): ?><div class="field-error"><?= e($err('talla_camiseta')) ?></div><?php endif; ?>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -489,7 +490,7 @@ $multi   = $maxPart >= 2;
                 <?php if ($cfVis('sexo')): ?>
                 <div class="form-row">
                     <label for="<?= e($idf('sexo')) ?>"><?= e(t('form.label.sex')) ?><?= $rm('sexo') ?></label>
-                    <select id="<?= e($idf('sexo')) ?>" name="<?= e($nm('sexo')) ?>" <?= $ra('sexo') ?>>
+                    <select id="<?= e($idf('sexo')) ?>" name="<?= e($nm('sexo')) ?>" class="p-sexo" <?= $ra('sexo') ?>>
                         <option value=""><?= e(t('form.label.sex.choose')) ?></option>
                         <option value="H" <?= $pv('sexo') === 'H' ? 'selected' : '' ?>><?= e(t('form.label.sex.male')) ?></option>
                         <option value="M" <?= $pv('sexo') === 'M' ? 'selected' : '' ?>><?= e(t('form.label.sex.female')) ?></option>
@@ -500,12 +501,13 @@ $multi   = $maxPart >= 2;
                 <?php if ($cfVis('talla_camiseta')): ?>
                 <div class="form-row">
                     <label for="<?= e($idf('talla_camiseta')) ?>"><?= e(t('form.label.shirt')) ?><?= $rm('talla_camiseta') ?></label>
-                    <select id="<?= e($idf('talla_camiseta')) ?>" name="<?= e($nm('talla_camiseta')) ?>" <?= $ra('talla_camiseta') ?>>
+                    <select id="<?= e($idf('talla_camiseta')) ?>" name="<?= e($nm('talla_camiseta')) ?>" class="p-talla" <?= $ra('talla_camiseta') ?>>
                         <option value=""><?= e(t('form.label.shirt.none')) ?></option>
                         <?php foreach (Inscrito::TALLAS as $tl): ?>
                             <option value="<?= e($tl) ?>" <?= $pv('talla_camiseta') === $tl ? 'selected' : '' ?>><?= e($tl) ?></option>
                         <?php endforeach; ?>
                     </select>
+                    <?php $e = $pe('talla_camiseta'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                 </div>
                 <?php endif; ?>
             </div>
@@ -721,6 +723,8 @@ $multi   = $maxPart >= 2;
             var fn  = block.querySelector('.p-fnac');
             if (sel) sel.addEventListener('change', function () { checkAge(block, false); recalcTotal(); });
             if (fn) { fn.addEventListener('change', function () { checkAge(block, false); }); fn.addEventListener('input', function () { checkAge(block, false); }); }
+            var sx = block.querySelector('.p-sexo'), tll = block.querySelector('.p-talla');
+            if (sx && tll && window.filterTallasBySexo) { window.filterTallasBySexo(sx, tll); sx.addEventListener('change', function () { window.filterTallasBySexo(sx, tll); }); }
             var rm = block.querySelector('[data-remove]');
             if (rm) rm.addEventListener('click', function () {
                 if (cont.querySelectorAll('[data-participant]').length <= 1) return;
@@ -892,3 +896,30 @@ $multi   = $maxPart >= 2;
 })();
 </script>
 <?php endif; ?>
+
+<script>
+// Talla de samarreta segons el sexe (filtra les opcions disponibles)
+(function () {
+    window.IO_TALLAS_ALL  = <?= json_encode(array_values(\App\Models\Inscrito::TALLAS)) ?>;
+    window.IO_TALLAS_SEXO = <?= json_encode(\App\Models\Inscrito::tallasSexoDecode($evento['tallas_sexo'] ?? null)) ?>;
+    window.filterTallasBySexo = function (sexoEl, tallaEl) {
+        if (!sexoEl || !tallaEl) return;
+        var map = window.IO_TALLAS_SEXO || {};
+        var allow = (map[sexoEl.value] && map[sexoEl.value].length) ? map[sexoEl.value] : window.IO_TALLAS_ALL;
+        var cur = tallaEl.value;
+        var fv = tallaEl.options.length ? tallaEl.options[0].value : '';
+        var ft = tallaEl.options.length ? tallaEl.options[0].text : '—';
+        tallaEl.innerHTML = '';
+        var o0 = document.createElement('option'); o0.value = fv; o0.text = ft; tallaEl.appendChild(o0);
+        allow.forEach(function (t) { var o = document.createElement('option'); o.value = t; o.text = t; if (t === cur) o.selected = true; tallaEl.appendChild(o); });
+    };
+    // Formulari individual
+    var s = document.getElementById('sexo'), tl = document.getElementById('talla_camiseta');
+    if (s && tl) { window.filterTallasBySexo(s, tl); s.addEventListener('change', function () { window.filterTallasBySexo(s, tl); }); }
+    // Participants inicials del formulari de grup
+    document.querySelectorAll('#participants [data-participant]').forEach(function (block) {
+        var sx = block.querySelector('.p-sexo'), tll = block.querySelector('.p-talla');
+        if (sx && tll) { window.filterTallasBySexo(sx, tll); sx.addEventListener('change', function () { window.filterTallasBySexo(sx, tll); }); }
+    });
+})();
+</script>
