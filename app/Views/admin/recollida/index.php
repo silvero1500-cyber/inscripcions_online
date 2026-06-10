@@ -74,7 +74,7 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
 
         <?php if ($jaRecollit): ?>
             <div class="rsc-done">
-                ✓ Ja recollit el <?= e(date('d/m/Y H:i', strtotime((string) $ins['dorsal_recollit_at']))) ?>
+                ✓ Ja recollit el <?= e(format_datetime_local((string) $ins['dorsal_recollit_at'], 'd/m/Y H:i')) ?>
                 <?php if (!empty($scanned['recollitPor'])): ?>
                     per <?= e($scanned['recollitPor']['nombre']) ?>
                 <?php endif; ?>
@@ -218,7 +218,7 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
                         <td><?= e($i['club'] ?? '—') ?></td>
                         <td>
                             <?php if ($rec): ?>
-                                <span class="badge badge-success">✓ <?= e(date('d/m H:i', strtotime((string) $i['dorsal_recollit_at']))) ?></span>
+                                <span class="badge badge-success">✓ <?= e(format_datetime_local((string) $i['dorsal_recollit_at'], 'd/m H:i')) ?></span>
                             <?php else: ?>
                                 <span class="muted">—</span>
                             <?php endif; ?>

@@ -225,7 +225,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                             <span class="muted">—</span>
                         <?php endif; ?>
                     </td>
-                    <td data-col="created_at"><?= e(date('d/m/Y H:i', strtotime((string)$i['created_at']))) ?></td>
+                    <td data-col="created_at"><?= e(format_datetime_local((string)$i['created_at'], 'd/m/Y H:i')) ?></td>
                     <td data-col="nombre"><strong><?= e($i['nombre']) ?></strong></td>
                     <td data-col="apellido"><?= e($i['apellido']) ?></td>
                     <td data-col="dni"><?= e($i['dni']) ?></td>
@@ -253,7 +253,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                     </td>
                     <td data-col="checkin">
                         <?php if (!empty($i['check_in_at'])): ?>
-                            <span class="badge badge-success">✓ <?= e(date('d/m H:i', strtotime((string)$i['check_in_at']))) ?></span>
+                            <span class="badge badge-success">✓ <?= e(format_datetime_local((string)$i['check_in_at'], 'd/m H:i')) ?></span>
                         <?php else: ?>
                             <span class="muted">—</span>
                         <?php endif; ?>

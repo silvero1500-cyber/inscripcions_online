@@ -208,7 +208,7 @@ final class InscritosAdminController
             fputcsv($out, [
                 $i['id'],
                 !empty($i['pedido_id']) ? '#' . (int) $i['pedido_id'] : '',
-                $i['created_at'],
+                format_datetime_local($i['created_at'], 'd/m/Y H:i'),
                 $i['nombre'],
                 $i['apellido'],
                 $i['dni'],
@@ -223,7 +223,7 @@ final class InscritosAdminController
                 $i['tarifa_nombre'],
                 number_format((float) $i['tarifa_precio'], 2, ',', '.'),
                 $i['estado'],
-                !empty($i['check_in_at']) ? $i['check_in_at'] : '',
+                !empty($i['check_in_at']) ? format_datetime_local($i['check_in_at'], 'd/m/Y H:i') : '',
                 $i['numero_dorsal'] ?? '',
             ], ';');
         }

@@ -106,3 +106,22 @@ if (!function_exists('format_price')) {
         return number_format((float) $value, 2, ',', '.') . ' €';
     }
 }
+
+/**
+ * Formatea un datetime guardado en UTC (la conexión BD usa time_zone '+00:00')
+ * a la hora local de Madrid (gestiona el horario de verano automáticamente).
+ * Ej.: "2026-06-10 18:00:00" (UTC) -> "10/06/2026 20:00".
+ */
+if (!function_exists('format_datetime_local')) {
+    function format_datetime_local(?string $utc, string $fmt = 'd/m/Y H:i'): string
+    {
+        if ($utc === null || trim($utc) === '') return '';
+        try {
+            $dt = new DateTime($utc, new DateTimeZone('UTC'));
+            $dt->setTimezone(new DateTimeZone('Europe/Madrid'));
+            return $dt->format($fmt);
+        } catch (\Throwable $e) {
+            return (string) $utc;
+        }
+    }
+}
