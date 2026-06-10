@@ -148,6 +148,33 @@
         });
     }
 
+    // Reordenable sense afegir/eliminar (per als camps estàndard).
+    function setupReorder(listId, itemSelector) {
+        var list = document.getElementById(listId);
+        if (!list) return;
+        function arrows() {
+            var items = list.querySelectorAll(itemSelector);
+            items.forEach(function (row, i) {
+                var up = row.querySelector('.move-up'), dn = row.querySelector('.move-down');
+                if (up) up.disabled = (i === 0);
+                if (dn) dn.disabled = (i === items.length - 1);
+            });
+        }
+        list.addEventListener('click', function (e) {
+            var row = e.target.closest(itemSelector);
+            if (!row) return;
+            if (e.target.closest('.move-up')) { var p = row.previousElementSibling; if (p) { list.insertBefore(row, p); arrows(); } }
+            else if (e.target.closest('.move-down')) { var n = row.nextElementSibling; if (n) { list.insertBefore(n, row); arrows(); } }
+        });
+        var dragEl = null;
+        list.addEventListener('mousedown', function (e) { var h = e.target.closest('.drag-handle'); if (h) { var row = h.closest(itemSelector); if (row) row.draggable = true; } });
+        list.addEventListener('mouseup', function () { list.querySelectorAll(itemSelector + '[draggable="true"]').forEach(function (r) { if (!r.classList.contains('dragging')) r.draggable = false; }); });
+        list.addEventListener('dragstart', function (e) { var row = e.target.closest(itemSelector); if (!row) return; dragEl = row; row.classList.add('dragging'); if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', ''); } catch (_) {} } });
+        list.addEventListener('dragend', function () { if (dragEl) { dragEl.classList.remove('dragging'); dragEl.draggable = false; dragEl = null; } arrows(); });
+        list.addEventListener('dragover', function (e) { if (!dragEl) return; e.preventDefault(); var after = getDragAfter(list, itemSelector, e.clientY); if (after == null) list.appendChild(dragEl); else list.insertBefore(dragEl, after); });
+        arrows();
+    }
+
     // ── Grups d'aforament compartit ─────────────────────────
     var grupoCounter = 0;
     function newGrupoCid() { return 'n' + (++grupoCounter) + Date.now().toString(36); }
@@ -270,6 +297,7 @@
 
     setupGrupos();
     refreshGroupSelects();
+    setupReorder('camps-fixos-list', '.cf-row');
 
     // Canvi de grup en una tarifa → activar/desactivar el seu aforo propi
     document.addEventListener('change', function (e) {

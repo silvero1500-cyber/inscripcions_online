@@ -270,21 +270,30 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
 
     <fieldset>
         <legend>Camps estàndard del corredor</legend>
-        <p class="muted">Tria quins camps demanar al formulari d'inscripció. <strong>Nom</strong> i <strong>email</strong> són sempre obligatoris.</p>
+        <p class="muted">Tria quins camps demanar i <strong>arrossega'ls (⠿) o fes servir les fletxes</strong> per ordenar-los al formulari. <strong>Nom</strong> i <strong>email</strong> són sempre obligatoris; <strong>email + repetir</strong> van sempre junts.</p>
 
-        <div class="campos-fijos">
-            <div class="cf-row cf-fixed">
-                <span class="cf-label">Nom · Email</span>
-                <span class="badge badge-muted">Sempre obligatori</span>
-            </div>
-            <?php foreach (CamposFijos::CAMPS as $key => $meta): $st = $cfState($key); ?>
-                <div class="cf-row">
-                    <label class="cf-label" for="cf-<?= e($key) ?>"><?= e($meta['label']) ?></label>
-                    <select id="cf-<?= e($key) ?>" name="campos_fijos[<?= e($key) ?>]" class="cf-select">
-                        <option value="obligatori" <?= $st === 'obligatori' ? 'selected' : '' ?>>Obligatori</option>
-                        <option value="opcional"   <?= $st === 'opcional'   ? 'selected' : '' ?>>Opcional</option>
-                        <option value="ocult"      <?= $st === 'ocult'      ? 'selected' : '' ?>>Ocult</option>
-                    </select>
+        <div id="camps-fixos-list" class="campos-fijos cf-sortable">
+            <?php foreach (CamposFijos::orden($evento['campos_orden'] ?? null) as $key):
+                $isFix = in_array($key, CamposFijos::FIXOS, true);
+                $st = $isFix ? null : $cfState($key);
+            ?>
+                <div class="cf-row card-item" data-key="<?= e($key) ?>">
+                    <span class="drag-handle" title="Arrossega per ordenar" aria-hidden="true">⠿</span>
+                    <input type="hidden" name="campos_orden[]" value="<?= e($key) ?>">
+                    <span class="cf-label"><?= e(CamposFijos::labelOf($key)) ?></span>
+                    <?php if ($isFix): ?>
+                        <span class="badge badge-muted">Sempre obligatori</span>
+                    <?php else: ?>
+                        <select name="campos_fijos[<?= e($key) ?>]" class="cf-select">
+                            <option value="obligatori" <?= $st === 'obligatori' ? 'selected' : '' ?>>Obligatori</option>
+                            <option value="opcional"   <?= $st === 'opcional'   ? 'selected' : '' ?>>Opcional</option>
+                            <option value="ocult"      <?= $st === 'ocult'      ? 'selected' : '' ?>>Ocult</option>
+                        </select>
+                    <?php endif; ?>
+                    <span class="item-tools">
+                        <button type="button" class="btn-move move-up" title="Pujar" aria-label="Pujar">↑</button>
+                        <button type="button" class="btn-move move-down" title="Baixar" aria-label="Baixar">↓</button>
+                    </span>
                 </div>
             <?php endforeach; ?>
         </div>
