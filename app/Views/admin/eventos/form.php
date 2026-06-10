@@ -122,7 +122,7 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                 </div>
             <?php endif; ?>
             <input type="file" id="imagen" name="imagen" accept="image/jpeg,image/png,image/webp,image/gif">
-            <small class="muted">JPG, PNG, WEBP o GIF · màx 5 MB</small>
+            <small class="muted">JPG, PNG, WEBP o GIF · màx 5 MB · <strong>mida recomanada 1600×900 px (proporció 16:9)</strong> — es mostra sencera tant a la llista com a la fitxa.</small>
             <?php if ($err('imagen')): ?><div class="field-error"><?= e($err('imagen')) ?></div><?php endif; ?>
         </div>
 
