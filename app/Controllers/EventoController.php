@@ -108,11 +108,16 @@ final class EventoController
                     'activo'                   => $data['activo'],
                     'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
                     'campos_fijos'             => $data['campos_fijos'],
-                    'campos_orden'             => $data['campos_orden'],
+                    'campos_orden'             => null,
                 ]);
                 $map = GrupoAforo::syncForEvento($eventoId, $grupos);
                 Tarifa::syncForEvento($eventoId, self::assignTarifaGroups($tarifas, $map));
-                CampoPersonalizado::syncForEvento($eventoId, $campos);
+                $createdIds = CampoPersonalizado::syncForEvento($eventoId, $campos);
+                // L'ordre final inclou els camps personalitzats (mapeja __CUSTOM__ → campo_<id>)
+                Database::getInstance()->update('eventos',
+                    ['campos_orden' => CamposFijos::buildCamposOrden($_POST, $createdIds)],
+                    ['id' => $eventoId]
+                );
             }
         );
 
@@ -181,7 +186,6 @@ final class EventoController
             'activo'                   => $data['activo'],
             'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
             'campos_fijos'             => $data['campos_fijos'],
-            'campos_orden'             => $data['campos_orden'],
         ];
 
         // Si el título cambió, regenerar slug único
@@ -213,7 +217,11 @@ final class EventoController
                 Evento::update($id, $update);
                 $map = GrupoAforo::syncForEvento($id, $grupos);
                 Tarifa::syncForEvento($id, self::assignTarifaGroups($tarifas, $map));
-                CampoPersonalizado::syncForEvento($id, $campos);
+                $createdIds = CampoPersonalizado::syncForEvento($id, $campos);
+                Database::getInstance()->update('eventos',
+                    ['campos_orden' => CamposFijos::buildCamposOrden($_POST, $createdIds)],
+                    ['id' => $id]
+                );
             }
         );
 
@@ -527,7 +535,6 @@ final class EventoController
             'activo'                   => isset($post['activo']) ? 1 : 0,
             'inscripciones_abiertas'   => isset($post['inscripciones_abiertas']) ? 1 : 0,
             'campos_fijos'             => CamposFijos::fromPost($post),
-            'campos_orden'             => CamposFijos::ordenFromPost($post),
         ];
     }
 

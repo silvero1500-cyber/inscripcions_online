@@ -129,6 +129,57 @@ final class CamposFijos
         return $out;
     }
 
+    /**
+     * Ordre COMPLET dels camps del formulari: estàndard + personalitzats
+     * (clau 'campo_<id>'), respectant l'ordre desat i afegint els que falten.
+     * @param list<array<string,mixed>> $campos  Camps personalitzats de l'event
+     * @return list<string>
+     */
+    public static function ordenComplet(?string $json, array $campos): array
+    {
+        $customKeys = [];
+        foreach ($campos as $c) $customKeys[] = 'campo_' . (int) $c['id'];
+
+        $stored = [];
+        if ($json !== null && $json !== '') {
+            $d = json_decode($json, true);
+            if (is_array($d)) $stored = $d;
+        }
+        $out = [];
+        foreach ($stored as $k) {
+            $k = (string) $k;
+            if ((in_array($k, self::ORDEN_DEFAULT, true) || in_array($k, $customKeys, true)) && !in_array($k, $out, true)) {
+                $out[] = $k;
+            }
+        }
+        foreach (self::ORDEN_DEFAULT as $k) if (!in_array($k, $out, true)) $out[] = $k;
+        foreach ($customKeys as $k)        if (!in_array($k, $out, true)) $out[] = $k;
+        return $out;
+    }
+
+    /**
+     * Construeix el JSON d'ordre final a desar: substitueix els marcadors
+     * '__CUSTOM__' (camps personalitzats, en ordre) pels ids reals creats.
+     * @param list<int> $createdCampoIds  ids dels camps personalitzats acabats de crear, EN ORDRE
+     */
+    public static function buildCamposOrden(array $post, array $createdCampoIds): ?string
+    {
+        $raw = $post['campos_orden'] ?? null;
+        if (!is_array($raw)) return null;
+        $ci = 0; $out = [];
+        foreach ($raw as $k) {
+            $k = (string) $k;
+            if ($k === '__CUSTOM__') {
+                if (isset($createdCampoIds[$ci])) $out[] = 'campo_' . (int) $createdCampoIds[$ci];
+                $ci++;
+            } elseif (in_array($k, self::ORDEN_DEFAULT, true) && !in_array($k, $out, true)) {
+                $out[] = $k;
+            }
+        }
+        foreach (self::ORDEN_DEFAULT as $k) if (!in_array($k, $out, true)) $out[] = $k;
+        return $out ? (string) json_encode($out, JSON_UNESCAPED_UNICODE) : null;
+    }
+
     /** Construeix el JSON d'ordre a partir del POST (campos_orden[] = clau). */
     public static function ordenFromPost(array $post): ?string
     {

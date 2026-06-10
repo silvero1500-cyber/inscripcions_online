@@ -381,6 +381,7 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 }
 .form-fields-grid > .form-row,
 .form-row-pair > .form-row { margin-bottom: 0; }
+.form-fields-grid > .form-row-wide { grid-column: 1 / -1; }
 .form-row-pair {
     grid-column: 1 / -1;
     display: grid;

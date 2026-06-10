@@ -46,10 +46,15 @@ final class CampoPersonalizado
      *
      * @param list<array{nombre_campo:string, etiqueta:string, tipo:string, opciones:?string, requerido:int, orden:int}> $campos
      */
-    public static function syncForEvento(int $eventoId, array $campos): void
+    /**
+     * Reemplaça els camps personalitzats. Retorna la llista d'ids creats EN ORDRE
+     * (per poder enllaçar l'ordre del formulari amb els nous ids).
+     * @return list<int>
+     */
+    public static function syncForEvento(int $eventoId, array $campos): array
     {
         $db = Database::getInstance();
-        $db->transaction(function ($db) use ($eventoId, $campos): void {
+        return $db->transaction(function ($db) use ($eventoId, $campos): array {
             // Tarifes vàlides de l'esdeveniment (per validar el camp condicional)
             $tarifasValides = array_map('intval', $db->query(
                 'SELECT id FROM tarifas_evento WHERE evento_id = ?',
@@ -57,6 +62,7 @@ final class CampoPersonalizado
             )->fetchAll(\PDO::FETCH_COLUMN));
 
             $db->query('DELETE FROM campos_personalizados WHERE evento_id = ?', [$eventoId]);
+            $ids = [];
             foreach ($campos as $orden => $c) {
                 // Llista de tarifes (condicional): només les vàlides de l'esdeveniment
                 $tarifaIds = [];
@@ -75,7 +81,7 @@ final class CampoPersonalizado
                     }
                 }
 
-                $db->insert('campos_personalizados', [
+                $ids[] = $db->insert('campos_personalizados', [
                     'evento_id'       => $eventoId,
                     'tarifa_id'       => null,
                     'tarifa_ids'      => $tarifaIds ? (string) json_encode($tarifaIds) : null,
@@ -92,6 +98,7 @@ final class CampoPersonalizado
                     'ayuda'        => $c['ayuda'] ?? null,
                 ]);
             }
+            return $ids;
         });
     }
 

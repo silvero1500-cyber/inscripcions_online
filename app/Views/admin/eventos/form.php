@@ -269,32 +269,117 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
     </fieldset>
 
     <fieldset>
-        <legend>Camps estàndard del corredor</legend>
-        <p class="muted">Tria quins camps demanar i <strong>arrossega'ls (⠿) o fes servir les fletxes</strong> per ordenar-los al formulari. <strong>Nom</strong> i <strong>email</strong> són sempre obligatoris; <strong>email + repetir</strong> van sempre junts.</p>
+        <legend>Camps del formulari</legend>
+        <p class="muted">Arrossega (⠿) o fes servir les fletxes per <strong>ordenar tots els camps</strong> (estàndard i personalitzats) com vulguis. <strong>Nom</strong> i <strong>email</strong> són sempre obligatoris; <strong>email + repetir</strong> van junts. Amb «+ Afegir camp» crees camps extra i els col·loques on vulguis.</p>
+        <?php
+        $ordenFull = CamposFijos::ordenComplet($evento['campos_orden'] ?? null, $campos);
+        $camposByIdEditor = [];
+        foreach ($campos as $cc) $camposByIdEditor[(int) $cc['id']] = $cc;
 
-        <div id="camps-fixos-list" class="campos-fijos cf-sortable">
-            <?php foreach (CamposFijos::orden($evento['campos_orden'] ?? null) as $key):
-                $isFix = in_array($key, CamposFijos::FIXOS, true);
-                $st = $isFix ? null : $cfState($key);
+        // Checkboxes de tarifes per al camp condicional (només tarifes ja desades)
+        $tarifaCondChecks = function (array $selectedIds, $idx) use ($tarifas): string {
+            if (count(array_filter($tarifas, fn($t) => !empty($t['id']))) === 0) {
+                return '<span class="muted">Desa l\'esdeveniment per poder assignar tarifes a aquest camp.</span>';
+            }
+            $h = '';
+            foreach ($tarifas as $t) {
+                if (empty($t['id'])) continue;
+                $checked = in_array((int) $t['id'], $selectedIds, true) ? ' checked' : '';
+                $h .= '<label class="inline-check" style="margin-right:.8rem;"><input type="checkbox" name="campos[' . $idx . '][tarifa_ids][]" value="' . (int) $t['id'] . '"' . $checked . '> ' . e((string) $t['nombre']) . '</label>';
+            }
+            return $h;
+        };
+        // Inputs d'opcions diferents per tarifa (select/radio/checkbox)
+        $opcTarifaInputs = function (array $campo, $idx) use ($tarifas): string {
+            if (count(array_filter($tarifas, fn($t) => !empty($t['id']))) === 0) return '';
+            $map = \App\Models\CampoPersonalizado::opcionesPorTarifa($campo);
+            $h  = '<details class="campo-opc-tarifa" style="margin-top:.6rem;"><summary style="cursor:pointer;color:var(--color-primary,#1e88c2);">Opcions diferents per tarifa (opcional)</summary>';
+            $h .= '<small class="muted" style="display:block;margin:.3rem 0 .5rem;">Per a select/radio/checkbox: si omples les opcions d\'una tarifa, substitueixen les generals. Separa amb <code>|</code>.</small>';
+            foreach ($tarifas as $t) {
+                if (empty($t['id'])) continue;
+                $tid = (int) $t['id'];
+                $val = isset($map[$tid]) ? implode(' | ', $map[$tid]) : '';
+                $h .= '<div style="margin-bottom:.4rem;"><label style="font-size:.85rem;font-weight:600;">' . e((string) $t['nombre']) . '</label>';
+                $h .= '<input type="text" name="campos[' . $idx . '][opciones_tarifa][' . $tid . ']" value="' . e($val) . '" placeholder="Opció 1 | Opció 2 | Opció 3"></div>';
+            }
+            return $h . '</details>';
+        };
+        // Targeta plegable d'un camp personalitzat ($c = null per a la plantilla)
+        $renderCampoCard = function ($idx, ?array $c) use ($tarifaCondChecks, $opcTarifaInputs): void {
+            $opcArr   = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null);
+            $tipo     = (string) ($c['tipo'] ?? 'text');
+            $etiqueta = (string) ($c['etiqueta'] ?? '');
             ?>
-                <div class="cf-row card-item" data-key="<?= e($key) ?>">
+            <div class="campo-row card-item field-item collapsed" data-index="<?= $idx ?>">
+                <input type="hidden" name="campos_orden[]" value="__CUSTOM__">
+                <div class="item-head">
                     <span class="drag-handle" title="Arrossega per ordenar" aria-hidden="true">⠿</span>
-                    <input type="hidden" name="campos_orden[]" value="<?= e($key) ?>">
-                    <span class="cf-label"><?= e(CamposFijos::labelOf($key)) ?></span>
-                    <?php if ($isFix): ?>
-                        <span class="badge badge-muted">Sempre obligatori</span>
-                    <?php else: ?>
-                        <select name="campos_fijos[<?= e($key) ?>]" class="cf-select">
-                            <option value="obligatori" <?= $st === 'obligatori' ? 'selected' : '' ?>>Obligatori</option>
-                            <option value="opcional"   <?= $st === 'opcional'   ? 'selected' : '' ?>>Opcional</option>
-                            <option value="ocult"      <?= $st === 'ocult'      ? 'selected' : '' ?>>Ocult</option>
-                        </select>
-                    <?php endif; ?>
+                    <span class="item-title"><?= e($etiqueta !== '' ? $etiqueta : 'Camp personalitzat') ?></span>
+                    <span class="item-badge muted">camp extra</span>
                     <span class="item-tools">
+                        <button type="button" class="btn-move campo-toggle" title="Desplegar / plegar opcions">⌄</button>
                         <button type="button" class="btn-move move-up" title="Pujar" aria-label="Pujar">↑</button>
                         <button type="button" class="btn-move move-down" title="Baixar" aria-label="Baixar">↓</button>
+                        <button type="button" class="btn-link btn-danger campo-remove" title="Eliminar camp" aria-label="Eliminar camp">✕</button>
                     </span>
                 </div>
+                <div class="campo-body">
+                    <div class="campo-grid">
+                        <div><label>Etiqueta (visible)</label><input type="text" name="campos[<?= $idx ?>][etiqueta]" value="<?= e($etiqueta) ?>" required></div>
+                        <div><label>Nom intern</label><input type="text" name="campos[<?= $idx ?>][nombre_campo]" value="<?= e((string) ($c['nombre_campo'] ?? '')) ?>" placeholder="auto"></div>
+                        <div><label>Tipus</label>
+                            <select name="campos[<?= $idx ?>][tipo]" class="campo-tipo">
+                                <?php foreach (CampoPersonalizado::TIPOS_VALIDOS as $tp): ?>
+                                    <option value="<?= e($tp) ?>" <?= $tipo === $tp ? 'selected' : '' ?>><?= e($tp) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div><label>Obligatori</label><label class="inline-check"><input type="checkbox" name="campos[<?= $idx ?>][requerido]" value="1" <?= !empty($c['requerido']) ? 'checked' : '' ?>> Obligatori</label></div>
+                    </div>
+                    <div class="campo-grid-2">
+                        <div><label>Opcions (només select/radio/checkbox · separa amb |)</label><input type="text" name="campos[<?= $idx ?>][opciones]" value="<?= e(implode(' | ', $opcArr)) ?>" placeholder="Opció 1 | Opció 2 | Opció 3"></div>
+                        <div><label>Text d'ajuda</label><input type="text" name="campos[<?= $idx ?>][ayuda]" value="<?= e((string) ($c['ayuda'] ?? '')) ?>"></div>
+                    </div>
+                    <div class="campo-grid-2">
+                        <div style="grid-column:1 / -1;">
+                            <label>Mostrar només per a aquestes tarifes <span class="muted">(condicional)</span></label>
+                            <div class="campo-tarifes-checks"><?= $tarifaCondChecks(CampoPersonalizado::tarifasDeCampo($c ?? []), $idx) ?></div>
+                            <small class="muted">Marca una o més tarifes i el camp només apareix quan se'n tria alguna. Cap marcada = sempre.</small>
+                            <?= $opcTarifaInputs($c ?? [], $idx) ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php
+        };
+        ?>
+
+        <button type="button" id="add-campo" class="btn btn-secondary" style="margin-bottom:.8rem;">+ Afegir camp personalitzat</button>
+        <div id="camps-fixos-list" class="sortable-list cf-sortable">
+            <?php $cidx = 0; foreach ($ordenFull as $key): ?>
+                <?php if (str_starts_with($key, 'campo_')): ?>
+                    <?php $cId = (int) substr($key, 6); if (!isset($camposByIdEditor[$cId])) continue; ?>
+                    <?php $renderCampoCard($cidx++, $camposByIdEditor[$cId]); ?>
+                <?php else: $isFix = in_array($key, CamposFijos::FIXOS, true); $st = $isFix ? null : $cfState($key); ?>
+                    <div class="cf-row card-item field-item" data-key="<?= e($key) ?>">
+                        <span class="drag-handle" title="Arrossega per ordenar" aria-hidden="true">⠿</span>
+                        <input type="hidden" name="campos_orden[]" value="<?= e($key) ?>">
+                        <span class="cf-label"><?= e(CamposFijos::labelOf($key)) ?></span>
+                        <?php if ($isFix): ?>
+                            <span class="badge badge-muted">Sempre obligatori</span>
+                        <?php else: ?>
+                            <select name="campos_fijos[<?= e($key) ?>]" class="cf-select">
+                                <option value="obligatori" <?= $st === 'obligatori' ? 'selected' : '' ?>>Obligatori</option>
+                                <option value="opcional"   <?= $st === 'opcional'   ? 'selected' : '' ?>>Opcional</option>
+                                <option value="ocult"      <?= $st === 'ocult'      ? 'selected' : '' ?>>Ocult</option>
+                            </select>
+                        <?php endif; ?>
+                        <span class="item-tools">
+                            <button type="button" class="btn-move move-up" title="Pujar" aria-label="Pujar">↑</button>
+                            <button type="button" class="btn-move move-down" title="Baixar" aria-label="Baixar">↓</button>
+                        </span>
+                    </div>
+                <?php endif; ?>
             <?php endforeach; ?>
         </div>
 
@@ -325,118 +410,6 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
         </div>
     </fieldset>
 
-    <fieldset>
-        <legend>Camps personalitzats del formulari</legend>
-        <p class="muted">A part dels camps estàndard del corredor (nom, DNI, email...), pots afegir camps extra que es mostraran al formulari d'inscripció. Arrossega'ls o fes servir les fletxes per ordenar-los.</p>
-        <?php
-        // Checkboxes de tarifes per al camp condicional (només tarifes ja desades).
-        // $idx pot ser un enter (camp existent) o '__IDX__' (plantilla).
-        $tarifaCondChecks = function (array $selectedIds, $idx) use ($tarifas): string {
-            $ambId = array_filter($tarifas, fn($t) => !empty($t['id']));
-            if (count($ambId) === 0) {
-                return '<span class="muted">Desa l\'esdeveniment per poder assignar tarifes a aquest camp.</span>';
-            }
-            $h = '';
-            foreach ($tarifas as $t) {
-                if (empty($t['id'])) continue;
-                $checked = in_array((int) $t['id'], $selectedIds, true) ? ' checked' : '';
-                $h .= '<label class="inline-check" style="margin-right:.8rem;"><input type="checkbox" name="campos[' . $idx . '][tarifa_ids][]" value="' . (int) $t['id'] . '"' . $checked . '> ' . e((string) $t['nombre']) . '</label>';
-            }
-            return $h;
-        };
-
-        // Inputs d'opcions diferents per tarifa (per a camps select/radio/checkbox).
-        $opcTarifaInputs = function (array $campo, $idx) use ($tarifas): string {
-            if (count(array_filter($tarifas, fn($t) => !empty($t['id']))) === 0) return '';
-            $map = \App\Models\CampoPersonalizado::opcionesPorTarifa($campo);
-            $h  = '<details class="campo-opc-tarifa" style="margin-top:.6rem;"><summary style="cursor:pointer;color:var(--color-primary,#1e88c2);">Opcions diferents per tarifa (opcional)</summary>';
-            $h .= '<small class="muted" style="display:block;margin:.3rem 0 .5rem;">Per a select/radio/checkbox: si omples les opcions d\'una tarifa, substitueixen les generals quan es tria aquesta tarifa. Separa amb <code>|</code>.</small>';
-            foreach ($tarifas as $t) {
-                if (empty($t['id'])) continue;
-                $tid = (int) $t['id'];
-                $val = isset($map[$tid]) ? implode(' | ', $map[$tid]) : '';
-                $h .= '<div style="margin-bottom:.4rem;"><label style="font-size:.85rem;font-weight:600;">' . e((string) $t['nombre']) . '</label>';
-                $h .= '<input type="text" name="campos[' . $idx . '][opciones_tarifa][' . $tid . ']" value="' . e($val) . '" placeholder="Opció 1 | Opció 2 | Opció 3"></div>';
-            }
-            return $h . '</details>';
-        };
-        ?>
-
-        <div class="builder">
-            <aside class="builder-side">
-                <button type="button" id="add-campo" class="btn btn-secondary btn-block">+ Afegir camp</button>
-                <p class="builder-count"><strong data-count-for="campos-list">0</strong> camps</p>
-            </aside>
-            <div class="builder-main">
-                <div id="campos-list" class="sortable-list">
-                    <?php foreach ($campos as $idx => $c): ?>
-                        <?php $opcionesArr = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null); ?>
-                        <div class="campo-row card-item" data-index="<?= (int)$idx ?>">
-                            <div class="item-head">
-                                <span class="drag-handle" title="Arrossega per ordenar" aria-hidden="true">⠿</span>
-                                <span class="item-title"><?= e((string)$c['etiqueta'] !== '' ? (string)$c['etiqueta'] : 'Camp') ?></span>
-                                <span class="item-tools">
-                                    <button type="button" class="btn-move move-up" title="Pujar" aria-label="Pujar">↑</button>
-                                    <button type="button" class="btn-move move-down" title="Baixar" aria-label="Baixar">↓</button>
-                                    <button type="button" class="btn-link btn-danger campo-remove" title="Eliminar camp" aria-label="Eliminar camp">✕</button>
-                                </span>
-                            </div>
-                            <div class="campo-grid">
-                                <div>
-                                    <label>Etiqueta (visible)</label>
-                                    <input type="text" name="campos[<?= (int)$idx ?>][etiqueta]" value="<?= e((string)$c['etiqueta']) ?>" required>
-                                </div>
-                                <div>
-                                    <label>Nom intern</label>
-                                    <input type="text" name="campos[<?= (int)$idx ?>][nombre_campo]" value="<?= e((string)$c['nombre_campo']) ?>" placeholder="auto">
-                                </div>
-                                <div>
-                                    <label>Tipus</label>
-                                    <select name="campos[<?= (int)$idx ?>][tipo]" class="campo-tipo">
-                                        <?php foreach (CampoPersonalizado::TIPOS_VALIDOS as $t): ?>
-                                            <option value="<?= e($t) ?>" <?= $c['tipo'] === $t ? 'selected' : '' ?>><?= e($t) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label>Obligatori</label>
-                                    <label class="inline-check">
-                                        <input type="checkbox" name="campos[<?= (int)$idx ?>][requerido]" value="1" <?= (int)$c['requerido'] === 1 ? 'checked' : '' ?>>
-                                        Obligatori
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="campo-grid-2">
-                                <div>
-                                    <label>Opcions (només select/radio/checkbox · separa amb |)</label>
-                                    <input type="text" name="campos[<?= (int)$idx ?>][opciones]" value="<?= e(implode(' | ', $opcionesArr)) ?>" placeholder="Opció 1 | Opció 2 | Opció 3">
-                                </div>
-                                <div>
-                                    <label>Text d'ajuda</label>
-                                    <input type="text" name="campos[<?= (int)$idx ?>][ayuda]" value="<?= e((string)($c['ayuda'] ?? '')) ?>">
-                                </div>
-                            </div>
-                            <div class="campo-grid-2">
-                                <div style="grid-column:1 / -1;">
-                                    <label class="inline-check"><input type="checkbox" name="campos[<?= (int)$idx ?>][antes_estandar]" value="1" <?= !empty($c['antes_estandar']) ? 'checked' : '' ?>> Mostrar <strong>abans</strong> dels camps estàndard (nom, email...)</label>
-                                </div>
-                            </div>
-                            <div class="campo-grid-2">
-                                <div style="grid-column:1 / -1;">
-                                    <label>Mostrar només per a aquestes tarifes <span class="muted">(condicional)</span></label>
-                                    <div class="campo-tarifes-checks"><?= $tarifaCondChecks(CampoPersonalizado::tarifasDeCampo($c), (int)$idx) ?></div>
-                                    <small class="muted">Marca una o més tarifes i el camp només apareix quan se'n tria alguna (p.ex. franja horària per a Mitja i 10K). Cap marcada = sempre.</small>
-                                    <?= $opcTarifaInputs($c, (int)$idx) ?>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <p class="empty-hint" data-empty-for="campos-list">Encara no has afegit cap camp.</p>
-            </div>
-        </div>
-    </fieldset>
-
     <div class="form-actions">
         <button type="submit" class="btn btn-primary"><?= $isEdit ? 'Desa els canvis' : 'Crea l\'esdeveniment' ?></button>
         <a href="<?= e(base_url('/admin/eventos')) ?>" class="btn">Cancel·la</a>
@@ -445,65 +418,7 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
 
 <!-- Plantilla para nuevos campos (oculta) -->
 <template id="campo-template">
-    <div class="campo-row card-item" data-index="__IDX__">
-        <div class="item-head">
-            <span class="drag-handle" title="Arrossega per ordenar" aria-hidden="true">⠿</span>
-            <span class="item-title">Camp</span>
-            <span class="item-tools">
-                <button type="button" class="btn-move move-up" title="Pujar" aria-label="Pujar">↑</button>
-                <button type="button" class="btn-move move-down" title="Baixar" aria-label="Baixar">↓</button>
-                <button type="button" class="btn-link btn-danger campo-remove" title="Eliminar camp" aria-label="Eliminar camp">✕</button>
-            </span>
-        </div>
-        <div class="campo-grid">
-            <div>
-                <label>Etiqueta (visible)</label>
-                <input type="text" name="campos[__IDX__][etiqueta]" required>
-            </div>
-            <div>
-                <label>Nom intern</label>
-                <input type="text" name="campos[__IDX__][nombre_campo]" placeholder="auto">
-            </div>
-            <div>
-                <label>Tipus</label>
-                <select name="campos[__IDX__][tipo]" class="campo-tipo">
-                    <?php foreach (CampoPersonalizado::TIPOS_VALIDOS as $t): ?>
-                        <option value="<?= e($t) ?>"><?= e($t) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div>
-                <label>Obligatori</label>
-                <label class="inline-check">
-                    <input type="checkbox" name="campos[__IDX__][requerido]" value="1">
-                    Obligatori
-                </label>
-            </div>
-        </div>
-        <div class="campo-grid-2">
-            <div>
-                <label>Opcions (només select/radio/checkbox · separa amb |)</label>
-                <input type="text" name="campos[__IDX__][opciones]" placeholder="Opció 1 | Opció 2 | Opció 3">
-            </div>
-            <div>
-                <label>Text d'ajuda</label>
-                <input type="text" name="campos[__IDX__][ayuda]">
-            </div>
-        </div>
-        <div class="campo-grid-2">
-            <div style="grid-column:1 / -1;">
-                <label class="inline-check"><input type="checkbox" name="campos[__IDX__][antes_estandar]" value="1"> Mostrar <strong>abans</strong> dels camps estàndard (nom, email...)</label>
-            </div>
-        </div>
-        <div class="campo-grid-2">
-            <div style="grid-column:1 / -1;">
-                <label>Mostrar només per a aquestes tarifes <span class="muted">(condicional)</span></label>
-                <div class="campo-tarifes-checks"><?= $tarifaCondChecks([], '__IDX__') ?></div>
-                <small class="muted">Marca una o més tarifes i el camp només apareix quan se'n tria alguna. Cap marcada = sempre.</small>
-                <?= $opcTarifaInputs([], '__IDX__') ?>
-            </div>
-        </div>
-    </div>
+    <?php $renderCampoCard('__IDX__', null); ?>
 </template>
 
 <!-- Plantilla para nuevas tarifas -->

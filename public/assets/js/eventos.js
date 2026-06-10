@@ -283,11 +283,24 @@
         updateMetaG();
     }
 
+    // Llista UNIFICADA: camps estàndard (.cf-row) + personalitzats (.campo-row), tots .field-item.
+    // setupBuilder gestiona afegir/eliminar/títol/arrossegar; els '+ Afegir camp' creen .campo-row.
     setupBuilder({
-        listId: 'campos-list', addBtnId: 'add-campo', templateId: 'campo-template',
-        itemSelector: '.campo-row', removeClass: 'campo-remove',
-        titleField: 'etiqueta', confirmMsg: 'Vols eliminar aquest camp?'
+        listId: 'camps-fixos-list', addBtnId: 'add-campo', templateId: 'campo-template',
+        itemSelector: '.field-item', removeClass: 'campo-remove',
+        titleField: 'etiqueta', confirmMsg: 'Vols eliminar aquest camp?',
+        onAdd: function (node) { if (node) node.classList.remove('collapsed'); }
     });
+    // Desplegar / plegar les opcions d'un camp personalitzat
+    var campsList = document.getElementById('camps-fixos-list');
+    if (campsList) {
+        campsList.addEventListener('click', function (e) {
+            if (e.target.closest('.campo-toggle')) {
+                var row = e.target.closest('.campo-row');
+                if (row) row.classList.toggle('collapsed');
+            }
+        });
+    }
     setupBuilder({
         listId: 'tarifas-list', addBtnId: 'add-tarifa', templateId: 'tarifa-template',
         itemSelector: '.tarifa-row', removeClass: 'tarifa-remove',
@@ -297,7 +310,6 @@
 
     setupGrupos();
     refreshGroupSelects();
-    setupReorder('camps-fixos-list', '.cf-row');
 
     // Canvi de grup en una tarifa → activar/desactivar el seu aforo propi
     document.addEventListener('change', function (e) {
@@ -311,7 +323,7 @@
         form.addEventListener('submit', function () {
             reindex('grupos-list', '.grupo-row', 'grupos');
             reindex('tarifas-list', '.tarifa-row', 'tarifas');
-            reindex('campos-list', '.campo-row', 'campos');
+            reindex('camps-fixos-list', '.campo-row', 'campos');
         });
     }
 })();

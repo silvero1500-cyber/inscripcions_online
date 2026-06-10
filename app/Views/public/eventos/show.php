@@ -28,8 +28,10 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
 // Inscripció de grup: si l'esdeveniment permet >1 participant per inscripció
 $maxPart = (int) ($evento['max_participantes'] ?? 1);
 $multi   = $maxPart >= 2;
-// Ordre configurat dels camps estàndard del formulari
-$orden   = CamposFijos::orden($evento['campos_orden'] ?? null);
+// Ordre COMPLET dels camps del formulari (estàndard + personalitzats) + índex per id
+$ordenFull  = CamposFijos::ordenComplet($evento['campos_orden'] ?? null, $campos);
+$camposById = [];
+foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
 ?>
 
 <section class="container">
@@ -310,7 +312,7 @@ $orden   = CamposFijos::orden($evento['campos_orden'] ?? null);
                     $opts = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null);
                     $req  = (int) $c['requerido'] === 1;
                     ?>
-                    <div class="form-row" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
+                    <div class="form-row form-row-wide" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
                         <label><?= e($c['etiqueta']) ?><?= $req ? ' <span class="req">*</span>' : '' ?></label>
                         <?php if ($c['tipo'] === 'textarea'): ?>
                             <textarea name="<?= e($key) ?>" rows="3" <?= $req ? 'required' : '' ?>><?= e($valC) ?></textarea>
@@ -343,13 +345,17 @@ $orden   = CamposFijos::orden($evento['campos_orden'] ?? null);
                     </div>
                     <?php
                 };
-                // Camps personalitzats marcats "abans dels estàndard"
-                foreach ($campos as $c) if (!empty($c['antes_estandar'])) $customField($c);
                 ?>
                 <div class="form-fields-grid">
-                    <?php foreach ($orden as $key) $field($key); ?>
+                    <?php foreach ($ordenFull as $key):
+                        if (str_starts_with($key, 'campo_')) {
+                            $cid = (int) substr($key, 6);
+                            if (isset($camposById[$cid])) $customField($camposById[$cid]);
+                        } else {
+                            $field($key);
+                        }
+                    endforeach; ?>
                 </div>
-                <?php foreach ($campos as $c) if (empty($c['antes_estandar'])) $customField($c); ?>
             </fieldset>
         </div>
 
@@ -379,7 +385,7 @@ $orden   = CamposFijos::orden($evento['campos_orden'] ?? null);
     $cerr = fn(string $k): ?string => $errors["contacto.$k"][0] ?? null;
 
     // Renderitza UN participant. $i és int per als reals, '__I__' per a la plantilla.
-    $renderParticipant = function ($i, array $pd = []) use ($cf, $cfVis, $campos, $tarifas, $errors, $orden): void {
+    $renderParticipant = function ($i, array $pd = []) use ($cf, $cfVis, $campos, $tarifas, $errors, $ordenFull, $camposById): void {
         $isTpl = !is_int($i);
         $nm  = fn(string $f): string => 'participants[' . $i . '][' . $f . ']';
         $idf = fn(string $f): string => 'p_' . $i . '_' . $f;
@@ -508,7 +514,7 @@ $orden   = CamposFijos::orden($evento['campos_orden'] ?? null);
                 $creq  = (int) $c['requerido'] === 1;
                 $cvalC = $pv($ckey);
                 ?>
-                <div class="form-row" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
+                <div class="form-row form-row-wide" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
                     <label><?= e($c['etiqueta']) ?><?= $creq ? ' <span class="req">*</span>' : '' ?></label>
                     <?php if ($c['tipo'] === 'textarea'): ?>
                         <textarea name="<?= e($nm($ckey)) ?>" rows="3" <?= $creq ? 'required' : '' ?>><?= e($cvalC) ?></textarea>
@@ -541,12 +547,17 @@ $orden   = CamposFijos::orden($evento['campos_orden'] ?? null);
                 </div>
                 <?php
             };
-            foreach ($campos as $c) if (!empty($c['antes_estandar'])) $pCustomField($c);
             ?>
             <div class="form-fields-grid">
-                <?php foreach ($orden as $key) $pfield($key); ?>
+                <?php foreach ($ordenFull as $key):
+                    if (str_starts_with($key, 'campo_')) {
+                        $cid = (int) substr($key, 6);
+                        if (isset($camposById[$cid])) $pCustomField($camposById[$cid]);
+                    } else {
+                        $pfield($key);
+                    }
+                endforeach; ?>
             </div>
-            <?php foreach ($campos as $c) if (empty($c['antes_estandar'])) $pCustomField($c); ?>
 
             <details class="participant-discount">
                 <summary><?= e(t('form.label.discount_question')) ?></summary>
