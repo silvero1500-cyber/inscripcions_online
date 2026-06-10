@@ -424,6 +424,10 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 }
 .inline-check input { width: auto; margin: 0; }
 
+/* Talles per sexe: checkboxes en horitzontal (no apilades) */
+.cf-tallas-sexe .tallas-sexe-row { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .9rem; margin-bottom: .6rem; }
+.cf-tallas-sexe .tallas-sexe-row .inline-check { display: inline-flex; margin-right: 0 !important; }
+
 /* ── Imagen actual en editar ────────────────────────────── */
 .current-image {
     display: flex; align-items: center; gap: 1rem;
