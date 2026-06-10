@@ -248,10 +248,11 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
-    background: #e5e7eb;
+    background: #f3f4f6;
     aspect-ratio: 21 / 9;
     max-height: 320px;
-    background-size: cover;
+    background-size: contain;
+    background-repeat: no-repeat;
     background-position: center;
     box-shadow: var(--shadow-md);
 }
