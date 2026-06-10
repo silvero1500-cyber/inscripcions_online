@@ -64,11 +64,6 @@ $multi   = $maxPart >= 2;
         <?php endif; ?>
 
         <div class="evt-info">
-            <div class="evt-tags">
-                <span class="evt-tag evt-tag-primary">Running</span>
-                <span class="evt-tag evt-tag-muted"><?= current_locale() === 'es' ? 'Carrera popular' : 'Cursa popular' ?></span>
-            </div>
-
             <ul class="evt-facts">
                 <li class="evt-fact">
                     <span class="evt-fact-ic" aria-hidden="true">
