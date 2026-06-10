@@ -28,6 +28,8 @@ $reqAttr = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required'
 // Inscripció de grup: si l'esdeveniment permet >1 participant per inscripció
 $maxPart = (int) ($evento['max_participantes'] ?? 1);
 $multi   = $maxPart >= 2;
+// Ordre configurat dels camps estàndard del formulari
+$orden   = CamposFijos::orden($evento['campos_orden'] ?? null);
 ?>
 
 <section class="container">
@@ -199,120 +201,109 @@ $multi   = $maxPart >= 2;
             <fieldset>
                 <legend><?= e(t('form.personal.title')) ?></legend>
 
-                <div class="form-grid-2">
-                    <div class="form-row">
-                        <label for="nombre"><?= e(t('form.label.name')) ?> <span class="req">*</span></label>
-                        <input type="text" id="nombre" name="nombre" required maxlength="100" autocomplete="given-name"
-                               value="<?= e($val('nombre')) ?>">
-                        <?php if ($err('nombre')): ?><div class="field-error"><?= e($err('nombre')) ?></div><?php endif; ?>
-                    </div>
-                    <?php if ($cfVis('apellido')): ?>
-                    <div class="form-row">
-                        <label for="apellido"><?= e(t('form.label.surname')) ?><?= $reqMark('apellido') ?></label>
-                        <input type="text" id="apellido" name="apellido" <?= $reqAttr('apellido') ?> maxlength="150" autocomplete="family-name"
-                               value="<?= e($val('apellido')) ?>">
-                        <?php if ($err('apellido')): ?><div class="field-error"><?= e($err('apellido')) ?></div><?php endif; ?>
-                    </div>
-                    <?php endif; ?>
+                <?php
+                // Camps estàndard en l'ordre configurat ($orden). Email + repetir van junts.
+                $field = function (string $key) use ($val, $err, $cfVis, $reqMark, $reqAttr, $cfReq): void {
+                    if (!in_array($key, CamposFijos::FIXOS, true) && !$cfVis($key)) return;
+                    switch ($key):
+                        case 'nombre': ?>
+                            <div class="form-row">
+                                <label for="nombre"><?= e(t('form.label.name')) ?> <span class="req">*</span></label>
+                                <input type="text" id="nombre" name="nombre" required maxlength="100" autocomplete="given-name" value="<?= e($val('nombre')) ?>">
+                                <?php if ($err('nombre')): ?><div class="field-error"><?= e($err('nombre')) ?></div><?php endif; ?>
+                            </div>
+                        <?php break;
+                        case 'apellido': ?>
+                            <div class="form-row">
+                                <label for="apellido"><?= e(t('form.label.surname')) ?><?= $reqMark('apellido') ?></label>
+                                <input type="text" id="apellido" name="apellido" <?= $reqAttr('apellido') ?> maxlength="150" autocomplete="family-name" value="<?= e($val('apellido')) ?>">
+                                <?php if ($err('apellido')): ?><div class="field-error"><?= e($err('apellido')) ?></div><?php endif; ?>
+                            </div>
+                        <?php break;
+                        case 'email': ?>
+                            <div class="form-row-pair">
+                                <div class="form-row">
+                                    <label for="email"><?= e(t('form.label.email')) ?> <span class="req">*</span></label>
+                                    <input type="email" id="email" name="email" required maxlength="255" autocomplete="email" value="<?= e($val('email')) ?>">
+                                    <?php if ($err('email')): ?><div class="field-error"><?= e($err('email')) ?></div><?php endif; ?>
+                                </div>
+                                <div class="form-row">
+                                    <label for="email_confirm"><?= e(t('form.label.email_confirm')) ?> <span class="req">*</span></label>
+                                    <input type="email" id="email_confirm" name="email_confirm" required maxlength="255" autocomplete="off" onpaste="return false;" ondrop="return false;" value="<?= e($val('email_confirm')) ?>">
+                                    <?php if ($err('email_confirm')): ?><div class="field-error"><?= e($err('email_confirm')) ?></div><?php endif; ?>
+                                </div>
+                            </div>
+                        <?php break;
+                        case 'dni': ?>
+                            <div class="form-row">
+                                <label for="dni"><?= e(t('form.label.dni')) ?><?= $reqMark('dni') ?></label>
+                                <input type="text" id="dni" name="dni" <?= $reqAttr('dni') ?> maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($val('dni'))) ?>">
+                                <?php if ($err('dni')): ?><div class="field-error"><?= e($err('dni')) ?></div><?php endif; ?>
+                            </div>
+                        <?php break;
+                        case 'fecha_nacimiento': ?>
+                            <div class="form-row">
+                                <label for="fecha_nacimiento"><?= e(t('form.label.birth_date')) ?><?= $reqMark('fecha_nacimiento') ?></label>
+                                <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" <?= $reqAttr('fecha_nacimiento') ?> value="<?= e($val('fecha_nacimiento')) ?>">
+                                <?php if ($err('fecha_nacimiento')): ?><div class="field-error"><?= e($err('fecha_nacimiento')) ?></div><?php endif; ?>
+                            </div>
+                        <?php break;
+                        case 'sexo': ?>
+                            <div class="form-row">
+                                <label for="sexo"><?= e(t('form.label.sex')) ?><?= $reqMark('sexo') ?></label>
+                                <select id="sexo" name="sexo" <?= $reqAttr('sexo') ?>>
+                                    <option value=""><?= e(t('form.label.sex.choose')) ?></option>
+                                    <option value="H" <?= $val('sexo') === 'H' ? 'selected' : '' ?>><?= e(t('form.label.sex.male')) ?></option>
+                                    <option value="M" <?= $val('sexo') === 'M' ? 'selected' : '' ?>><?= e(t('form.label.sex.female')) ?></option>
+                                    <option value="NB" <?= $val('sexo') === 'NB' ? 'selected' : '' ?>><?= e(t('form.label.sex.nonbinary')) ?></option>
+                                </select>
+                                <?php if ($err('sexo')): ?><div class="field-error"><?= e($err('sexo')) ?></div><?php endif; ?>
+                            </div>
+                        <?php break;
+                        case 'talla_camiseta': ?>
+                            <div class="form-row">
+                                <label for="talla_camiseta"><?= e(t('form.label.shirt')) ?><?= $reqMark('talla_camiseta') ?></label>
+                                <select id="talla_camiseta" name="talla_camiseta" <?= $reqAttr('talla_camiseta') ?>>
+                                    <option value=""><?= e(t('form.label.shirt.none')) ?></option>
+                                    <?php foreach (Inscrito::TALLAS as $t): ?>
+                                        <option value="<?= e($t) ?>" <?= $val('talla_camiseta') === $t ? 'selected' : '' ?>><?= e($t) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <?php if ($err('talla_camiseta')): ?><div class="field-error"><?= e($err('talla_camiseta')) ?></div><?php endif; ?>
+                            </div>
+                        <?php break;
+                        case 'telefono': ?>
+                            <div class="form-row">
+                                <label for="telefono"><?= e(t('form.label.phone')) ?><?= $reqMark('telefono') ?></label>
+                                <input type="tel" id="telefono" name="telefono" <?= $reqAttr('telefono') ?> maxlength="15" autocomplete="tel" placeholder="600123456" value="<?= e($val('telefono')) ?>">
+                                <?php if ($err('telefono')): ?><div class="field-error"><?= e($err('telefono')) ?></div><?php endif; ?>
+                            </div>
+                        <?php break;
+                        case 'poblacion': ?>
+                            <div class="form-row">
+                                <label for="poblacion"><?= e(t('form.label.city')) ?><?= $reqMark('poblacion') ?></label>
+                                <input type="text" id="poblacion" name="poblacion" <?= $reqAttr('poblacion') ?> maxlength="120" autocomplete="address-level2" value="<?= e($val('poblacion')) ?>">
+                            </div>
+                        <?php break;
+                        case 'codigo_postal': ?>
+                            <div class="form-row">
+                                <label for="codigo_postal"><?= e(t('form.label.postal_code')) ?><?= $reqMark('codigo_postal') ?></label>
+                                <input type="text" id="codigo_postal" name="codigo_postal" <?= $reqAttr('codigo_postal') ?> maxlength="10" autocomplete="postal-code" placeholder="08001" value="<?= e($val('codigo_postal')) ?>">
+                                <?php if ($err('codigo_postal')): ?><div class="field-error"><?= e($err('codigo_postal')) ?></div><?php endif; ?>
+                            </div>
+                        <?php break;
+                        case 'club': ?>
+                            <div class="form-row">
+                                <label for="club"><?= e(t('form.label.club')) ?><?= $cfReq('club') ? $reqMark('club') : ' (' . e(t('common.optional')) . ')' ?></label>
+                                <input type="text" id="club" name="club" <?= $reqAttr('club') ?> maxlength="150" value="<?= e($val('club')) ?>">
+                            </div>
+                        <?php break;
+                    endswitch;
+                };
+                ?>
+                <div class="form-fields-grid">
+                    <?php foreach ($orden as $key) $field($key); ?>
                 </div>
-
-                <div class="form-grid-2">
-                    <?php if ($cfVis('dni')): ?>
-                    <div class="form-row">
-                        <label for="dni"><?= e(t('form.label.dni')) ?><?= $reqMark('dni') ?></label>
-                        <input type="text" id="dni" name="dni" <?= $reqAttr('dni') ?> maxlength="20" placeholder="12345678A"
-                               value="<?= e(strtoupper($val('dni'))) ?>">
-                        <?php if ($err('dni')): ?><div class="field-error"><?= e($err('dni')) ?></div><?php endif; ?>
-                    </div>
-                    <?php endif; ?>
-                    <?php if ($cfVis('fecha_nacimiento')): ?>
-                    <div class="form-row">
-                        <label for="fecha_nacimiento"><?= e(t('form.label.birth_date')) ?><?= $reqMark('fecha_nacimiento') ?></label>
-                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" <?= $reqAttr('fecha_nacimiento') ?>
-                               value="<?= e($val('fecha_nacimiento')) ?>">
-                        <?php if ($err('fecha_nacimiento')): ?><div class="field-error"><?= e($err('fecha_nacimiento')) ?></div><?php endif; ?>
-                    </div>
-                    <?php endif; ?>
-                </div>
-
-                <div class="form-grid-2">
-                    <div class="form-row">
-                        <label for="email"><?= e(t('form.label.email')) ?> <span class="req">*</span></label>
-                        <input type="email" id="email" name="email" required maxlength="255" autocomplete="email"
-                               value="<?= e($val('email')) ?>">
-                        <?php if ($err('email')): ?><div class="field-error"><?= e($err('email')) ?></div><?php endif; ?>
-                    </div>
-                    <div class="form-row">
-                        <label for="email_confirm"><?= e(t('form.label.email_confirm')) ?> <span class="req">*</span></label>
-                        <input type="email" id="email_confirm" name="email_confirm" required maxlength="255"
-                               autocomplete="off" onpaste="return false;" ondrop="return false;"
-                               value="<?= e($val('email_confirm')) ?>">
-                        <?php if ($err('email_confirm')): ?><div class="field-error"><?= e($err('email_confirm')) ?></div><?php endif; ?>
-                    </div>
-                </div>
-
-                <?php if ($cfVis('telefono')): ?>
-                <div class="form-grid-2">
-                    <div class="form-row">
-                        <label for="telefono"><?= e(t('form.label.phone')) ?><?= $reqMark('telefono') ?></label>
-                        <input type="tel" id="telefono" name="telefono" <?= $reqAttr('telefono') ?> maxlength="15" autocomplete="tel"
-                               placeholder="600123456" value="<?= e($val('telefono')) ?>">
-                        <?php if ($err('telefono')): ?><div class="field-error"><?= e($err('telefono')) ?></div><?php endif; ?>
-                    </div>
-                </div>
-                <?php endif; ?>
-
-                <div class="form-grid-2">
-                    <?php if ($cfVis('sexo')): ?>
-                    <div class="form-row">
-                        <label for="sexo"><?= e(t('form.label.sex')) ?><?= $reqMark('sexo') ?></label>
-                        <select id="sexo" name="sexo" <?= $reqAttr('sexo') ?>>
-                            <option value=""><?= e(t('form.label.sex.choose')) ?></option>
-                            <option value="H" <?= $val('sexo') === 'H' ? 'selected' : '' ?>><?= e(t('form.label.sex.male')) ?></option>
-                            <option value="M" <?= $val('sexo') === 'M' ? 'selected' : '' ?>><?= e(t('form.label.sex.female')) ?></option>
-                            <option value="NB" <?= $val('sexo') === 'NB' ? 'selected' : '' ?>><?= e(t('form.label.sex.nonbinary')) ?></option>
-                        </select>
-                        <?php if ($err('sexo')): ?><div class="field-error"><?= e($err('sexo')) ?></div><?php endif; ?>
-                    </div>
-                    <?php endif; ?>
-                    <?php if ($cfVis('talla_camiseta')): ?>
-                    <div class="form-row">
-                        <label for="talla_camiseta"><?= e(t('form.label.shirt')) ?><?= $reqMark('talla_camiseta') ?></label>
-                        <select id="talla_camiseta" name="talla_camiseta" <?= $reqAttr('talla_camiseta') ?>>
-                            <option value=""><?= e(t('form.label.shirt.none')) ?></option>
-                            <?php foreach (Inscrito::TALLAS as $t): ?>
-                                <option value="<?= e($t) ?>" <?= $val('talla_camiseta') === $t ? 'selected' : '' ?>><?= e($t) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <?php if ($err('talla_camiseta')): ?><div class="field-error"><?= e($err('talla_camiseta')) ?></div><?php endif; ?>
-                    </div>
-                    <?php endif; ?>
-                </div>
-
-                <div class="form-grid-2">
-                    <?php if ($cfVis('poblacion')): ?>
-                    <div class="form-row">
-                        <label for="poblacion"><?= e(t('form.label.city')) ?><?= $reqMark('poblacion') ?></label>
-                        <input type="text" id="poblacion" name="poblacion" <?= $reqAttr('poblacion') ?> maxlength="120" autocomplete="address-level2"
-                               value="<?= e($val('poblacion')) ?>">
-                    </div>
-                    <?php endif; ?>
-                    <?php if ($cfVis('codigo_postal')): ?>
-                    <div class="form-row">
-                        <label for="codigo_postal"><?= e(t('form.label.postal_code')) ?><?= $reqMark('codigo_postal') ?></label>
-                        <input type="text" id="codigo_postal" name="codigo_postal" <?= $reqAttr('codigo_postal') ?> maxlength="10" autocomplete="postal-code"
-                               placeholder="08001" value="<?= e($val('codigo_postal')) ?>">
-                        <?php if ($err('codigo_postal')): ?><div class="field-error"><?= e($err('codigo_postal')) ?></div><?php endif; ?>
-                    </div>
-                    <?php endif; ?>
-                </div>
-
-                <?php if ($cfVis('club')): ?>
-                <div class="form-row">
-                    <label for="club"><?= e(t('form.label.club')) ?><?= $cfReq('club') ? $reqMark('club') : ' (' . e(t('common.optional')) . ')' ?></label>
-                    <input type="text" id="club" name="club" <?= $reqAttr('club') ?> maxlength="150" value="<?= e($val('club')) ?>">
-                </div>
-                <?php endif; ?>
 
                 <?php if (count($campos) > 0): ?>
                     <?php foreach ($campos as $c):
@@ -405,7 +396,7 @@ $multi   = $maxPart >= 2;
     $cerr = fn(string $k): ?string => $errors["contacto.$k"][0] ?? null;
 
     // Renderitza UN participant. $i és int per als reals, '__I__' per a la plantilla.
-    $renderParticipant = function ($i, array $pd = []) use ($cf, $cfVis, $campos, $tarifas, $errors): void {
+    $renderParticipant = function ($i, array $pd = []) use ($cf, $cfVis, $campos, $tarifas, $errors, $orden): void {
         $isTpl = !is_int($i);
         $nm  = fn(string $f): string => 'participants[' . $i . '][' . $f . ']';
         $idf = fn(string $f): string => 'p_' . $i . '_' . $f;
@@ -449,86 +440,88 @@ $multi   = $maxPart >= 2;
                 <div class="tarifa-age-msg field-error" style="display:none;margin-top:.4rem;"></div>
             </div>
 
-            <div class="form-grid-2">
-                <div class="form-row">
-                    <label for="<?= e($idf('nombre')) ?>"><?= e(t('form.label.name')) ?> <span class="req">*</span></label>
-                    <input type="text" id="<?= e($idf('nombre')) ?>" name="<?= e($nm('nombre')) ?>" required maxlength="100" value="<?= e($pv('nombre')) ?>">
-                    <?php $e = $pe('nombre'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
-                </div>
-                <?php if ($cfVis('apellido')): ?>
-                <div class="form-row">
-                    <label for="<?= e($idf('apellido')) ?>"><?= e(t('form.label.surname')) ?><?= $rm('apellido') ?></label>
-                    <input type="text" id="<?= e($idf('apellido')) ?>" name="<?= e($nm('apellido')) ?>" <?= $ra('apellido') ?> maxlength="150" value="<?= e($pv('apellido')) ?>">
-                    <?php $e = $pe('apellido'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
-                </div>
-                <?php endif; ?>
+            <?php
+            // Camps estàndard del participant en l'ordre configurat (email/telèfon són del contacte → fora)
+            $pfield = function (string $key) use ($nm, $idf, $pv, $pe, $ra, $rm, $cfVis): void {
+                if ($key === 'email' || $key === 'telefono') return;
+                if ($key !== 'nombre' && !$cfVis($key)) return;
+                switch ($key):
+                    case 'nombre': ?>
+                        <div class="form-row">
+                            <label for="<?= e($idf('nombre')) ?>"><?= e(t('form.label.name')) ?> <span class="req">*</span></label>
+                            <input type="text" id="<?= e($idf('nombre')) ?>" name="<?= e($nm('nombre')) ?>" required maxlength="100" value="<?= e($pv('nombre')) ?>">
+                            <?php $e = $pe('nombre'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                        </div>
+                    <?php break;
+                    case 'apellido': ?>
+                        <div class="form-row">
+                            <label for="<?= e($idf('apellido')) ?>"><?= e(t('form.label.surname')) ?><?= $rm('apellido') ?></label>
+                            <input type="text" id="<?= e($idf('apellido')) ?>" name="<?= e($nm('apellido')) ?>" <?= $ra('apellido') ?> maxlength="150" value="<?= e($pv('apellido')) ?>">
+                            <?php $e = $pe('apellido'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                        </div>
+                    <?php break;
+                    case 'dni': ?>
+                        <div class="form-row">
+                            <label for="<?= e($idf('dni')) ?>"><?= e(t('form.label.dni')) ?><?= $rm('dni') ?></label>
+                            <input type="text" id="<?= e($idf('dni')) ?>" name="<?= e($nm('dni')) ?>" <?= $ra('dni') ?> maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($pv('dni'))) ?>">
+                            <?php $e = $pe('dni'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                        </div>
+                    <?php break;
+                    case 'fecha_nacimiento': ?>
+                        <div class="form-row">
+                            <label for="<?= e($idf('fecha_nacimiento')) ?>"><?= e(t('form.label.birth_date')) ?><?= $rm('fecha_nacimiento') ?></label>
+                            <input type="date" id="<?= e($idf('fecha_nacimiento')) ?>" name="<?= e($nm('fecha_nacimiento')) ?>" class="p-fnac" <?= $ra('fecha_nacimiento') ?> value="<?= e($pv('fecha_nacimiento')) ?>">
+                            <?php $e = $pe('fecha_nacimiento'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                        </div>
+                    <?php break;
+                    case 'sexo': ?>
+                        <div class="form-row">
+                            <label for="<?= e($idf('sexo')) ?>"><?= e(t('form.label.sex')) ?><?= $rm('sexo') ?></label>
+                            <select id="<?= e($idf('sexo')) ?>" name="<?= e($nm('sexo')) ?>" class="p-sexo" <?= $ra('sexo') ?>>
+                                <option value=""><?= e(t('form.label.sex.choose')) ?></option>
+                                <option value="H" <?= $pv('sexo') === 'H' ? 'selected' : '' ?>><?= e(t('form.label.sex.male')) ?></option>
+                                <option value="M" <?= $pv('sexo') === 'M' ? 'selected' : '' ?>><?= e(t('form.label.sex.female')) ?></option>
+                                <option value="NB" <?= $pv('sexo') === 'NB' ? 'selected' : '' ?>><?= e(t('form.label.sex.nonbinary')) ?></option>
+                            </select>
+                        </div>
+                    <?php break;
+                    case 'talla_camiseta': ?>
+                        <div class="form-row">
+                            <label for="<?= e($idf('talla_camiseta')) ?>"><?= e(t('form.label.shirt')) ?><?= $rm('talla_camiseta') ?></label>
+                            <select id="<?= e($idf('talla_camiseta')) ?>" name="<?= e($nm('talla_camiseta')) ?>" class="p-talla" <?= $ra('talla_camiseta') ?>>
+                                <option value=""><?= e(t('form.label.shirt.none')) ?></option>
+                                <?php foreach (Inscrito::TALLAS as $tl): ?>
+                                    <option value="<?= e($tl) ?>" <?= $pv('talla_camiseta') === $tl ? 'selected' : '' ?>><?= e($tl) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <?php $e = $pe('talla_camiseta'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                        </div>
+                    <?php break;
+                    case 'poblacion': ?>
+                        <div class="form-row">
+                            <label for="<?= e($idf('poblacion')) ?>"><?= e(t('form.label.city')) ?><?= $rm('poblacion') ?></label>
+                            <input type="text" id="<?= e($idf('poblacion')) ?>" name="<?= e($nm('poblacion')) ?>" <?= $ra('poblacion') ?> maxlength="120" value="<?= e($pv('poblacion')) ?>">
+                        </div>
+                    <?php break;
+                    case 'codigo_postal': ?>
+                        <div class="form-row">
+                            <label for="<?= e($idf('codigo_postal')) ?>"><?= e(t('form.label.postal_code')) ?><?= $rm('codigo_postal') ?></label>
+                            <input type="text" id="<?= e($idf('codigo_postal')) ?>" name="<?= e($nm('codigo_postal')) ?>" <?= $ra('codigo_postal') ?> maxlength="10" placeholder="08001" value="<?= e($pv('codigo_postal')) ?>">
+                            <?php $e = $pe('codigo_postal'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                        </div>
+                    <?php break;
+                    case 'club': ?>
+                        <div class="form-row">
+                            <label for="<?= e($idf('club')) ?>"><?= e(t('form.label.club')) ?></label>
+                            <input type="text" id="<?= e($idf('club')) ?>" name="<?= e($nm('club')) ?>" <?= $ra('club') ?> maxlength="150" value="<?= e($pv('club')) ?>">
+                        </div>
+                    <?php break;
+                endswitch;
+            };
+            ?>
+            <div class="form-fields-grid">
+                <?php foreach ($orden as $key) $pfield($key); ?>
             </div>
-
-            <div class="form-grid-2">
-                <?php if ($cfVis('dni')): ?>
-                <div class="form-row">
-                    <label for="<?= e($idf('dni')) ?>"><?= e(t('form.label.dni')) ?><?= $rm('dni') ?></label>
-                    <input type="text" id="<?= e($idf('dni')) ?>" name="<?= e($nm('dni')) ?>" <?= $ra('dni') ?> maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($pv('dni'))) ?>">
-                    <?php $e = $pe('dni'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
-                </div>
-                <?php endif; ?>
-                <?php if ($cfVis('fecha_nacimiento')): ?>
-                <div class="form-row">
-                    <label for="<?= e($idf('fecha_nacimiento')) ?>"><?= e(t('form.label.birth_date')) ?><?= $rm('fecha_nacimiento') ?></label>
-                    <input type="date" id="<?= e($idf('fecha_nacimiento')) ?>" name="<?= e($nm('fecha_nacimiento')) ?>" class="p-fnac" <?= $ra('fecha_nacimiento') ?> value="<?= e($pv('fecha_nacimiento')) ?>">
-                    <?php $e = $pe('fecha_nacimiento'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
-                </div>
-                <?php endif; ?>
-            </div>
-
-            <div class="form-grid-2">
-                <?php if ($cfVis('sexo')): ?>
-                <div class="form-row">
-                    <label for="<?= e($idf('sexo')) ?>"><?= e(t('form.label.sex')) ?><?= $rm('sexo') ?></label>
-                    <select id="<?= e($idf('sexo')) ?>" name="<?= e($nm('sexo')) ?>" class="p-sexo" <?= $ra('sexo') ?>>
-                        <option value=""><?= e(t('form.label.sex.choose')) ?></option>
-                        <option value="H" <?= $pv('sexo') === 'H' ? 'selected' : '' ?>><?= e(t('form.label.sex.male')) ?></option>
-                        <option value="M" <?= $pv('sexo') === 'M' ? 'selected' : '' ?>><?= e(t('form.label.sex.female')) ?></option>
-                        <option value="NB" <?= $pv('sexo') === 'NB' ? 'selected' : '' ?>><?= e(t('form.label.sex.nonbinary')) ?></option>
-                    </select>
-                </div>
-                <?php endif; ?>
-                <?php if ($cfVis('talla_camiseta')): ?>
-                <div class="form-row">
-                    <label for="<?= e($idf('talla_camiseta')) ?>"><?= e(t('form.label.shirt')) ?><?= $rm('talla_camiseta') ?></label>
-                    <select id="<?= e($idf('talla_camiseta')) ?>" name="<?= e($nm('talla_camiseta')) ?>" class="p-talla" <?= $ra('talla_camiseta') ?>>
-                        <option value=""><?= e(t('form.label.shirt.none')) ?></option>
-                        <?php foreach (Inscrito::TALLAS as $tl): ?>
-                            <option value="<?= e($tl) ?>" <?= $pv('talla_camiseta') === $tl ? 'selected' : '' ?>><?= e($tl) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <?php $e = $pe('talla_camiseta'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
-                </div>
-                <?php endif; ?>
-            </div>
-
-            <div class="form-grid-2">
-                <?php if ($cfVis('poblacion')): ?>
-                <div class="form-row">
-                    <label for="<?= e($idf('poblacion')) ?>"><?= e(t('form.label.city')) ?><?= $rm('poblacion') ?></label>
-                    <input type="text" id="<?= e($idf('poblacion')) ?>" name="<?= e($nm('poblacion')) ?>" <?= $ra('poblacion') ?> maxlength="120" value="<?= e($pv('poblacion')) ?>">
-                </div>
-                <?php endif; ?>
-                <?php if ($cfVis('codigo_postal')): ?>
-                <div class="form-row">
-                    <label for="<?= e($idf('codigo_postal')) ?>"><?= e(t('form.label.postal_code')) ?><?= $rm('codigo_postal') ?></label>
-                    <input type="text" id="<?= e($idf('codigo_postal')) ?>" name="<?= e($nm('codigo_postal')) ?>" <?= $ra('codigo_postal') ?> maxlength="10" placeholder="08001" value="<?= e($pv('codigo_postal')) ?>">
-                    <?php $e = $pe('codigo_postal'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
-                </div>
-                <?php endif; ?>
-            </div>
-
-            <?php if ($cfVis('club')): ?>
-            <div class="form-row">
-                <label for="<?= e($idf('club')) ?>"><?= e(t('form.label.club')) ?></label>
-                <input type="text" id="<?= e($idf('club')) ?>" name="<?= e($nm('club')) ?>" <?= $ra('club') ?> maxlength="150" value="<?= e($pv('club')) ?>">
-            </div>
-            <?php endif; ?>
 
             <?php foreach ($campos as $c):
                 $ckey = 'campo_' . (int) $c['id'];

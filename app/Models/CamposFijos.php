@@ -84,4 +84,64 @@ final class CamposFijos
     {
         return ($config[$campo] ?? 'obligatori') === 'obligatori';
     }
+
+    // ── Ordre dels camps estàndard al formulari ──────────────
+
+    /** Camps sempre obligatoris (no configurables d'estat), però sí ordenables. */
+    public const FIXOS = ['nombre', 'email'];
+
+    /**
+     * Ordre per defecte de TOTS els camps estàndard (inclou nombre i email).
+     * 'email' representa el bloc email + repetir email (van sempre junts).
+     */
+    public const ORDEN_DEFAULT = [
+        'nombre', 'apellido', 'email', 'telefono', 'dni',
+        'fecha_nacimiento', 'sexo', 'talla_camiseta', 'poblacion', 'codigo_postal', 'club',
+    ];
+
+    public static function labelOf(string $key): string
+    {
+        if ($key === 'nombre') return 'Nom';
+        if ($key === 'email')  return 'Email (+ repetir)';
+        return self::CAMPS[$key]['label'] ?? $key;
+    }
+
+    /**
+     * Ordre resolt dels camps estàndard: aplica l'ordre desat (claus vàlides)
+     * i afegeix al final qualsevol camp que falti (compatibilitat enrere).
+     * @return list<string>
+     */
+    public static function orden(?string $json): array
+    {
+        $stored = [];
+        if ($json !== null && $json !== '') {
+            $d = json_decode($json, true);
+            if (is_array($d)) $stored = $d;
+        }
+        $out = [];
+        foreach ($stored as $k) {
+            $k = (string) $k;
+            if (in_array($k, self::ORDEN_DEFAULT, true) && !in_array($k, $out, true)) $out[] = $k;
+        }
+        foreach (self::ORDEN_DEFAULT as $k) {
+            if (!in_array($k, $out, true)) $out[] = $k;
+        }
+        return $out;
+    }
+
+    /** Construeix el JSON d'ordre a partir del POST (campos_orden[] = clau). */
+    public static function ordenFromPost(array $post): ?string
+    {
+        $raw = $post['campos_orden'] ?? null;
+        if (!is_array($raw)) return null;
+        $out = [];
+        foreach ($raw as $k) {
+            $k = (string) $k;
+            if (in_array($k, self::ORDEN_DEFAULT, true) && !in_array($k, $out, true)) $out[] = $k;
+        }
+        foreach (self::ORDEN_DEFAULT as $k) {
+            if (!in_array($k, $out, true)) $out[] = $k;
+        }
+        return $out ? (string) json_encode($out, JSON_UNESCAPED_UNICODE) : null;
+    }
 }

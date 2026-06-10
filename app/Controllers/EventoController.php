@@ -108,6 +108,7 @@ final class EventoController
                     'activo'                   => $data['activo'],
                     'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
                     'campos_fijos'             => $data['campos_fijos'],
+                    'campos_orden'             => $data['campos_orden'],
                 ]);
                 $map = GrupoAforo::syncForEvento($eventoId, $grupos);
                 Tarifa::syncForEvento($eventoId, self::assignTarifaGroups($tarifas, $map));
@@ -180,6 +181,7 @@ final class EventoController
             'activo'                   => $data['activo'],
             'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
             'campos_fijos'             => $data['campos_fijos'],
+            'campos_orden'             => $data['campos_orden'],
         ];
 
         // Si el título cambió, regenerar slug único
@@ -449,6 +451,7 @@ final class EventoController
                     'activo'                   => 0, // la còpia comença inactiva
                     'inscripciones_abiertas'   => (int) $evento['inscripciones_abiertas'],
                     'campos_fijos'             => $evento['campos_fijos'] ?? null,
+                    'campos_orden'             => $evento['campos_orden'] ?? null,
                 ]);
 
                 // Grups d'aforament: crear-los de nou i obtenir mapa old_id -> new_id
@@ -524,6 +527,7 @@ final class EventoController
             'activo'                   => isset($post['activo']) ? 1 : 0,
             'inscripciones_abiertas'   => isset($post['inscripciones_abiertas']) ? 1 : 0,
             'campos_fijos'             => CamposFijos::fromPost($post),
+            'campos_orden'             => CamposFijos::ordenFromPost($post),
         ];
     }
 

@@ -372,6 +372,25 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 .form-row { margin-bottom: 1.1rem; }
 .form-row:last-child { margin-bottom: 0; }
 
+/* Camps estàndard en l'ordre configurat (2 columnes auto) */
+.form-fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1rem 1rem;
+    margin-bottom: 1.1rem;
+}
+.form-fields-grid > .form-row,
+.form-row-pair > .form-row { margin-bottom: 0; }
+.form-row-pair {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1rem 1rem;
+}
+@media (max-width: 600px) {
+    .form-fields-grid, .form-row-pair { grid-template-columns: 1fr; }
+}
+
 label {
     display: block;
     font-weight: 600;
