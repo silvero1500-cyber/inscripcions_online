@@ -235,13 +235,16 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
     width: 18px; height: 18px;
 }
 
-/* ── Grid principal del detall (banner ample a dalt + info a sota) ─ */
+/* ── Grid principal del detall (imatge esquerra + info dreta) ─ */
 .evt-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.8rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2rem;
     align-items: start;
     margin-bottom: 3rem;
+}
+@media (max-width: 800px) {
+    .evt-grid { grid-template-columns: 1fr; gap: 1.5rem; }
 }
 
 .evt-poster {
@@ -251,8 +254,6 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
     overflow: hidden;
     background: #f3f4f6;
     aspect-ratio: 16 / 9;
-    max-width: 600px;
-    justify-self: center;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -260,8 +261,6 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 }
 .evt-poster-placeholder {
     width: 100%;
-    max-width: 600px;
-    justify-self: center;
     border-radius: var(--radius-lg);
     background: linear-gradient(135deg, #1e88c2 0%, #1976a8 100%);
     display: flex; align-items: center; justify-content: center;
