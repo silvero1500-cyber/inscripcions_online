@@ -898,16 +898,21 @@ $multi   = $maxPart >= 2;
 (function () {
     window.IO_TALLAS_ALL  = <?= json_encode(array_values(\App\Models\Inscrito::TALLAS)) ?>;
     window.IO_TALLAS_SEXO = <?= json_encode(\App\Models\Inscrito::tallasSexoDecode($evento['tallas_sexo'] ?? null)) ?>;
+    window.IO_SEXO_LABELS = <?= json_encode(['H' => t('form.label.sex.male'), 'M' => t('form.label.sex.female')], JSON_UNESCAPED_UNICODE) ?>;
     window.filterTallasBySexo = function (sexoEl, tallaEl) {
         if (!sexoEl || !tallaEl) return;
         var map = window.IO_TALLAS_SEXO || {};
-        var allow = (map[sexoEl.value] && map[sexoEl.value].length) ? map[sexoEl.value] : window.IO_TALLAS_ALL;
+        var sx = sexoEl.value;
+        var hasSpecific = !!(map[sx] && map[sx].length);
+        var allow = hasSpecific ? map[sx] : window.IO_TALLAS_ALL;
+        // Si aquest sexe té talles pròpies configurades, etiqueta-les (p.ex. "M (Dona)")
+        var suffix = (hasSpecific && window.IO_SEXO_LABELS[sx]) ? ' (' + window.IO_SEXO_LABELS[sx] + ')' : '';
         var cur = tallaEl.value;
         var fv = tallaEl.options.length ? tallaEl.options[0].value : '';
         var ft = tallaEl.options.length ? tallaEl.options[0].text : '—';
         tallaEl.innerHTML = '';
         var o0 = document.createElement('option'); o0.value = fv; o0.text = ft; tallaEl.appendChild(o0);
-        allow.forEach(function (t) { var o = document.createElement('option'); o.value = t; o.text = t; if (t === cur) o.selected = true; tallaEl.appendChild(o); });
+        allow.forEach(function (t) { var o = document.createElement('option'); o.value = t; o.text = t + suffix; if (t === cur) o.selected = true; tallaEl.appendChild(o); });
     };
     // ── Camps condicionals segons la tarifa (mostra/amaga + activa/desactiva) ──
     // Opcions d'un camp segons la tarifa: {campId: {def:[...], byTarifa:{tarifaId:[...]}}}

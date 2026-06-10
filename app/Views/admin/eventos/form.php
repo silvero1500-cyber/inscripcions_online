@@ -274,7 +274,7 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
 
         <div class="campos-fijos">
             <div class="cf-row cf-fixed">
-                <span class="cf-label">Nom · Email · Talla de samarreta</span>
+                <span class="cf-label">Nom · Email</span>
                 <span class="badge badge-muted">Sempre obligatori</span>
             </div>
             <?php foreach (CamposFijos::CAMPS as $key => $meta): $st = $cfState($key); ?>

@@ -7,7 +7,7 @@ namespace App\Models;
 /**
  * Configuració dels camps fixos (estàndard) del corredor per a cada esdeveniment.
  *
- * `nombre`, `email` i `talla_camiseta` són SEMPRE obligatoris i no es configuren.
+ * `nombre` i `email` són SEMPRE obligatoris i no es configuren.
  * La resta de camps poden ser: 'obligatori', 'opcional' o 'ocult'.
  *
  * Es desa a `eventos.campos_fijos` com a JSON { camp: estat }.
@@ -27,8 +27,8 @@ final class CamposFijos
         'dni'              => ['label' => 'DNI / NIE',          'default' => 'obligatori'],
         'fecha_nacimiento' => ['label' => 'Data de naixement',  'default' => 'obligatori'],
         'sexo'             => ['label' => 'Sexe',               'default' => 'obligatori'],
+        'talla_camiseta'   => ['label' => 'Talla samarreta',   'default' => 'obligatori'],
         'telefono'         => ['label' => 'Telèfon',            'default' => 'obligatori'],
-        // talla_camiseta NO és configurable: sempre visible i obligatòria (dada important)
         'club'             => ['label' => 'Club',               'default' => 'opcional'],
         'poblacion'        => ['label' => 'Població',           'default' => 'opcional'],
         'codigo_postal'    => ['label' => 'Codi postal',        'default' => 'opcional'],
