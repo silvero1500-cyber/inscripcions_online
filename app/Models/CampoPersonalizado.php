@@ -84,6 +84,7 @@ final class CampoPersonalizado
                     'tipo'            => $c['tipo'],
                     'opciones'        => $c['opciones'],
                     'opciones_tarifa' => $opcTarifa ? (string) json_encode($opcTarifa, JSON_UNESCAPED_UNICODE) : null,
+                    'antes_estandar'  => !empty($c['antes_estandar']) ? 1 : 0,
                     'requerido'       => $c['requerido'],
                     'orden'        => $orden,
                     'activo'       => 1,

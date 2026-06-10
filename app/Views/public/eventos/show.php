@@ -301,24 +301,19 @@ $orden   = CamposFijos::orden($evento['campos_orden'] ?? null);
                     endswitch;
                 };
                 ?>
-                <div class="form-fields-grid">
-                    <?php foreach ($orden as $key) $field($key); ?>
-                </div>
-
-                <?php if (count($campos) > 0): ?>
-                    <?php foreach ($campos as $c):
-                        $key = 'campo_' . (int)$c['id'];
-                        $errC = $err($key);
-                        $valC = $val($key);
-                        $opts = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null);
-                        $req = (int)$c['requerido'] === 1;
+                <?php
+                // Camp personalitzat (reutilitzable: pot anar ABANS o DESPRÉS dels estàndard)
+                $customField = function (array $c) use ($val, $err): void {
+                    $key  = 'campo_' . (int) $c['id'];
+                    $errC = $err($key);
+                    $valC = $val($key);
+                    $opts = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null);
+                    $req  = (int) $c['requerido'] === 1;
                     ?>
                     <div class="form-row" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
                         <label><?= e($c['etiqueta']) ?><?= $req ? ' <span class="req">*</span>' : '' ?></label>
-
                         <?php if ($c['tipo'] === 'textarea'): ?>
                             <textarea name="<?= e($key) ?>" rows="3" <?= $req ? 'required' : '' ?>><?= e($valC) ?></textarea>
-
                         <?php elseif ($c['tipo'] === 'select'): ?>
                             <select name="<?= e($key) ?>" data-camp-id="<?= (int)$c['id'] ?>" <?= $req ? 'required' : '' ?>>
                                 <option value="">— Tria —</option>
@@ -326,47 +321,35 @@ $orden   = CamposFijos::orden($evento['campos_orden'] ?? null);
                                     <option value="<?= e($o) ?>" <?= $valC === $o ? 'selected' : '' ?>><?= e($o) ?></option>
                                 <?php endforeach; ?>
                             </select>
-
                         <?php elseif ($c['tipo'] === 'radio'): ?>
                             <div class="radio-group">
                                 <?php foreach ($opts as $o): ?>
-                                    <label class="inline-check">
-                                        <input type="radio" name="<?= e($key) ?>" value="<?= e($o) ?>" <?= $valC === $o ? 'checked' : '' ?> <?= $req ? 'required' : '' ?>>
-                                        <?= e($o) ?>
-                                    </label>
+                                    <label class="inline-check"><input type="radio" name="<?= e($key) ?>" value="<?= e($o) ?>" <?= $valC === $o ? 'checked' : '' ?> <?= $req ? 'required' : '' ?>> <?= e($o) ?></label>
                                 <?php endforeach; ?>
                             </div>
-
                         <?php elseif ($c['tipo'] === 'checkbox' && count($opts) > 0): ?>
                             <div class="radio-group">
                                 <?php foreach ($opts as $o): ?>
-                                    <label class="inline-check">
-                                        <input type="checkbox" name="<?= e($key) ?>[]" value="<?= e($o) ?>">
-                                        <?= e($o) ?>
-                                    </label>
+                                    <label class="inline-check"><input type="checkbox" name="<?= e($key) ?>[]" value="<?= e($o) ?>"> <?= e($o) ?></label>
                                 <?php endforeach; ?>
                             </div>
-
                         <?php elseif ($c['tipo'] === 'checkbox'): ?>
-                            <label class="inline-check">
-                                <input type="checkbox" name="<?= e($key) ?>" value="1" <?= $valC === '1' ? 'checked' : '' ?> <?= $req ? 'required' : '' ?>>
-                                <?= e($c['etiqueta']) ?>
-                            </label>
-
+                            <label class="inline-check"><input type="checkbox" name="<?= e($key) ?>" value="1" <?= $valC === '1' ? 'checked' : '' ?> <?= $req ? 'required' : '' ?>> <?= e($c['etiqueta']) ?></label>
                         <?php else: ?>
-                            <input type="<?= e($c['tipo']) ?>" name="<?= e($key) ?>"
-                                   value="<?= e($valC) ?>"
-                                   <?= $req ? 'required' : '' ?>
-                                   <?= !empty($c['placeholder']) ? 'placeholder="' . e($c['placeholder']) . '"' : '' ?>>
+                            <input type="<?= e($c['tipo']) ?>" name="<?= e($key) ?>" value="<?= e($valC) ?>" <?= $req ? 'required' : '' ?> <?= !empty($c['placeholder']) ? 'placeholder="' . e($c['placeholder']) . '"' : '' ?>>
                         <?php endif; ?>
-
-                        <?php if (!empty($c['ayuda'])): ?>
-                            <small class="muted"><?= e($c['ayuda']) ?></small>
-                        <?php endif; ?>
+                        <?php if (!empty($c['ayuda'])): ?><small class="muted"><?= e($c['ayuda']) ?></small><?php endif; ?>
                         <?php if ($errC): ?><div class="field-error"><?= e($errC) ?></div><?php endif; ?>
                     </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                    <?php
+                };
+                // Camps personalitzats marcats "abans dels estàndard"
+                foreach ($campos as $c) if (!empty($c['antes_estandar'])) $customField($c);
+                ?>
+                <div class="form-fields-grid">
+                    <?php foreach ($orden as $key) $field($key); ?>
+                </div>
+                <?php foreach ($campos as $c) if (empty($c['antes_estandar'])) $customField($c); ?>
             </fieldset>
         </div>
 
@@ -518,17 +501,13 @@ $orden   = CamposFijos::orden($evento['campos_orden'] ?? null);
                     <?php break;
                 endswitch;
             };
-            ?>
-            <div class="form-fields-grid">
-                <?php foreach ($orden as $key) $pfield($key); ?>
-            </div>
-
-            <?php foreach ($campos as $c):
-                $ckey = 'campo_' . (int) $c['id'];
+            // Camp personalitzat del participant (pot anar ABANS o DESPRÉS dels estàndard)
+            $pCustomField = function (array $c) use ($nm, $pv, $pe): void {
+                $ckey  = 'campo_' . (int) $c['id'];
                 $copts = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null);
                 $creq  = (int) $c['requerido'] === 1;
                 $cvalC = $pv($ckey);
-            ?>
+                ?>
                 <div class="form-row" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
                     <label><?= e($c['etiqueta']) ?><?= $creq ? ' <span class="req">*</span>' : '' ?></label>
                     <?php if ($c['tipo'] === 'textarea'): ?>
@@ -560,7 +539,14 @@ $orden   = CamposFijos::orden($evento['campos_orden'] ?? null);
                     <?php if (!empty($c['ayuda'])): ?><small class="muted"><?= e($c['ayuda']) ?></small><?php endif; ?>
                     <?php $e = $pe($ckey); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                 </div>
-            <?php endforeach; ?>
+                <?php
+            };
+            foreach ($campos as $c) if (!empty($c['antes_estandar'])) $pCustomField($c);
+            ?>
+            <div class="form-fields-grid">
+                <?php foreach ($orden as $key) $pfield($key); ?>
+            </div>
+            <?php foreach ($campos as $c) if (empty($c['antes_estandar'])) $pCustomField($c); ?>
 
             <details class="participant-discount">
                 <summary><?= e(t('form.label.discount_question')) ?></summary>

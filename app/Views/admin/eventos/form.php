@@ -418,6 +418,11 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                             </div>
                             <div class="campo-grid-2">
                                 <div style="grid-column:1 / -1;">
+                                    <label class="inline-check"><input type="checkbox" name="campos[<?= (int)$idx ?>][antes_estandar]" value="1" <?= !empty($c['antes_estandar']) ? 'checked' : '' ?>> Mostrar <strong>abans</strong> dels camps estàndard (nom, email...)</label>
+                                </div>
+                            </div>
+                            <div class="campo-grid-2">
+                                <div style="grid-column:1 / -1;">
                                     <label>Mostrar només per a aquestes tarifes <span class="muted">(condicional)</span></label>
                                     <div class="campo-tarifes-checks"><?= $tarifaCondChecks(CampoPersonalizado::tarifasDeCampo($c), (int)$idx) ?></div>
                                     <small class="muted">Marca una o més tarifes i el camp només apareix quan se'n tria alguna (p.ex. franja horària per a Mitja i 10K). Cap marcada = sempre.</small>
@@ -483,6 +488,11 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
             <div>
                 <label>Text d'ajuda</label>
                 <input type="text" name="campos[__IDX__][ayuda]">
+            </div>
+        </div>
+        <div class="campo-grid-2">
+            <div style="grid-column:1 / -1;">
+                <label class="inline-check"><input type="checkbox" name="campos[__IDX__][antes_estandar]" value="1"> Mostrar <strong>abans</strong> dels camps estàndard (nom, email...)</label>
             </div>
         </div>
         <div class="campo-grid-2">
