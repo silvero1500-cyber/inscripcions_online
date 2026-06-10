@@ -160,9 +160,10 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 .event-card-img {
     width: 100%;
     aspect-ratio: 16 / 9;
-    background-size: cover;
+    background-size: contain;
+    background-repeat: no-repeat;
     background-position: center;
-    background-color: #e5e7eb;
+    background-color: #f3f4f6;
 }
 .event-card-img-placeholder {
     background: linear-gradient(135deg, #cbd5e1, #94a3b8);
