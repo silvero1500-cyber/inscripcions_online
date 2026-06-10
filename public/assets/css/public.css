@@ -240,8 +240,12 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 2rem;
-    align-items: start;
+    align-items: stretch;
     margin-bottom: 3rem;
+}
+/* En dues columnes la imatge iguala l'alçada del panell d'info (simètric) */
+@media (min-width: 801px) {
+    .evt-poster, .evt-poster-placeholder { aspect-ratio: auto; min-height: 100%; }
 }
 @media (max-width: 800px) {
     .evt-grid { grid-template-columns: 1fr; gap: 1.5rem; }
