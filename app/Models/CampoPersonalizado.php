@@ -26,7 +26,9 @@ final class CampoPersonalizado
     }
 
     /**
-     * Campos activos de un evento para el formulario público.
+     * Campos activos y VISIBLES de un evento para el formulario público.
+     * Los campos ocultos (oculto = 1) se excluyen: existen solo como columna
+     * en el CSV de exportación/importación, no se piden al corredor.
      * @return list<array<string,mixed>>
      */
     public static function getActivosPorEvento(int $eventoId): array
@@ -34,10 +36,33 @@ final class CampoPersonalizado
         return Database::getInstance()
             ->query(
                 'SELECT * FROM campos_personalizados
-                 WHERE evento_id = ? AND activo = 1
+                 WHERE evento_id = ? AND activo = 1 AND oculto = 0
                  ORDER BY orden ASC, id ASC',
                 [$eventoId]
             )->fetchAll();
+    }
+
+    /**
+     * Valores de los campos personalizados para un conjunto de inscritos.
+     * @param list<int> $inscritoIds
+     * @return array<int, array<int, string>>  [inscrito_id => [campo_id => valor]]
+     */
+    public static function valoresPorInscrito(array $inscritoIds): array
+    {
+        $ids = array_values(array_filter(array_map('intval', $inscritoIds), fn($n) => $n > 0));
+        if ($ids === []) return [];
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        $rows = Database::getInstance()->query(
+            "SELECT inscrito_id, campo_id, valor
+             FROM inscrito_campos_valores
+             WHERE inscrito_id IN ($ph)",
+            $ids
+        )->fetchAll();
+        $out = [];
+        foreach ($rows as $r) {
+            $out[(int) $r['inscrito_id']][(int) $r['campo_id']] = (string) ($r['valor'] ?? '');
+        }
+        return $out;
     }
 
     /**
@@ -94,6 +119,7 @@ final class CampoPersonalizado
                     'requerido'       => $c['requerido'],
                     'orden'        => $orden,
                     'activo'       => 1,
+                    'oculto'       => !empty($c['oculto']) ? 1 : 0,
                     'placeholder'  => $c['placeholder'] ?? null,
                     'ayuda'        => $c['ayuda'] ?? null,
                 ]);

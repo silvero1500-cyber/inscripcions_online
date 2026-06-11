@@ -138,6 +138,7 @@ CREATE TABLE IF NOT EXISTS `campos_personalizados` (
     `requerido`    TINYINT(1)    NOT NULL DEFAULT 0,
     `orden`        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     `activo`       TINYINT(1)    NOT NULL DEFAULT 1,
+    `oculto`       TINYINT(1)    NOT NULL DEFAULT 0 COMMENT 'Si 1, només columna CSV (no formulari públic)',
     `placeholder`  VARCHAR(255)  NULL,
     `ayuda`        VARCHAR(500)  NULL COMMENT 'Texto de ayuda bajo el campo',
     PRIMARY KEY (`id`),

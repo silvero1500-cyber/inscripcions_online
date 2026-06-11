@@ -793,6 +793,7 @@ final class EventoController
                 'opciones_tarifa' => $opcTarifa,
                 'antes_estandar'  => !empty($c['antes_estandar']) ? 1 : 0,
                 'requerido'       => !empty($c['requerido']) ? 1 : 0,
+                'oculto'          => !empty($c['oculto']) ? 1 : 0,
                 'tarifa_ids'      => $tarifaIds,
                 'placeholder'     => substr(trim((string)($c['placeholder'] ?? '')), 0, 255) ?: null,
                 'ayuda'           => substr(trim((string)($c['ayuda'] ?? '')), 0, 500) ?: null,

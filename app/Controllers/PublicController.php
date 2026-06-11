@@ -50,7 +50,7 @@ final class PublicController
 
         $campos = Database::getInstance()->query(
             'SELECT * FROM campos_personalizados
-             WHERE evento_id = ? AND activo = 1
+             WHERE evento_id = ? AND activo = 1 AND oculto = 0
              ORDER BY orden ASC, id ASC',
             [$evento['id']]
         )->fetchAll();

@@ -315,7 +315,7 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                 <div class="item-head">
                     <span class="drag-handle" title="Arrossega per ordenar" aria-hidden="true">⠿</span>
                     <span class="item-title"><?= e($etiqueta !== '' ? $etiqueta : 'Camp personalitzat') ?></span>
-                    <span class="item-badge muted">camp extra</span>
+                    <span class="item-badge muted"><?= !empty($c['oculto']) ? '🔒 ocult (CSV)' : 'camp extra' ?></span>
                     <span class="item-tools">
                         <button type="button" class="btn-move campo-toggle" title="Desplegar / plegar opcions">⌄</button>
                         <button type="button" class="btn-move move-up" title="Pujar" aria-label="Pujar">↑</button>
@@ -339,6 +339,11 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                     <div class="campo-grid-2">
                         <div><label>Opcions (només select/radio/checkbox · separa amb |)</label><input type="text" name="campos[<?= $idx ?>][opciones]" value="<?= e(implode(' | ', $opcArr)) ?>" placeholder="Opció 1 | Opció 2 | Opció 3"></div>
                         <div><label>Text d'ajuda</label><input type="text" name="campos[<?= $idx ?>][ayuda]" value="<?= e((string) ($c['ayuda'] ?? '')) ?>"></div>
+                    </div>
+                    <div class="campo-grid-2">
+                        <div style="grid-column:1 / -1;">
+                            <label class="inline-check"><input type="checkbox" name="campos[<?= $idx ?>][oculto]" value="1" <?= !empty($c['oculto']) ? 'checked' : '' ?>> <strong>Camp ocult</strong> — no apareix al formulari públic; només surt com a columna al CSV (per omplir-lo a mà i importar-lo)</label>
+                        </div>
                     </div>
                     <div class="campo-grid-2">
                         <div style="grid-column:1 / -1;">

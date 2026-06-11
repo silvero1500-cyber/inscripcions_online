@@ -11,6 +11,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
+use App\Models\CampoPersonalizado;
 use App\Models\Evento;
 use App\Models\Inscrito;
 
@@ -23,6 +24,8 @@ use App\Models\Inscrito;
  *
  * Columnes permeses per actualitzar (la resta s'ignoren):
  *   numero_dorsal, talla_camiseta, club, poblacion, codigo_postal, estado
+ *   + qualsevol camp personalitzat (per coincidència amb la seva etiqueta),
+ *     inclosos els ocults → s'escriuen a inscrito_campos_valores.
  *
  * Identificació: per columna "ID" del CSV (la primera del export).
  */
@@ -180,9 +183,29 @@ final class InscritosImportController
                     $fields = is_array($c['fields'] ?? null) ? $c['fields'] : [];
                     // Doble verificació: només superadmin pot tocar l'estat
                     if (!$isSuper) unset($fields['estado']);
-                    if (empty($fields)) continue;
+                    $custom = is_array($c['customFields'] ?? null) ? $c['customFields'] : [];
+                    if (empty($fields) && empty($custom)) continue;
+                    $iid = (int) $c['id'];
                     try {
-                        Database::getInstance()->update('inscritos', $fields, ['id' => (int) $c['id']]);
+                        if (!empty($fields)) {
+                            Database::getInstance()->update('inscritos', $fields, ['id' => $iid]);
+                        }
+                        foreach ($custom as $campoId => $val) {
+                            $campoId = (int) $campoId;
+                            if ($val === null || $val === '') {
+                                Database::getInstance()->query(
+                                    'DELETE FROM inscrito_campos_valores WHERE inscrito_id = ? AND campo_id = ?',
+                                    [$iid, $campoId]
+                                );
+                            } else {
+                                Database::getInstance()->query(
+                                    'INSERT INTO inscrito_campos_valores (inscrito_id, campo_id, valor)
+                                     VALUES (?, ?, ?)
+                                     ON DUPLICATE KEY UPDATE valor = VALUES(valor)',
+                                    [$iid, $campoId, (string) $val]
+                                );
+                            }
+                        }
                         $applied++;
                     } catch (\Throwable $e) {
                         $failed[] = ['id' => $c['id'], 'error' => $e->getMessage()];
@@ -269,12 +292,12 @@ final class InscritosImportController
             ];
         }
 
-        // Detectar quines columnes editables hi ha al CSV
+        // Detectar quines columnes fixes editables hi ha al CSV
         $colMap = [];
         $estadoIgnored = false;
+        $usedIdx = [$idIdx => true];
         foreach ($headers as $idx => $h) {
-            $clean = preg_replace('/[^a-z0-9 ]+/u', '', strtolower($h));
-            $clean = trim(preg_replace('/\s+/', ' ', $clean));
+            $clean = self::normHeader($h);
             if (isset(self::HEADER_MAP[$clean])) {
                 $col = self::HEADER_MAP[$clean];
                 // Només superadmin pot canviar l'estat per CSV
@@ -284,13 +307,40 @@ final class InscritosImportController
                 }
                 if (in_array($col, self::EDITABLE, true)) {
                     $colMap[$col] = $idx;
+                    $usedIdx[$idx] = true;
                 }
             }
         }
-        if (empty($colMap)) {
+
+        // Detectar columnes de camps personalitzats (per coincidència amb l'etiqueta).
+        // Permet omplir a mà els camps (sobretot els ocults) i tornar-los a carregar.
+        $campos = CampoPersonalizado::listByEvento($eventoId);
+        $campoByNorm = [];
+        foreach ($campos as $cp) {
+            $n = self::normHeader((string) $cp['etiqueta']);
+            if ($n !== '') $campoByNorm[$n] = $cp;
+        }
+        // Capçaleres base (no editables) reservades, per no confondre-les amb un camp
+        $reserved = [];
+        foreach (['ID','Comanda','Data inscripció','Nom','Cognoms','DNI','Sexe','Data naixement',
+                  'Email','Telèfon','Tarifa','Preu','Check-in'] as $bh) {
+            $reserved[self::normHeader($bh)] = true;
+        }
+        $customColMap = []; // idx => campo (array)
+        foreach ($headers as $idx => $h) {
+            if (isset($usedIdx[$idx])) continue;
+            $clean = self::normHeader($h);
+            if ($clean === '' || isset(self::HEADER_MAP[$clean]) || isset($reserved[$clean])) continue;
+            if (isset($campoByNorm[$clean])) {
+                $customColMap[$idx] = $campoByNorm[$clean];
+                $usedIdx[$idx] = true;
+            }
+        }
+
+        if (empty($colMap) && empty($customColMap)) {
             $msg = $estadoIgnored
                 ? 'L\'única columna editable era "Estat", però només un superadmin pot canviar-la per CSV. Edita dorsal, talla, club, població o codi postal.'
-                : 'El CSV no conté cap columna editable (dorsal, talla, club, població, codi postal, estat).';
+                : 'El CSV no conté cap columna editable (dorsal, talla, club, població, codi postal, estat) ni cap camp personalitzat reconegut.';
             return [
                 'totalRows' => count($rows),
                 'changes' => [],
@@ -309,6 +359,11 @@ final class InscritosImportController
             [$eventoId]
         )->fetchAll();
         foreach ($rowsBD as $r) $existing[(int)$r['id']] = $r;
+
+        // Valors actuals dels camps personalitzats (per comparar i detectar canvis)
+        $customExisting = $customColMap
+            ? CampoPersonalizado::valoresPorInscrito(array_keys($existing))
+            : [];
 
         // Comprovar dorsals usats per detectar duplicats dins el CSV mateix
         $dorsalUsats = [];
@@ -360,18 +415,37 @@ final class InscritosImportController
                 }
             }
 
-            if (count($newFields) === 0) {
+            // Camps personalitzats (s'escriuen a inscrito_campos_valores)
+            $customFields = [];
+            foreach ($customColMap as $idx => $campo) {
+                $cid = (int) $campo['id'];
+                $rawVal = trim((string) ($row[$idx] ?? ''));
+                $newVal = ($rawVal === '') ? null : mb_substr($rawVal, 0, 2000);
+                $oldVal = $customExisting[$id][$cid] ?? null;
+                if ($oldVal === '') $oldVal = null;
+                if (!self::valuesEqual($oldVal, $newVal)) {
+                    $label = (string) $campo['etiqueta'];
+                    $customFields[$cid] = $newVal;
+                    $diff[$label] = ['from' => $oldVal, 'to' => $newVal];
+                    $changedCols[$label] = ($changedCols[$label] ?? 0) + 1;
+                }
+            }
+
+            if (count($newFields) === 0 && count($customFields) === 0) {
                 $skipped++;
                 continue;
             }
 
-            $changes[] = [
+            $change = [
                 'id'    => $id,
                 'dni'   => (string) $orig['dni'],
                 'nom'   => (string) ($orig['nombre'] . ' ' . $orig['apellido']),
                 'fields'=> $newFields,
                 'diff'  => $diff,
             ];
+            if ($customFields) $change['customFields'] = $customFields;
+            $changes[] = $change;
+
             foreach (array_keys($newFields) as $c) {
                 $changedCols[$c] = ($changedCols[$c] ?? 0) + 1;
             }
@@ -417,5 +491,16 @@ final class InscritosImportController
         if ($a === null && $b === null) return true;
         if ($a === null || $b === null) return false;
         return (string)$a === (string)$b;
+    }
+
+    /**
+     * Normalitza una capçalera CSV per comparar-la: treu el sufix "(ocult)" que
+     * afegeix l'exportació, passa a minúscules i elimina símbols/accents.
+     */
+    private static function normHeader(string $h): string
+    {
+        $h = preg_replace('/\s*\(ocult\)\s*$/iu', '', $h);
+        $h = preg_replace('/[^a-z0-9 ]+/u', '', strtolower($h));
+        return trim(preg_replace('/\s+/', ' ', (string) $h));
     }
 }

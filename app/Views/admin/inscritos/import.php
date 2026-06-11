@@ -26,7 +26,8 @@
         <li>Veuràs una previsualització dels canvis abans d'aplicar-los.</li>
     </ol>
     <p style="margin:.6rem 0 0;">
-        <strong>Columnes editables:</strong> <code>Dorsal</code>, <code>Talla</code>, <code>Club</code>, <code>Població</code>, <code>Codi postal</code>, <code>Estat</code>.
+        <strong>Columnes editables:</strong> <code>Dorsal</code>, <code>Talla</code>, <code>Club</code>, <code>Població</code>, <code>Codi postal</code>, <code>Estat</code>,
+        i qualsevol <strong>camp personalitzat</strong> de l'esdeveniment (inclosos els <strong>ocults</strong>) — emplena la columna amb el nom del camp.
         La resta s'ignoren. La identificació és per la columna <code>ID</code>.
     </p>
 </div>

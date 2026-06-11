@@ -11,6 +11,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
+use App\Models\CampoPersonalizado;
 use App\Models\Evento;
 use App\Models\Inscrito;
 use App\Models\Tarifa;
@@ -186,6 +187,11 @@ final class InscritosAdminController
         $evento = Evento::findById((int) $filters['evento_id']);
         $inscritos = Inscrito::listForAdminExport(array_filter($filters), 5000);
 
+        // Camps personalitzats (visibles + ocults) com a columnes extra del CSV.
+        // Els ocults serveixen per omplir info a mà i tornar-la a importar.
+        $campos = CampoPersonalizado::listByEvento((int) $filters['evento_id']);
+        $valores = CampoPersonalizado::valoresPorInscrito(array_map(fn($i) => (int) $i['id'], $inscritos));
+
         $filename = 'inscrits_' . preg_replace('/[^a-z0-9_-]+/i', '_', (string) $evento['slug'])
                   . '_' . date('Ymd_His') . '.csv';
 
@@ -197,15 +203,19 @@ final class InscritosAdminController
         // BOM UTF-8 perquè Excel detecti l'encoding
         fwrite($out, "\xEF\xBB\xBF");
 
-        // Capçaleres
-        fputcsv($out, [
+        // Capçaleres (fixes + una per cada camp personalitzat)
+        $headers = [
             'ID', 'Comanda', 'Data inscripció', 'Nom', 'Cognoms', 'DNI', 'Sexe', 'Data naixement',
             'Email', 'Telèfon', 'Club', 'Població', 'Codi postal', 'Talla',
             'Tarifa', 'Preu', 'Estat', 'Check-in', 'Dorsal'
-        ], ';');
+        ];
+        foreach ($campos as $c) {
+            $headers[] = (string) $c['etiqueta'] . (!empty($c['oculto']) ? ' (ocult)' : '');
+        }
+        fputcsv($out, $headers, ';');
 
         foreach ($inscritos as $i) {
-            fputcsv($out, [
+            $row = [
                 $i['id'],
                 !empty($i['pedido_id']) ? '#' . (int) $i['pedido_id'] : '',
                 format_datetime_local($i['created_at'], 'd/m/Y H:i'),
@@ -225,7 +235,12 @@ final class InscritosAdminController
                 $i['estado'],
                 !empty($i['check_in_at']) ? format_datetime_local($i['check_in_at'], 'd/m/Y H:i') : '',
                 $i['numero_dorsal'] ?? '',
-            ], ';');
+            ];
+            $vals = $valores[(int) $i['id']] ?? [];
+            foreach ($campos as $c) {
+                $row[] = $vals[(int) $c['id']] ?? '';
+            }
+            fputcsv($out, $row, ';');
         }
 
         fclose($out);
