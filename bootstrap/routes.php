@@ -18,6 +18,7 @@ use App\Controllers\UsuariosAdminController;
 use App\Controllers\PagoController;
 use App\Controllers\PublicController;
 use App\Controllers\InscripcionController;
+use App\Controllers\WaitingListController;
 use App\Controllers\LangController;
 
 /** @var Router $router */
@@ -30,6 +31,7 @@ $router->get ('/lang/{code}',                         [LangController::class, 's
 $router->get ('/',                                    [PublicController::class,       'index']);
 $router->get ('/eventos/{slug}',                      [PublicController::class,       'show']);
 $router->post('/eventos/{slug}/inscriure',            [InscripcionController::class,  'store']);
+$router->post('/eventos/{slug}/llista-espera',        [WaitingListController::class,  'store']);
 $router->get ('/eventos/{slug}/gracies',              [InscripcionController::class,  'exito']);
 $router->get ('/comprovant',                          [InscripcionController::class,  'comprovantForm']);
 $router->post('/comprovant',                          [InscripcionController::class,  'comprovantSend']);
@@ -83,6 +85,10 @@ $router->post('/admin/inscritos/{id}/reenviar',                [InscritosAdminCo
 $router->get ('/admin/eventos/{id}/inscritos/import',          [InscritosImportController::class, 'form'],    $auth);
 $router->post('/admin/eventos/{id}/inscritos/import/preview',  [InscritosImportController::class, 'preview'], $auth);
 $router->post('/admin/eventos/{id}/inscritos/import/apply',    [InscritosImportController::class, 'apply'],   $auth);
+
+// Llista d'espera
+$router->get ('/admin/eventos/{id}/llista-espera',          [WaitingListController::class, 'index'],  $auth);
+$router->post('/admin/eventos/{id}/llista-espera/avisar',   [WaitingListController::class, 'notify'], $auth);
 
 // Usuarios (només superadmin)
 $router->get ('/admin/usuarios',                     [UsuariosAdminController::class, 'index'],   $superadmin);

@@ -382,6 +382,11 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 .form-fields-grid > .form-row,
 .form-row-pair > .form-row { margin-bottom: 0; }
 .form-fields-grid > .form-row-wide { grid-column: 1 / -1; }
+/* Llista d'espera (apareix quan no queden places) */
+.waitlist-panel { border-left: 4px solid #f59e0b; }
+.waitlist-panel .panel-title { color: #b45309; }
+.waitlist-form { margin-top: .6rem; }
+.waitlist-form .btn-primary { margin-top: .4rem; }
 .form-row-pair {
     grid-column: 1 / -1;
     display: grid;

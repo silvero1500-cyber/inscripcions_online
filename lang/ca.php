@@ -84,6 +84,25 @@ return [
     'form.test.banner_desc'            => 'clica per omplir el formulari amb dades aleatòries vàlides.',
     'form.test.fill'                   => '🧪 Omplir prova',
 
+    // Llista d'espera
+    'waitlist.title'                   => "Llista d'espera",
+    'waitlist.desc'                    => "No queden places? Deixa'ns el teu correu i t'avisarem si se'n allibera alguna.",
+    'waitlist.name'                    => 'Nom',
+    'waitlist.email'                   => 'Correu electrònic',
+    'waitlist.tarifa'                  => "Tarifa que t'interessa",
+    'waitlist.tarifa_any'              => 'Qualsevol',
+    'waitlist.submit'                  => "Apunta'm a la llista d'espera",
+    'waitlist.ok'                      => "Fet! T'avisarem per correu si s'allibera una plaça.",
+    'waitlist.err_email'               => 'Introdueix un correu electrònic vàlid.',
+    'waitlist.err_session'             => 'La sessió ha expirat. Torna-ho a provar.',
+    'waitlist.email_subject'           => "S'han alliberat places · {event}",
+    'waitlist.email_title'             => 'Hi ha plaça disponible!',
+    'waitlist.email_hello'             => 'Hola {name},',
+    'waitlist.email_intro'             => "T'havies apuntat a la llista d'espera de {event} i ara mateix hi ha places disponibles.",
+    'waitlist.email_hurry'             => "Les places són limitades i s'assignen per ordre d'inscripció, així que afanya't!",
+    'waitlist.email_cta'               => "Inscriu-te ara",
+    'waitlist.email_ignore'            => "Si ja no t'interessa, ignora aquest correu. Enllaç directe:",
+
     // Inscripció de grup (diversos participants)
     'group.contact_title'              => 'Dades de contacte',
     'group.contact_desc'               => 'Qui rep el comprovant amb els QR de tots els participants.',

@@ -747,6 +747,57 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
     </script>
 
     <?php endif; ?>
+
+    <?php
+    // ── Llista d'espera: visible si hi ha alguna tarifa esgotada o l'aforament és ple ──
+    $hayAgotadas = false;
+    foreach ($tarifas as $tt) { if (!empty($tt['_agotada'])) { $hayAgotadas = true; break; } }
+    $plenes = ($plazasDisponibles !== null && $plazasDisponibles <= 0);
+    $agotadasList = array_values(array_filter($tarifas, fn($t) => !empty($t['_agotada'])));
+    if ($hayAgotadas || $plenes):
+    ?>
+    <div class="panel waitlist-panel" id="llista-espera">
+        <h2 class="panel-title"><?= e(t('waitlist.title')) ?></h2>
+        <p class="muted" style="margin-top:-.3rem;"><?= e(t('waitlist.desc')) ?></p>
+
+        <?php if (!empty($esperaOk)): ?>
+            <div class="alert alert-success"><?= e($esperaOk) ?></div>
+        <?php endif; ?>
+        <?php if (!empty($esperaError)): ?>
+            <div class="alert alert-error"><?= e($esperaError) ?></div>
+        <?php endif; ?>
+
+        <form method="post" action="<?= e(base_url('/eventos/' . $evento['slug'] . '/llista-espera')) ?>" class="form-publico waitlist-form">
+            <?= Csrf::field() ?>
+            <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">
+                <label for="le_website">No omplir</label>
+                <input type="text" id="le_website" name="website" tabindex="-1" autocomplete="off" value="">
+            </div>
+            <div class="form-grid-2">
+                <div class="form-row">
+                    <label for="le_nombre"><?= e(t('waitlist.name')) ?></label>
+                    <input type="text" id="le_nombre" name="nombre" maxlength="150" value="">
+                </div>
+                <div class="form-row">
+                    <label for="le_email"><?= e(t('waitlist.email')) ?> <span class="req">*</span></label>
+                    <input type="email" id="le_email" name="email" required maxlength="255" autocomplete="email" value="">
+                </div>
+            </div>
+            <?php if (count($agotadasList) > 1): ?>
+            <div class="form-row">
+                <label for="le_tarifa"><?= e(t('waitlist.tarifa')) ?></label>
+                <select id="le_tarifa" name="tarifa_id">
+                    <option value=""><?= e(t('waitlist.tarifa_any')) ?></option>
+                    <?php foreach ($agotadasList as $t): ?>
+                        <option value="<?= (int) $t['id'] ?>"><?= e($t['nombre']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+            <button type="submit" class="btn btn-primary"><?= e(t('waitlist.submit')) ?></button>
+        </form>
+    </div>
+    <?php endif; ?>
 </section>
 
 <script>

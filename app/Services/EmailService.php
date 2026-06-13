@@ -23,12 +23,14 @@ final class EmailService
      * @param string                          $subject
      * @param string                          $htmlBody
      * @param list<array{cid:string, bytes:string, name:string, type?:string}> $inlineAttachments
+     * @param list<array{bytes:string, name:string, type:string}>              $fileAttachments
      */
     public static function send(
         string $to,
         string $subject,
         string $htmlBody,
-        array $inlineAttachments = []
+        array $inlineAttachments = [],
+        array $fileAttachments = []
     ): void {
         $mailer = self::buildMailer();
         $mailer->addAddress($to);
@@ -43,6 +45,14 @@ final class EmailService
                 $att['name'],
                 PHPMailer::ENCODING_BASE64,
                 $att['type'] ?? 'image/png'
+            );
+        }
+        foreach ($fileAttachments as $att) {
+            $mailer->addStringAttachment(
+                $att['bytes'],
+                $att['name'],
+                PHPMailer::ENCODING_BASE64,
+                $att['type']
             );
         }
 
@@ -107,8 +117,19 @@ final class EmailService
                 'bytes' => $qrPng,
                 'name'  => $cidName,
                 'type'  => 'image/png',
-            ]]
+            ]],
+            [self::icsAttachment($evento, 'inscrito-' . ($inscrito['id'] ?? ''))]
         );
+    }
+
+    /** Construeix l'adjunt .ics (afegir al calendari) per a un esdeveniment. */
+    private static function icsAttachment(array $evento, string $uidSeed = ''): array
+    {
+        return [
+            'bytes' => IcsService::build($evento, $uidSeed),
+            'name'  => 'esdeveniment.ics',
+            'type'  => 'text/calendar; charset=utf-8; method=PUBLISH',
+        ];
     }
 
     /**
@@ -153,7 +174,39 @@ final class EmailService
         }
         \App\Core\Lang::reset();
 
-        self::send((string) $pedido['email'], $subject, $html, $attachments);
+        self::send(
+            (string) $pedido['email'],
+            $subject,
+            $html,
+            $attachments,
+            [self::icsAttachment($evento, 'pedido-' . ($pedido['id'] ?? ''))]
+        );
+    }
+
+    /**
+     * Avisa un interessat de la llista d'espera que s'ha alliberat alguna plaça.
+     *
+     * @param array $entry   Fila de lista_espera (email, nombre, tarifa_nombre...)
+     * @param array $evento  Fila de eventos
+     */
+    public static function sendListaEsperaAviso(array $entry, array $evento): void
+    {
+        $url  = base_url('/eventos/' . (string) ($evento['slug'] ?? ''));
+        $html = View::renderToString('emails/aviso_lista_espera', [
+            'entry'   => $entry,
+            'evento'  => $evento,
+            'url'     => $url,
+            'baseUrl' => base_url('/'),
+        ]);
+        $subject = \App\Core\Lang::t('waitlist.email_subject', ['event' => $evento['titulo']]);
+
+        self::send(
+            (string) $entry['email'],
+            $subject,
+            $html,
+            [],
+            [self::icsAttachment($evento, 'espera-' . ($entry['id'] ?? ''))]
+        );
     }
 
     /**

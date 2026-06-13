@@ -84,6 +84,25 @@ return [
     'form.test.banner_desc'            => 'clica para rellenar el formulario con datos aleatorios válidos.',
     'form.test.fill'                   => '🧪 Rellenar prueba',
 
+    // Lista de espera
+    'waitlist.title'                   => 'Lista de espera',
+    'waitlist.desc'                    => '¿No quedan plazas? Déjanos tu correo y te avisaremos si se libera alguna.',
+    'waitlist.name'                    => 'Nombre',
+    'waitlist.email'                   => 'Correo electrónico',
+    'waitlist.tarifa'                  => 'Tarifa que te interesa',
+    'waitlist.tarifa_any'              => 'Cualquiera',
+    'waitlist.submit'                  => 'Apúntame a la lista de espera',
+    'waitlist.ok'                      => '¡Hecho! Te avisaremos por correo si se libera una plaza.',
+    'waitlist.err_email'               => 'Introduce un correo electrónico válido.',
+    'waitlist.err_session'             => 'La sesión ha caducado. Inténtalo de nuevo.',
+    'waitlist.email_subject'           => 'Se han liberado plazas · {event}',
+    'waitlist.email_title'             => '¡Hay plaza disponible!',
+    'waitlist.email_hello'             => 'Hola {name},',
+    'waitlist.email_intro'             => 'Te habías apuntado a la lista de espera de {event} y ahora mismo hay plazas disponibles.',
+    'waitlist.email_hurry'             => 'Las plazas son limitadas y se asignan por orden de inscripción, ¡así que date prisa!',
+    'waitlist.email_cta'               => 'Inscríbete ahora',
+    'waitlist.email_ignore'            => 'Si ya no te interesa, ignora este correo. Enlace directo:',
+
     // Inscripción de grupo (varios participantes)
     'group.contact_title'              => 'Datos de contacto',
     'group.contact_desc'               => 'Quien recibe el justificante con los QR de todos los participantes.',

@@ -1,0 +1,30 @@
+# Normalitza finals de línia: el repositori guarda SEMPRE LF.
+# Evita l'avís "LF will be replaced by CRLF" a Windows.
+* text=auto eol=lf
+
+# Codi i text → LF explícit
+*.php   text eol=lf
+*.css   text eol=lf
+*.js    text eol=lf
+*.sql   text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+*.html  text eol=lf
+*.txt   text eol=lf
+*.xml   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.ics   text eol=lf
+
+# Binaris → mai conversió
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
