@@ -818,65 +818,91 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
     var btn = document.getElementById('btn-autofill');
     if (!btn) return;
 
+    var noms = ['Joan', 'Marta', 'Pau', 'Laia', 'Marc', 'Anna', 'Pol', 'Júlia'];
+    var cognoms = ['Garcia', 'Puig', 'Soler', 'Vila', 'Roca', 'Marti', 'Ferrer'];
+    var dominis = ['example.com', 'test.cat', 'mailinator.com'];
+    var ciutats = ['Barcelona', 'Girona', 'Lleida', 'Tarragona', 'Sabadell', 'Terrassa'];
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
     function dniAleatori() {
-        var num = Math.floor(10000000 + Math.random() * 89999999);
-        var lletres = 'TRWAGMYFPDXBNJZSQVHLCKE';
-        return num + lletres.charAt(num % 23);
+        var n = Math.floor(10000000 + Math.random() * 89999999);
+        return n + 'TRWAGMYFPDXBNJZSQVHLCKE'.charAt(n % 23);
     }
-    function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-    function fillIfEmpty(el, val) {
-        if (!el) return;
-        if (el.tagName === 'SELECT') {
-            for (var i = 0; i < el.options.length; i++) {
-                if (el.options[i].value === val) { el.value = val; break; }
-            }
-        } else if (el.type === 'checkbox' || el.type === 'radio') {
-            el.checked = true;
-        } else {
-            el.value = val;
+    function randTel() { return '6' + Math.floor(10000000 + Math.random() * 89999999); }
+    function randDate() { return '1990-' + pad2(Math.floor(Math.random() * 12) + 1) + '-' + pad2(Math.floor(Math.random() * 28) + 1); }
+    function randEmail(nom, cog) { return nom.toLowerCase() + '.' + cog.toLowerCase() + Math.floor(Math.random() * 999) + '@' + pick(dominis); }
+
+    function setVal(el, val) { if (el && !el.value) el.value = val; }
+    function setSelVal(el, val) {
+        if (!el || el.tagName !== 'SELECT' || el.value) return;
+        for (var i = 0; i < el.options.length; i++) {
+            if (el.options[i].value === val && !el.options[i].disabled) { el.selectedIndex = i; return; }
         }
     }
+    function setSelAny(el) {
+        if (!el || el.tagName !== 'SELECT' || el.value) return;
+        var idx = [];
+        for (var i = 0; i < el.options.length; i++) {
+            if (el.options[i].value && !el.options[i].disabled) idx.push(i);
+        }
+        if (idx.length) el.selectedIndex = pick(idx);
+    }
+    function fire(el, type) { if (el) el.dispatchEvent(new Event(type, { bubbles: true })); }
+    // Camp dins d'un àmbit: accepta name="f" (individual) o name$="[f]" (grup)
+    function q(scope, f) { return scope.querySelector('[name="' + f + '"], [name$="[' + f + ']"]'); }
 
-    btn.addEventListener('click', function () {
-        var noms = ['Joan', 'Marta', 'Pau', 'Laia', 'Marc', 'Anna', 'Pol', 'Júlia'];
-        var cognoms = ['Garcia', 'Puig', 'Soler', 'Vila', 'Roca', 'Marti', 'Ferrer'];
-        var dominis = ['example.com', 'test.cat', 'mailinator.com'];
-
-        var nom = pick(noms);
-        var cog = pick(cognoms);
-
-        fillIfEmpty(document.getElementById('nombre'), nom);
-        fillIfEmpty(document.getElementById('apellido'), cog + ' ' + pick(cognoms));
-        fillIfEmpty(document.getElementById('dni'), dniAleatori());
-        fillIfEmpty(document.getElementById('fecha_nacimiento'), '1990-' +
-            String(Math.floor(Math.random() * 12) + 1).padStart(2, '0') + '-' +
-            String(Math.floor(Math.random() * 28) + 1).padStart(2, '0'));
-        fillIfEmpty(document.getElementById('email'),
-            nom.toLowerCase() + '.' + cog.toLowerCase() + Math.floor(Math.random() * 999) + '@' + pick(dominis));
-        var emEl = document.getElementById('email'), emcEl = document.getElementById('email_confirm');
-        if (emEl && emcEl) emcEl.value = emEl.value;
-        fillIfEmpty(document.getElementById('telefono'), '6' + Math.floor(10000000 + Math.random() * 89999999));
-        fillIfEmpty(document.getElementById('sexo'), pick(['H', 'M', 'NB']));
-        fillIfEmpty(document.getElementById('talla_camiseta'), pick(['S', 'M', 'L', 'XL']));
-        fillIfEmpty(document.getElementById('poblacion'), pick(['Barcelona', 'Girona', 'Lleida', 'Tarragona', 'Sabadell', 'Terrassa']));
-        fillIfEmpty(document.getElementById('codigo_postal'), '0' + Math.floor(8000 + Math.random() * 1000));
-        fillIfEmpty(document.getElementById('club'), 'Club Prova');
-
-        document.querySelectorAll('input[name^="campo_"]').forEach(function (el) {
+    function fillCustom(scope) {
+        scope.querySelectorAll('input[name^="campo_"], input[name*="[campo_"]').forEach(function (el) {
             if (el.type === 'radio' || el.type === 'checkbox') {
-                if (!document.querySelector('input[name="' + el.name + '"]:checked')) el.checked = true;
+                if (!scope.querySelector('input[name="' + CSS.escape(el.name) + '"]:checked')) el.checked = true;
             } else if (!el.value) {
                 el.value = el.type === 'number' ? '1' : (el.type === 'date' ? '2026-06-15' : 'Prova');
             }
         });
-        document.querySelectorAll('textarea[name^="campo_"]').forEach(function (el) { if (!el.value) el.value = 'Text de prova'; });
-        document.querySelectorAll('select[name^="campo_"]').forEach(function (el) { if (!el.value && el.options.length > 1) el.selectedIndex = 1; });
+        scope.querySelectorAll('textarea[name^="campo_"], textarea[name*="[campo_"]').forEach(function (el) { if (!el.value) el.value = 'Text de prova'; });
+        scope.querySelectorAll('select[name^="campo_"], select[name*="[campo_"]').forEach(function (el) { if (!el.value && el.options.length > 1) el.selectedIndex = 1; });
+    }
 
-        var tarifaSel = document.getElementById('tarifa_id');
-        if (tarifaSel && !tarifaSel.value) {
-            for (var ti = 0; ti < tarifaSel.options.length; ti++) {
-                if (tarifaSel.options[ti].value && !tarifaSel.options[ti].disabled) { tarifaSel.selectedIndex = ti; break; }
-            }
+    // Omple una persona dins d'un àmbit (individual: document; grup: un [data-participant])
+    function fillPerson(scope) {
+        var nom = pick(noms), cog = pick(cognoms);
+        // Tarifa primer: dispara canvis (camps condicionals, total, talles per sexe...)
+        var tar = q(scope, 'tarifa_id');
+        if (tar) { setSelAny(tar); fire(tar, 'change'); }
+        setVal(q(scope, 'nombre'), nom);
+        setVal(q(scope, 'apellido'), cog + ' ' + pick(cognoms));
+        setVal(q(scope, 'dni'), dniAleatori());
+        setVal(q(scope, 'fecha_nacimiento'), randDate());
+        var sx = q(scope, 'sexo');
+        if (sx) { setSelVal(sx, pick(['H', 'M', 'NB'])); fire(sx, 'change'); }
+        setSelAny(q(scope, 'talla_camiseta')); // després de sexo (opcions ja filtrades)
+        setVal(q(scope, 'poblacion'), pick(ciutats));
+        setVal(q(scope, 'codigo_postal'), '0' + Math.floor(8000 + Math.random() * 1000));
+        setVal(q(scope, 'club'), 'Club Prova');
+        fillCustom(scope);
+        return { nom: nom, cog: cog };
+    }
+
+    btn.addEventListener('click', function () {
+        var grup = document.getElementById('formulari-grup');
+        if (grup) {
+            // Contacte del grup
+            var em = document.getElementById('c_email');
+            if (em && !em.value) em.value = randEmail(pick(noms), pick(cognoms));
+            var emc = document.getElementById('c_email_confirm');
+            if (em && emc) emc.value = em.value;
+            setVal(document.getElementById('c_telefono'), randTel());
+            // Tots els participants presents
+            grup.querySelectorAll('[data-participant]').forEach(function (block) { fillPerson(block); });
+        } else {
+            // Formulari individual
+            var p = fillPerson(document);
+            var em2 = document.getElementById('email');
+            if (em2 && !em2.value) em2.value = randEmail(p.nom, p.cog);
+            var emc2 = document.getElementById('email_confirm');
+            if (em2 && emc2) emc2.value = em2.value;
+            setVal(document.getElementById('telefono'), randTel());
         }
     });
 })();
