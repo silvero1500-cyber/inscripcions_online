@@ -79,6 +79,7 @@ $router->post('/admin/eventos/{id}/eliminar',        [EventoController::class, '
 // Inscrits (llistat + export CSV + import CSV)
 $router->get ('/admin/inscritos',                              [InscritosAdminController::class, 'index'],   $auth);
 $router->get ('/admin/inscritos/export',                       [InscritosAdminController::class, 'export'],  $auth);
+$router->get ('/admin/inscritos/{id}',                         [InscritosAdminController::class, 'show'],               $auth);
 $router->get ('/admin/inscritos/{id}/qr',                      [InscritosAdminController::class, 'qr'],                 $auth);
 $router->get ('/admin/inscritos/{id}/comprovant',              [InscritosAdminController::class, 'comprovant'],         $auth);
 $router->post('/admin/inscritos/{id}/reenviar',                [InscritosAdminController::class, 'resendConfirmation'], $auth);

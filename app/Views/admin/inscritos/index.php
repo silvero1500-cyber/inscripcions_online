@@ -259,6 +259,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                         <?php endif; ?>
                     </td>
                     <td data-col="accions" class="cell-actions">
+                        <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'])) ?>" title="Veure fitxa completa">👁 Fitxa</a>
                         <?php if ($i['estado'] === 'confirmado'): ?>
                             <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/comprovant')) ?>" target="_blank" rel="noopener" title="Comprovant imprimible">📄</a>
                             <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/qr')) ?>" target="_blank" rel="noopener" title="Veure / descarregar QR">QR</a>
@@ -267,8 +268,6 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                                 <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
                                 <button type="submit" class="btn-tiny" title="Reenviar email de confirmació">✉ Reenviar</button>
                             </form>
-                        <?php else: ?>
-                            <span class="muted">—</span>
                         <?php endif; ?>
                     </td>
                 </tr>

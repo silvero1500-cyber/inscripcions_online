@@ -78,6 +78,52 @@ final class InscritosAdminController
     }
 
     /**
+     * Fitxa d'un inscrit: totes les dades + respostes dels camps personalitzats
+     * (inclosos els ocults), pagaments i companys de comanda.
+     */
+    public function show(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        $inscrito = Inscrito::findById($id);
+        if ($inscrito === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, (int) $inscrito['evento_id'])) Response::forbidden();
+
+        $evento = Evento::findById((int) $inscrito['evento_id']);
+        $tarifa = !empty($inscrito['tarifa_id']) ? Tarifa::findById((int) $inscrito['tarifa_id']) : null;
+
+        $campos  = CampoPersonalizado::listByEvento((int) $inscrito['evento_id']);
+        $valores = CampoPersonalizado::valoresPorInscrito([$id])[$id] ?? [];
+
+        $pagos = Database::getInstance()->query(
+            'SELECT * FROM pagos WHERE inscrito_id = ? ORDER BY id DESC',
+            [$id]
+        )->fetchAll();
+
+        // Companys de la mateixa comanda (inscripció de grup)
+        $companys = [];
+        if (!empty($inscrito['pedido_id'])) {
+            $companys = Database::getInstance()->query(
+                'SELECT id, nombre, apellido FROM inscritos WHERE pedido_id = ? AND id <> ? ORDER BY id ASC',
+                [(int) $inscrito['pedido_id'], $id]
+            )->fetchAll();
+        }
+
+        View::render('admin/inscritos/show', [
+            'user'     => $user,
+            'inscrito' => $inscrito,
+            'evento'   => $evento,
+            'tarifa'   => $tarifa,
+            'campos'   => $campos,
+            'valores'  => $valores,
+            'pagos'    => $pagos,
+            'companys' => $companys,
+            'flash'    => Session::pullAllFlashes(),
+        ], layout: 'admin');
+    }
+
+    /**
      * Reenvia l'email de confirmació (amb QR) d'un inscrit confirmat.
      */
     public function resendConfirmation(Request $req, array $params): void

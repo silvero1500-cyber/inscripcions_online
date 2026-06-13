@@ -1114,6 +1114,20 @@ li.col-manager-item label {
     cursor: pointer;
 }
 
+/* ── Fitxa d'inscrit ───────────────────────────────────── */
+.detail-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: 1.2rem; }
+.detail-actions .inline { display: inline; }
+.detail-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; align-items: start; }
+@media (max-width: 820px) { .detail-cols { grid-template-columns: 1fr; } }
+.detail-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+.detail-row { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem 0; border-bottom: 1px solid #f1f5f9; }
+.detail-row:last-child { border-bottom: 0; }
+.detail-label { color: #6b7280; font-size: .9rem; flex: 0 0 auto; }
+.detail-value { font-weight: 500; text-align: right; word-break: break-word; }
+.detail-value.muted { font-weight: 400; }
+.detail-companys { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; }
+.detail-companys li { display: flex; gap: .35rem; }
+
 /* ── Recollida de dorsal ───────────────────────────────── */
 .kpi-grid-3 { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 600px) { .kpi-grid-3 { grid-template-columns: 1fr; } }
