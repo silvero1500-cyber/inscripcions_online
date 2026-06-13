@@ -110,8 +110,8 @@ $pageUrl = function (int $p) use ($filtersClean): string {
 
     <?php
     // Barra de paginació reutilitzable (la usem dalt i baix del grid)
-    $renderPagination = function () use ($page, $totalPages, $from, $to, $total, $pageUrl) {
-        if ($totalPages <= 1 && $total <= 100) return;
+    $renderPagination = function () use ($page, $totalPages, $from, $to, $total, $perPage, $pageUrl) {
+        if ($totalPages <= 1 && $total <= $perPage) return;
         ?>
         <nav class="pager" aria-label="Paginació">
             <div class="pager-info">

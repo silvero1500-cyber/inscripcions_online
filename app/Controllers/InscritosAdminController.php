@@ -23,7 +23,7 @@ final class InscritosAdminController
     public function index(Request $req): void
     {
         $user = Auth::user();
-        $perPage = 100;
+        $perPage = 25;
         $page = max(1, (int) ($req->query('page') ?? 1));
 
         $filters = [
