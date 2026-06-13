@@ -291,8 +291,11 @@ CREATE TABLE IF NOT EXISTS `lista_espera` (
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ------------------------------------------------------------
--- Superadmin inicial (cambiar contraseña tras primer login)
+-- Superadmin inicial SOLO para bootstrap de una instalación nueva.
 -- Password: Admin1234! (bcrypt)
+-- ⚠️ SEGURIDAD: tras el primer login crea TU propio superadmin con contraseña
+--    fuerte y única. La migración 024 desactiva esta cuenta automáticamente en
+--    cuanto exista otro superadmin activo (y solo si conserva esta contraseña).
 -- ------------------------------------------------------------
 INSERT INTO `usuarios` (`nombre`, `email`, `password_hash`, `rol`) VALUES
 (

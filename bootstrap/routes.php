@@ -19,6 +19,7 @@ use App\Controllers\PagoController;
 use App\Controllers\PublicController;
 use App\Controllers\InscripcionController;
 use App\Controllers\WaitingListController;
+use App\Controllers\MigrationController;
 use App\Controllers\LangController;
 
 /** @var Router $router */
@@ -92,6 +93,10 @@ $router->get ('/admin/eventos/{id}/llista-espera',          [WaitingListControll
 $router->post('/admin/eventos/{id}/llista-espera/avisar',   [WaitingListController::class, 'notify'], $auth);
 
 // Usuarios (només superadmin)
+// Migracions de base de dades (superadmin) — substitueix el runner PHP amb token
+$router->get ('/admin/migracions',                   [MigrationController::class, 'index'],  $superadmin);
+$router->post('/admin/migracions/aplicar',           [MigrationController::class, 'apply'],  $superadmin);
+
 $router->get ('/admin/usuarios',                     [UsuariosAdminController::class, 'index'],   $superadmin);
 $router->get ('/admin/usuarios/nou',                 [UsuariosAdminController::class, 'create'],  $superadmin);
 $router->post('/admin/usuarios',                     [UsuariosAdminController::class, 'store'],   $superadmin);

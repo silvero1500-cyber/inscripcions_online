@@ -21,6 +21,12 @@ $isSuper = ($user->rol ?? '') === 'superadmin';
     </div>
 </section>
 
+<?php if ($isSuper): ?>
+<section style="margin-top:1.4rem;">
+    <a class="btn" href="<?= e(base_url('/admin/migracions')) ?>">⚙ Migracions de base de dades</a>
+</section>
+<?php endif; ?>
+
 <?php if ($isSuper && (int)$stats['eventos'] === 0): ?>
 <section class="empty-state">
     <p>Encara no hi ha cap esdeveniment creat. Comença afegint el primer per recollir inscripcions.</p>
