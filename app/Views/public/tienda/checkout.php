@@ -5,6 +5,7 @@
 use App\Core\Csrf;
 use App\Services\RedsysService;
 ?>
+<div class="container shop-page">
 <section class="shop-hero"><h1><?= e(t('shop.checkout_title')) ?></h1></section>
 
 <?php if (!empty($flashError)): ?><div class="alert alert-error"><?= e($flashError) ?></div><?php endif; ?>
@@ -50,4 +51,5 @@ use App\Services\RedsysService;
         <?php endforeach; ?>
         <div class="checkout-line checkout-total"><span><?= e(t('shop.total')) ?></span> <strong><?= e(format_price($total)) ?></strong></div>
     </aside>
+</div>
 </div>

@@ -60,6 +60,7 @@
                         <?php if (!empty($p['destacado'])): ?><span class="badge" style="background:#fef3c7;color:#b45309;">★</span><?php endif; ?>
                     </td>
                     <td class="td-actions">
+                        <a class="btn-small" href="<?= e(base_url('/tienda/' . $p['slug'])) ?>" target="_blank" rel="noopener" title="Veure a la botiga">👁️ Veure</a>
                         <a class="btn-small" href="<?= e(base_url('/admin/tienda/' . (int)$p['id'] . '/editar')) ?>">Editar</a>
                         <form method="post" action="<?= e(base_url('/admin/tienda/' . (int)$p['id'] . '/eliminar')) ?>" class="inline"
                               onsubmit="return confirm('Eliminar el producte «<?= e($p['nombre']) ?>» i les seves imatges?');">

@@ -2,6 +2,7 @@
 /** @var list<array> $productos */
 use App\Services\ImageUploader;
 ?>
+<div class="container shop-page">
 <section class="shop-hero">
     <h1><?= e(t('shop.title')) ?></h1>
     <p class="muted"><?= e(t('shop.subtitle')) ?></p>
@@ -31,3 +32,4 @@ use App\Services\ImageUploader;
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
+</div>

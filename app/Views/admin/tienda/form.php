@@ -18,7 +18,12 @@ $val = fn(string $k, $d = '') => e((string) ($producto[$k] ?? $d));
         <h1><?= $isEdit ? 'Editar producte' : 'Nou producte' ?></h1>
         <p class="muted">Recollida en tenda · gestió de superadmin.</p>
     </div>
-    <a class="btn" href="<?= e(base_url('/admin/tienda')) ?>">← Tornar</a>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <?php if ($isEdit): ?>
+            <a class="btn" href="<?= e(base_url('/tienda/' . $producto['slug'])) ?>" target="_blank" rel="noopener">👁️ Veure a la botiga</a>
+        <?php endif; ?>
+        <a class="btn" href="<?= e(base_url('/admin/tienda')) ?>">← Tornar</a>
+    </div>
 </section>
 
 <?php if (!empty($flash['success'])): ?><div class="alert alert-success"><?= e($flash['success']) ?></div><?php endif; ?>

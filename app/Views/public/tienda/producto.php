@@ -22,6 +22,7 @@ foreach ($variaciones as $v) {
     ];
 }
 ?>
+<div class="container shop-page">
 <nav class="shop-breadcrumb"><a href="<?= e(base_url('/tienda')) ?>">← <?= e(t('shop.continue')) ?></a></nav>
 
 <?php if (!empty($flashError)): ?><div class="alert alert-error"><?= e($flashError) ?></div><?php endif; ?>
@@ -144,3 +145,4 @@ foreach ($variaciones as $v) {
     document.querySelectorAll('.shop-attr').forEach(function (s) { s.addEventListener('change', update); });
 })();
 </script>
+</div>

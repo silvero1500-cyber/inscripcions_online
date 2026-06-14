@@ -4,6 +4,7 @@
 use App\Core\Csrf;
 use App\Services\ImageUploader;
 ?>
+<div class="container shop-page">
 <section class="shop-hero">
     <h1><?= e(t('shop.cart')) ?></h1>
 </section>
@@ -61,3 +62,4 @@ use App\Services\ImageUploader;
         </div>
     </div>
 <?php endif; ?>
+</div>
