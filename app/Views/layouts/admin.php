@@ -52,6 +52,7 @@ $navActive = function (string $rel, bool $exact = false) use ($curPath): string 
                 <a class="<?= trim($navActive('/admin/recollida')) ?>" href="<?= e(base_url('/admin/recollida')) ?>">Recollida</a>
                 <a class="<?= trim($navActive('/admin/inscritos')) ?>" href="<?= e(base_url('/admin/inscritos')) ?>">Inscrits</a>
                 <?php if ($currentUser && $currentUser->rol === 'superadmin'): ?>
+                    <a class="<?= trim($navActive('/admin/tienda')) ?>" href="<?= e(base_url('/admin/tienda')) ?>">Tenda</a>
                     <a class="<?= trim($navActive('/admin/usuarios')) ?>" href="<?= e(base_url('/admin/usuarios')) ?>">Usuaris</a>
                 <?php endif; ?>
             </nav>

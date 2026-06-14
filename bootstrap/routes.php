@@ -20,6 +20,7 @@ use App\Controllers\PublicController;
 use App\Controllers\InscripcionController;
 use App\Controllers\WaitingListController;
 use App\Controllers\MigrationController;
+use App\Controllers\TiendaAdminController;
 use App\Controllers\LangController;
 
 /** @var Router $router */
@@ -96,6 +97,15 @@ $router->post('/admin/eventos/{id}/llista-espera/avisar',   [WaitingListControll
 // Migracions de base de dades (superadmin) — substitueix el runner PHP amb token
 $router->get ('/admin/migracions',                   [MigrationController::class, 'index'],  $superadmin);
 $router->post('/admin/migracions/aplicar',           [MigrationController::class, 'apply'],  $superadmin);
+
+// Tienda — gestió de productes (NOMÉS superadmin)
+$router->get ('/admin/tienda',                       [TiendaAdminController::class, 'index'],   $superadmin);
+$router->get ('/admin/tienda/nou',                   [TiendaAdminController::class, 'create'],  $superadmin);
+$router->post('/admin/tienda',                       [TiendaAdminController::class, 'store'],   $superadmin);
+$router->get ('/admin/tienda/{id}/editar',           [TiendaAdminController::class, 'edit'],    $superadmin);
+$router->post('/admin/tienda/{id}',                  [TiendaAdminController::class, 'update'],  $superadmin);
+$router->post('/admin/tienda/{id}/eliminar',         [TiendaAdminController::class, 'destroy'], $superadmin);
+$router->post('/admin/tienda/imatge/{imgId}/eliminar', [TiendaAdminController::class, 'deleteImage'], $superadmin);
 
 $router->get ('/admin/usuarios',                     [UsuariosAdminController::class, 'index'],   $superadmin);
 $router->get ('/admin/usuarios/nou',                 [UsuariosAdminController::class, 'create'],  $superadmin);
