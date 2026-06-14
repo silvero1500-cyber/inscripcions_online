@@ -241,6 +241,9 @@ final class EventoController
         if ($evento === null) Response::notFound();
         if (!Evento::userCanEdit($user->id, $user->rol, $id)) Response::forbidden();
 
+        // Caduca pendents abandonats abans de calcular els KPIs (sense cron)
+        \App\Models\Inscrito::expirarPendientes($id);
+
         $db = Database::getInstance();
 
         // ── Resumen general ────────────────────────────────────

@@ -42,6 +42,12 @@ final class InscritosAdminController
             Response::forbidden();
         }
 
+        // Caduca pendents abandonats d'aquest evento (sense cron): així el llistat
+        // sempre reflecteix places reals encara que l'evento no tingui trànsit públic.
+        if ($filters['evento_id']) {
+            Inscrito::expirarPendientes((int) $filters['evento_id']);
+        }
+
         $filtersClean = array_filter($filters, fn($v) => $v !== null && $v !== '');
 
         $total = 0;
