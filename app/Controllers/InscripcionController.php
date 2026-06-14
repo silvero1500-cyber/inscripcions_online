@@ -45,6 +45,10 @@ final class InscripcionController
             Response::redirect(base_url('/'));
         }
 
+        // Caduca pendents abandonats: allibera places abans de comprovar l'aforament.
+        // (Cobreix també la inscripció de grup, que es despatxa més avall.)
+        Inscrito::expirarPendientes((int) $evento['id']);
+
         if (!PublicController::inscripcionesAbiertas($evento)) {
             Session::flash('error', 'Les inscripcions per a aquest esdeveniment estan tancades.');
             Response::redirect(base_url('/eventos/' . $slug));

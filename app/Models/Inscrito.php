@@ -11,6 +11,47 @@ final class Inscrito
     public const TALLAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
     public const SEXOS  = ['H', 'M', 'NB'];
 
+    /** Minuts que una inscripció pot estar 'pendiente' (sense pagar) abans de caducar. */
+    public const PENDING_EXPIRY_MINUTES = 30;
+
+    /**
+     * Caduca les inscripcions 'pendiente' abandonades d'un esdeveniment: les que
+     * fa més de N minuts que es van crear i NO tenen cap pagament completat (ni
+     * pròpia ni via el seu pedido de grup). Les passa a 'cancelado' per alliberar
+     * la plaça (l'aforament només compta pendiente+confirmado).
+     *
+     * S'executa de forma oportunista (a l'inscriure's i en mostrar l'esdeveniment),
+     * així no cal cap cron. Idempotent i tolerant a errors.
+     *
+     * @return int Nombre d'inscripcions caducades.
+     */
+    public static function expirarPendientes(int $eventoId, ?int $minutes = null): int
+    {
+        $min = $minutes ?? self::PENDING_EXPIRY_MINUTES;
+        if ($min <= 0 || $eventoId <= 0) return 0;
+
+        try {
+            $stmt = Database::getInstance()->query(
+                "UPDATE inscritos i
+                 SET i.estado = 'cancelado'
+                 WHERE i.evento_id = ?
+                   AND i.estado = 'pendiente'
+                   AND i.created_at < (NOW() - INTERVAL ? MINUTE)
+                   AND NOT EXISTS (
+                       SELECT 1 FROM pagos p
+                       WHERE p.estado = 'completado'
+                         AND (p.inscrito_id = i.id
+                              OR (i.pedido_id IS NOT NULL AND p.pedido_id = i.pedido_id))
+                   )",
+                [$eventoId, $min]
+            );
+            return $stmt->rowCount();
+        } catch (\Throwable $e) {
+            error_log('[Inscrito::expirarPendientes] ' . $e->getMessage());
+            return 0;
+        }
+    }
+
     /**
      * Decodifica la config `eventos.tallas_sexo` (JSON {"H":[...],"M":[...]}).
      * Només retorna sexes amb restricció real (llista no buida i vàlida).

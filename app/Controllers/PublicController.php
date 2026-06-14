@@ -55,6 +55,9 @@ final class PublicController
             [$evento['id']]
         )->fetchAll();
 
+        // Caduca pendents abandonats abans de calcular places/aforament (sense cron)
+        \App\Models\Inscrito::expirarPendientes((int) $evento['id']);
+
         $tarifas    = Tarifa::listDisponibles((int) $evento['id']);
         $gruposRest = GrupoAforo::plazasRestantesByEvento((int) $evento['id']);
 
