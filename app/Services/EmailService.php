@@ -210,6 +210,34 @@ final class EmailService
     }
 
     /**
+     * Email de confirmació d'una comanda de botiga (recollida en tenda).
+     */
+    public static function sendComandaTienda(int $pedidoId): void
+    {
+        $pedido = \App\Models\PedidoTienda::findById($pedidoId);
+        if ($pedido === null || empty($pedido['email'])) return;
+        $lineas = \App\Models\PedidoTienda::lineas($pedidoId);
+
+        $localePedido   = !empty($pedido['locale']) ? (string) $pedido['locale'] : \App\Core\Lang::DEFAULT_LOCALE;
+        $localeOriginal = $_COOKIE['IO_LOCALE'] ?? null;
+        $_COOKIE['IO_LOCALE'] = $localePedido;
+        \App\Core\Lang::reset();
+
+        $html = View::renderToString('emails/comanda_tienda', [
+            'pedido'  => $pedido,
+            'lineas'  => $lineas,
+            'baseUrl' => base_url('/'),
+        ]);
+        $subject = \App\Core\Lang::t('shop.email_subject', ['codi' => $pedido['codigo']]);
+
+        if ($localeOriginal !== null) { $_COOKIE['IO_LOCALE'] = $localeOriginal; }
+        else { unset($_COOKIE['IO_LOCALE']); }
+        \App\Core\Lang::reset();
+
+        self::send((string) $pedido['email'], $subject, $html);
+    }
+
+    /**
      * Envía un email de prueba al destinatario indicado.
      */
     public static function sendTest(string $to): void

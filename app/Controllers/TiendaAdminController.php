@@ -10,6 +10,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
+use App\Models\PedidoTienda;
 use App\Models\Producto;
 use App\Services\ImageUploader;
 
@@ -103,6 +104,35 @@ final class TiendaAdminController
         Producto::deleteImagen($imgId);
         Session::flash('success', 'Imatge eliminada.');
         Response::redirect(base_url('/admin/tienda/' . $productoId . '/editar'));
+    }
+
+    // ── Comandes (pedidos) ──────────────────────────────────
+    public function comandes(Request $req): void
+    {
+        PedidoTienda::expirarPendientes();
+        $pedidos = PedidoTienda::listAll();
+        $lineasPorPedido = [];
+        foreach ($pedidos as $p) {
+            $lineasPorPedido[(int) $p['id']] = PedidoTienda::lineas((int) $p['id']);
+        }
+        View::render('admin/tienda/comandes', [
+            'user'    => Auth::user(),
+            'pedidos' => $pedidos,
+            'lineas'  => $lineasPorPedido,
+            'flash'   => Session::pullAllFlashes(),
+        ], layout: 'admin');
+    }
+
+    public function comandaEntregat(Request $req, array $params): void
+    {
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+        $id = (int) ($params['id'] ?? 0);
+        $pedido = PedidoTienda::findById($id);
+        if ($pedido !== null && $pedido['estado'] === 'pagado') {
+            PedidoTienda::marcarEntregat($id);
+            Session::flash('success', 'Comanda ' . $pedido['codigo'] . ' marcada com a recollida.');
+        }
+        Response::redirect(base_url('/admin/tienda/comandes'));
     }
 
     // ── Helpers ─────────────────────────────────────────────

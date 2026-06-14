@@ -43,6 +43,9 @@ $router->get ('/tienda/cistella',                     [TiendaController::class, 
 $router->post('/tienda/cistella/afegir',              [TiendaController::class, 'cartAdd']);
 $router->post('/tienda/cistella/actualitzar',         [TiendaController::class, 'cartUpdate']);
 $router->post('/tienda/cistella/treure',              [TiendaController::class, 'cartRemove']);
+$router->get ('/tienda/checkout',                     [TiendaController::class, 'checkout']);
+$router->post('/tienda/checkout',                     [TiendaController::class, 'checkoutStore']);
+$router->get ('/tienda/comanda/{codigo}',             [TiendaController::class, 'comanda']);
 $router->get ('/tienda/{slug}',                       [TiendaController::class, 'show']);
 $router->get ('/comprovant',                          [InscripcionController::class,  'comprovantForm']);
 $router->post('/comprovant',                          [InscripcionController::class,  'comprovantSend']);
@@ -115,6 +118,8 @@ $router->get ('/admin/tienda/{id}/editar',           [TiendaAdminController::cla
 $router->post('/admin/tienda/{id}',                  [TiendaAdminController::class, 'update'],  $superadmin);
 $router->post('/admin/tienda/{id}/eliminar',         [TiendaAdminController::class, 'destroy'], $superadmin);
 $router->post('/admin/tienda/imatge/{imgId}/eliminar', [TiendaAdminController::class, 'deleteImage'], $superadmin);
+$router->get ('/admin/tienda/comandes',              [TiendaAdminController::class, 'comandes'],       $superadmin);
+$router->post('/admin/tienda/comandes/{id}/entregat',[TiendaAdminController::class, 'comandaEntregat'], $superadmin);
 
 $router->get ('/admin/usuarios',                     [UsuariosAdminController::class, 'index'],   $superadmin);
 $router->get ('/admin/usuarios/nou',                 [UsuariosAdminController::class, 'create'],  $superadmin);

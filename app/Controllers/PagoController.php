@@ -14,6 +14,7 @@ use App\Models\Evento;
 use App\Models\Inscrito;
 use App\Models\Pago;
 use App\Models\Pedido;
+use App\Models\PedidoTienda;
 use App\Models\RedsysNotificacion;
 use App\Models\Tarifa;
 use App\Services\EmailService;
@@ -399,7 +400,10 @@ final class PagoController
         Database::getInstance()->transaction(function () use ($pago, $params, $resultado): void {
             if ($resultado['success']) {
                 Pago::marcarCompletado((int) $pago['id'], $params);
-                if (!empty($pago['pedido_id'])) {
+                if (!empty($pago['tienda_pedido_id'])) {
+                    // Comanda de botiga
+                    PedidoTienda::marcarPagado((int) $pago['tienda_pedido_id']);
+                } elseif (!empty($pago['pedido_id'])) {
                     // Grup: confirmar el pedido i TOTS els seus participants
                     Pedido::marcarConfirmado((int) $pago['pedido_id']);
                     foreach (Pedido::inscritos((int) $pago['pedido_id']) as $ins) {
@@ -421,7 +425,9 @@ final class PagoController
         // logueamos pero devolvemos OK a Redsys igualmente para no reintentar.
         if ($resultado['success']) {
             try {
-                if (!empty($pago['pedido_id'])) {
+                if (!empty($pago['tienda_pedido_id'])) {
+                    EmailService::sendComandaTienda((int) $pago['tienda_pedido_id']);
+                } elseif (!empty($pago['pedido_id'])) {
                     InscripcionController::enviarConfirmacionPedido((int) $pago['pedido_id']);
                 } else {
                     self::enviarConfirmacion((int) $pago['inscrito_id'], (int) $pago['id']);

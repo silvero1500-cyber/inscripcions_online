@@ -84,6 +84,34 @@ final class Pago
         ]);
     }
 
+    /** Crea un pago 'iniciado' per a una COMANDA de botiga (sense inscrit). */
+    public static function crearIniciadoTienda(
+        int $tiendaPedidoId,
+        string $dsOrder,
+        float $importe,
+        string $merchantCode,
+        string $terminal
+    ): int {
+        return Database::getInstance()->insert('pagos', [
+            'inscrito_id'      => null,
+            'tienda_pedido_id' => $tiendaPedidoId,
+            'ds_order'         => $dsOrder,
+            'ds_merchant_code' => $merchantCode,
+            'ds_terminal'      => $terminal,
+            'importe'          => number_format($importe, 2, '.', ''),
+            'moneda'           => 'EUR',
+            'estado'           => self::ESTADO_INICIADO,
+        ]);
+    }
+
+    public static function hayPagoCompletadoTienda(int $tiendaPedidoId): bool
+    {
+        return (bool) Database::getInstance()->query(
+            "SELECT 1 FROM pagos WHERE tienda_pedido_id = ? AND estado = 'completado' LIMIT 1",
+            [$tiendaPedidoId]
+        )->fetchColumn();
+    }
+
     /**
      * Crea un registro de pago en estado 'iniciado'.
      */

@@ -7,7 +7,10 @@
         <h1>Tenda</h1>
         <p class="muted">Productes a la venda (recollida en tenda).</p>
     </div>
-    <a class="btn btn-primary" href="<?= e(base_url('/admin/tienda/nou')) ?>">+ Nou producte</a>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <a class="btn" href="<?= e(base_url('/admin/tienda/comandes')) ?>">📦 Comandes</a>
+        <a class="btn btn-primary" href="<?= e(base_url('/admin/tienda/nou')) ?>">+ Nou producte</a>
+    </div>
 </section>
 
 <?php if (!empty($flash['success'])): ?>
