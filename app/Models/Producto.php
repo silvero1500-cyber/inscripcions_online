@@ -69,6 +69,15 @@ final class Producto
         )->fetchAll();
     }
 
+    public static function imagenPrincipal(int $productoId): ?string
+    {
+        $r = Database::getInstance()->query(
+            'SELECT ruta FROM tienda_producto_imagenes WHERE producto_id = ? ORDER BY orden ASC, id ASC LIMIT 1',
+            [$productoId]
+        )->fetchColumn();
+        return $r !== false ? (string) $r : null;
+    }
+
     public static function imagenById(int $id): ?array
     {
         $row = Database::getInstance()

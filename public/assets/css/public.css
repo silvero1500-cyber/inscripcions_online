@@ -387,6 +387,64 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 .waitlist-panel .panel-title { color: #b45309; }
 .waitlist-form { margin-top: .6rem; }
 .waitlist-form .btn-primary { margin-top: .4rem; }
+
+/* ── Botiga (tienda) ─────────────────────────────────────── */
+.site-header-actions { display: flex; align-items: center; gap: 1.1rem; }
+.site-shopnav { display: flex; align-items: center; gap: .9rem; }
+.shopnav-link { font-weight: 600; color: inherit; text-decoration: none; }
+.shopnav-link:hover { text-decoration: underline; }
+.shopnav-cart { position: relative; font-size: 1.25rem; text-decoration: none; }
+.cart-badge { position: absolute; top: -8px; right: -10px; background: #dc2626; color: #fff; font-size: .68rem; font-weight: 700; min-width: 17px; height: 17px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; }
+
+.shop-hero { text-align: center; margin: 1.4rem 0 1.6rem; }
+.shop-hero h1 { margin: 0 0 .2rem; }
+.shop-empty { text-align: center; padding: 3rem 1rem; color: #6b7280; }
+.shop-empty .btn { margin-top: 1rem; }
+
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.2rem; }
+.shop-card { display: block; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; text-decoration: none; color: inherit; transition: box-shadow .15s, transform .15s; }
+.shop-card:hover { box-shadow: 0 8px 24px rgba(15,23,42,.10); transform: translateY(-2px); }
+.shop-card-img { aspect-ratio: 1/1; background: #f8fafc; display: flex; align-items: center; justify-content: center; }
+.shop-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.shop-card-noimg { font-size: 2.6rem; opacity: .6; }
+.shop-card-body { padding: .8rem 1rem 1rem; }
+.shop-card-body h3 { margin: 0 0 .35rem; font-size: 1.02rem; }
+.shop-card-price strong { font-size: 1.1rem; }
+
+.shop-breadcrumb { margin: 1rem 0; }
+.shop-breadcrumb a { text-decoration: none; color: #2563eb; }
+.shop-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+.shop-gallery-main { aspect-ratio: 1/1; background: #f8fafc; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.shop-gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+.shop-gallery-thumbs { display: flex; gap: .5rem; margin-top: .6rem; flex-wrap: wrap; }
+.shop-thumb { width: 64px; height: 64px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; padding: 0; cursor: pointer; background: #fff; }
+.shop-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.shop-info h1 { margin: 0 0 .4rem; }
+.shop-price { font-size: 1.7rem; font-weight: 800; color: #111827; margin-bottom: .8rem; }
+.shop-desc { color: #374151; line-height: 1.55; margin-bottom: 1.2rem; }
+.shop-buy .form-row { margin-bottom: .8rem; }
+.shop-stock { margin: .2rem 0 .8rem; }
+.shop-qty { max-width: 140px; }
+
+.cart-wrap { display: grid; grid-template-columns: 1fr; gap: 1.4rem; }
+.cart-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+.cart-table th, .cart-table td { padding: .7rem .8rem; border-bottom: 1px solid #f1f5f9; text-align: left; vertical-align: middle; }
+.cart-table thead th { font-size: .8rem; color: #6b7280; text-transform: uppercase; letter-spacing: .03em; }
+.cart-img img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+.cart-img span { font-size: 1.8rem; }
+.cart-qty-form { margin: 0; }
+.cart-summary { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.2rem 1.4rem; }
+.cart-total { display: flex; justify-content: space-between; align-items: baseline; font-size: 1.2rem; }
+.cart-total strong { font-size: 1.5rem; }
+.cart-actions { display: flex; gap: .8rem; justify-content: flex-end; margin-top: 1rem; flex-wrap: wrap; }
+
+@media (max-width: 720px) {
+    .shop-detail { grid-template-columns: 1fr; }
+    .cart-table thead { display: none; }
+    .cart-table, .cart-table tbody, .cart-table tr, .cart-table td { display: block; width: 100%; }
+    .cart-table tr { border-bottom: 1px solid #e5e7eb; padding: .4rem 0; }
+    .cart-table td { border: none; padding: .35rem .8rem; }
+}
 .form-row-pair {
     grid-column: 1 / -1;
     display: grid;

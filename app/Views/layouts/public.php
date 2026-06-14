@@ -7,6 +7,7 @@ if ($basePrefix !== '' && str_starts_with($currentPath, $basePrefix)) {
     $currentPath = substr($currentPath, strlen($basePrefix));
 }
 $ret = urlencode($currentPath ?: '/');
+$cartCount = \App\Services\Cart::count();
 ?><!DOCTYPE html>
 <html lang="<?= e($currentLocale) ?>">
 <head>
@@ -52,15 +53,21 @@ $ret = urlencode($currentPath ?: '/');
                 <span class="brand-mark">W</span>
                 <span class="brand-text">WeRun <strong><?= e(t('brand.suffix')) ?></strong></span>
             </a>
-            <nav class="lang-switcher" aria-label="Idioma">
-                <?php foreach (['ca' => 'CA', 'es' => 'ES'] as $code => $label): ?>
-                    <a class="lang-link<?= $currentLocale === $code ? ' active' : '' ?>"
-                       href="<?= e(base_url('/lang/' . $code . '?ret=' . $ret)) ?>"
-                       <?= $currentLocale === $code ? 'aria-current="true"' : '' ?>>
-                        <?= $label ?>
-                    </a>
-                <?php endforeach; ?>
-            </nav>
+            <div class="site-header-actions">
+                <nav class="site-shopnav" aria-label="Botiga">
+                    <a class="shopnav-link" href="<?= e(base_url('/tienda')) ?>"><?= e(t('shop.title')) ?></a>
+                    <a class="shopnav-cart" href="<?= e(base_url('/tienda/cistella')) ?>" aria-label="<?= e(t('shop.cart')) ?>">🛒<?php if ($cartCount > 0): ?><span class="cart-badge"><?= $cartCount ?></span><?php endif; ?></a>
+                </nav>
+                <nav class="lang-switcher" aria-label="Idioma">
+                    <?php foreach (['ca' => 'CA', 'es' => 'ES'] as $code => $label): ?>
+                        <a class="lang-link<?= $currentLocale === $code ? ' active' : '' ?>"
+                           href="<?= e(base_url('/lang/' . $code . '?ret=' . $ret)) ?>"
+                           <?= $currentLocale === $code ? 'aria-current="true"' : '' ?>>
+                            <?= $label ?>
+                        </a>
+                    <?php endforeach; ?>
+                </nav>
+            </div>
         </div>
     </header>
 

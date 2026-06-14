@@ -18,6 +18,7 @@ use App\Controllers\UsuariosAdminController;
 use App\Controllers\PagoController;
 use App\Controllers\PublicController;
 use App\Controllers\InscripcionController;
+use App\Controllers\TiendaController;
 use App\Controllers\WaitingListController;
 use App\Controllers\MigrationController;
 use App\Controllers\TiendaAdminController;
@@ -35,6 +36,14 @@ $router->get ('/eventos/{slug}',                      [PublicController::class, 
 $router->post('/eventos/{slug}/inscriure',            [InscripcionController::class,  'store']);
 $router->post('/eventos/{slug}/llista-espera',        [WaitingListController::class,  'store']);
 $router->get ('/eventos/{slug}/gracies',              [InscripcionController::class,  'exito']);
+
+// ── Tienda (botiga pública) ────────────────────────────
+$router->get ('/tienda',                              [TiendaController::class, 'index']);
+$router->get ('/tienda/cistella',                     [TiendaController::class, 'cart']);
+$router->post('/tienda/cistella/afegir',              [TiendaController::class, 'cartAdd']);
+$router->post('/tienda/cistella/actualitzar',         [TiendaController::class, 'cartUpdate']);
+$router->post('/tienda/cistella/treure',              [TiendaController::class, 'cartRemove']);
+$router->get ('/tienda/{slug}',                       [TiendaController::class, 'show']);
 $router->get ('/comprovant',                          [InscripcionController::class,  'comprovantForm']);
 $router->post('/comprovant',                          [InscripcionController::class,  'comprovantSend']);
 $router->get ('/comprovant/{token}',                  [InscripcionController::class,  'comprovant']);
