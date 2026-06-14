@@ -8,6 +8,7 @@ if ($basePrefix !== '' && str_starts_with($currentPath, $basePrefix)) {
 }
 $ret = urlencode($currentPath ?: '/');
 $cartCount = \App\Services\Cart::count();
+$tiendaActiva = \App\Models\Producto::hayActivos();
 ?><!DOCTYPE html>
 <html lang="<?= e($currentLocale) ?>">
 <head>
@@ -54,10 +55,12 @@ $cartCount = \App\Services\Cart::count();
                 <span class="brand-text">WeRun <strong><?= e(t('brand.suffix')) ?></strong></span>
             </a>
             <div class="site-header-actions">
+                <?php if ($tiendaActiva): ?>
                 <nav class="site-shopnav" aria-label="Botiga">
                     <a class="shopnav-link" href="<?= e(base_url('/tienda')) ?>"><?= e(t('shop.title')) ?></a>
                     <a class="shopnav-cart" href="<?= e(base_url('/tienda/cistella')) ?>" aria-label="<?= e(t('shop.cart')) ?>">🛒<?php if ($cartCount > 0): ?><span class="cart-badge"><?= $cartCount ?></span><?php endif; ?></a>
                 </nav>
+                <?php endif; ?>
                 <nav class="lang-switcher" aria-label="Idioma">
                     <?php foreach (['ca' => 'CA', 'es' => 'ES'] as $code => $label): ?>
                         <a class="lang-link<?= $currentLocale === $code ? ' active' : '' ?>"

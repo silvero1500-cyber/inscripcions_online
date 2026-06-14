@@ -43,6 +43,14 @@ final class Producto
         )->fetchAll();
     }
 
+    /** Hi ha almenys un producte actiu a la venda? (per mostrar/ocultar la botiga) */
+    public static function hayActivos(): bool
+    {
+        return (bool) Database::getInstance()
+            ->query('SELECT 1 FROM tienda_productos WHERE activo = 1 LIMIT 1')
+            ->fetchColumn();
+    }
+
     /** Productes actius per al catàleg públic, amb imatge principal i preu mínim. */
     public static function listActivos(): array
     {
