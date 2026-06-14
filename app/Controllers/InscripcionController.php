@@ -18,6 +18,7 @@ use App\Models\Evento;
 use App\Models\GrupoAforo;
 use App\Models\Inscrito;
 use App\Models\Pedido;
+use App\Models\RateLimit;
 use App\Models\Tarifa;
 use App\Services\EmailService;
 use App\Services\QrService;
@@ -592,28 +593,24 @@ final class InscripcionController
             Response::redirect($backUrl);
         }
 
+        // Límit de freqüència per IP: evita enumeració massiva de DNIs/correus i
+        // l'enviament massiu de correus als inscrits. Màx 8 intents / 15 min.
+        $rlKey = 'recover:' . $req->ip;
+        if (RateLimit::tooMany($rlKey, 8, 900)) {
+            Session::flash('error', t('recover.rate_limited'));
+            Response::redirect($backUrl);
+        }
+        RateLimit::hit($rlKey);
+
+        // Resposta NEUTRA sempre (no revela si el DNI/correu està inscrit ni quin
+        // correu és): si hi ha coincidències, s'envia el comprovant en silenci.
         $eventoId  = $evento !== null ? (int) $evento['id'] : null;
         $inscritos = Inscrito::findConfirmadosByDniOrEmail($needle, $eventoId);
-        if (count($inscritos) === 0) {
-            Session::flash('error', $evento !== null ? t('recover.notfound_event') : t('recover.notfound'));
-            Response::redirect($backUrl);
-        }
-
-        // Reenviar el comprovant a cada correu trobat
-        $emailsEnviats = [];
         foreach ($inscritos as $ins) {
-            if (self::enviarComprovantEmail($ins)) {
-                $emailsEnviats[mb_strtolower((string) $ins['email'])] = true;
-            }
+            self::enviarComprovantEmail($ins);
         }
 
-        if (count($emailsEnviats) === 0) {
-            Session::flash('error', t('recover.send_error'));
-            Response::redirect($backUrl);
-        }
-
-        $masked = implode(', ', array_map([self::class, 'maskEmail'], array_keys($emailsEnviats)));
-        Session::flash('success', t('recover.found', ['email' => $masked]));
+        Session::flash('success', t('recover.sent_generic'));
         Response::redirect($backUrl);
     }
 

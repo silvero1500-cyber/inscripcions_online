@@ -20,21 +20,25 @@ final class LoginThrottle
     /** ¿S'ha de bloquejar aquest intent (massa fallades recents)? */
     public static function blocked(string $ip, string $email): bool
     {
-        $db    = Database::getInstance();
-        $since = date('Y-m-d H:i:s', time() - self::WINDOW_MINUTES * 60);
-        $email = mb_strtolower(trim($email));
+        $db     = Database::getInstance();
+        // Finestra amb l'hora de MySQL (sessió en UTC) per coincidir amb created_at;
+        // date() de PHP podria estar en una altra zona horària i la finestra no casaria.
+        $window = self::WINDOW_MINUTES * 60;
+        $email  = mb_strtolower(trim($email));
 
         if ($email !== '') {
             $byEmail = (int) $db->query(
-                'SELECT COUNT(*) FROM intentos_login WHERE email = ? AND created_at >= ?',
-                [$email, $since]
+                'SELECT COUNT(*) FROM intentos_login
+                 WHERE email = ? AND created_at >= (NOW() - INTERVAL ? SECOND)',
+                [$email, $window]
             )->fetchColumn();
             if ($byEmail >= self::MAX_PER_EMAIL) return true;
         }
 
         $byIp = (int) $db->query(
-            'SELECT COUNT(*) FROM intentos_login WHERE ip = ? AND created_at >= ?',
-            [$ip, $since]
+            'SELECT COUNT(*) FROM intentos_login
+             WHERE ip = ? AND created_at >= (NOW() - INTERVAL ? SECOND)',
+            [$ip, $window]
         )->fetchColumn();
 
         return $byIp >= self::MAX_PER_IP;

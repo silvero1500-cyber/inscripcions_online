@@ -288,6 +288,17 @@ CREATE TABLE IF NOT EXISTS `lista_espera` (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ------------------------------------------------------------
+-- 13. RATE LIMITS (límit de freqüència per a endpoints públics)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `rate_limits` (
+    `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `rate_key`   VARCHAR(150) NOT NULL COMMENT 'Ex: recover:1.2.3.4',
+    `created_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_key_time` (`rate_key`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ------------------------------------------------------------

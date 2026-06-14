@@ -185,6 +185,8 @@ return [
     'recover.notfound'                 => 'No hemos encontrado ninguna inscripción confirmada con ese DNI o correo.',
     'recover.notfound_event'           => 'No hemos encontrado ninguna inscripción confirmada con ese DNI o correo en esta carrera.',
     'recover.empty'                    => 'Introduce tu DNI o correo electrónico.',
+    'recover.sent_generic'             => 'Si hay alguna inscripción confirmada con estos datos, te hemos enviado el comprobante al correo correspondiente. Revisa la bandeja de entrada (y el correo no deseado).',
+    'recover.rate_limited'             => 'Has hecho demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
     'recover.expired'                  => 'La sesión ha expirado. Inténtalo de nuevo.',
     'recover.send_error'               => 'Encontramos la inscripción pero ahora mismo no se pudo enviar el correo. Inténtalo más tarde.',
     'recover.link'                     => '¿Ya estás inscrito? Recupera tu justificante',
