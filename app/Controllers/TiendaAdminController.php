@@ -10,6 +10,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
+use App\Models\Ajuste;
 use App\Models\PedidoTienda;
 use App\Models\Producto;
 use App\Services\ImageUploader;
@@ -104,6 +105,29 @@ final class TiendaAdminController
         Producto::deleteImagen($imgId);
         Session::flash('success', 'Imatge eliminada.');
         Response::redirect(base_url('/admin/tienda/' . $productoId . '/editar'));
+    }
+
+    // ── Configuració de la botiga ───────────────────────────
+    public function config(Request $req): void
+    {
+        View::render('admin/tienda/config', [
+            'user'    => Auth::user(),
+            'lugar'   => Ajuste::get(Ajuste::TIENDA_LUGAR, ''),
+            'horario' => Ajuste::get(Ajuste::TIENDA_HORARIO, ''),
+            'flash'   => Session::pullAllFlashes(),
+        ], layout: 'admin');
+    }
+
+    public function configStore(Request $req): void
+    {
+        if (!Csrf::verify($req->post('_csrf'))) {
+            Session::flash('error', 'Sessió expirada. Torna-ho a provar.');
+            Response::redirect(base_url('/admin/tienda/config'));
+        }
+        Ajuste::set(Ajuste::TIENDA_LUGAR, mb_substr(trim((string) $req->post('lugar', '')), 0, 500) ?: null);
+        Ajuste::set(Ajuste::TIENDA_HORARIO, mb_substr(trim((string) $req->post('horario', '')), 0, 500) ?: null);
+        Session::flash('success', 'Configuració de la botiga desada.');
+        Response::redirect(base_url('/admin/tienda/config'));
     }
 
     // ── Comandes (pedidos) ──────────────────────────────────

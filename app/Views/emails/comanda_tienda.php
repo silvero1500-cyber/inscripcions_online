@@ -22,4 +22,10 @@
     </table>
 
     <p style="font-size:14px;color:#374151;line-height:1.5;margin-top:1rem;">📍 <?= e(t('shop.pickup_info')) ?></p>
+    <?php $lugar = \App\Models\Ajuste::get(\App\Models\Ajuste::TIENDA_LUGAR); $horario = \App\Models\Ajuste::get(\App\Models\Ajuste::TIENDA_HORARIO); ?>
+    <?php if ($lugar): ?>
+        <p style="font-size:14px;color:#1f2937;line-height:1.5;background:#f1f5f9;border-radius:8px;padding:10px;">
+            <strong><?= e(t('shop.pickup_place')) ?>:</strong><br><?= nl2br(e($lugar)) ?><?php if ($horario): ?><br><?= nl2br(e($horario)) ?><?php endif; ?>
+        </p>
+    <?php endif; ?>
 </div>

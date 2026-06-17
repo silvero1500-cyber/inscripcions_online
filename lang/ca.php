@@ -148,6 +148,7 @@ return [
     'shop.status_cancelado'           => 'Cancel·lada',
     'shop.status_entregado'           => 'Recollida',
     'shop.pickup_info'                => 'Passa per la tenda a recollir la teva comanda. Mostra aquest codi.',
+    'shop.pickup_place'              => 'Lloc de recollida',
     'shop.preparing_note'            => 'Estem preparant la teva comanda. T\'enviarem un correu quan estigui llesta per recollir.',
     'shop.ready_note'                => 'La teva comanda ja està llesta per recollir!',
     'shop.order_pending_note'         => 'Si has pagat, l\'estat s\'actualitzarà en uns instants. Refresca la pàgina.',

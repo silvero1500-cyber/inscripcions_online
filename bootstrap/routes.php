@@ -118,6 +118,8 @@ $router->get ('/admin/tienda/{id}/editar',           [TiendaAdminController::cla
 $router->post('/admin/tienda/{id}',                  [TiendaAdminController::class, 'update'],  $superadmin);
 $router->post('/admin/tienda/{id}/eliminar',         [TiendaAdminController::class, 'destroy'], $superadmin);
 $router->post('/admin/tienda/imatge/{imgId}/eliminar', [TiendaAdminController::class, 'deleteImage'], $superadmin);
+$router->get ('/admin/tienda/config',                [TiendaAdminController::class, 'config'],         $superadmin);
+$router->post('/admin/tienda/config',                [TiendaAdminController::class, 'configStore'],    $superadmin);
 $router->get ('/admin/tienda/comandes',              [TiendaAdminController::class, 'comandes'],       $superadmin);
 $router->post('/admin/tienda/comandes/{id}/llest',   [TiendaAdminController::class, 'comandaLlest'],    $superadmin);
 $router->post('/admin/tienda/comandes/{id}/entregat',[TiendaAdminController::class, 'comandaEntregat'], $superadmin);

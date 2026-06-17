@@ -391,6 +391,16 @@ CREATE TABLE IF NOT EXISTS `tienda_pedido_lineas` (
         REFERENCES `tienda_pedidos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ------------------------------------------------------------
+-- 15. AJUSTES (configuració global clau/valor)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `ajustes` (
+    `clave`      VARCHAR(100) NOT NULL,
+    `valor`      TEXT         NULL,
+    `updated_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`clave`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ------------------------------------------------------------

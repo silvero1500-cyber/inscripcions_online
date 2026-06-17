@@ -148,6 +148,7 @@ return [
     'shop.status_cancelado'           => 'Cancelado',
     'shop.status_entregado'           => 'Recogido',
     'shop.pickup_info'                => 'Pásate por la tienda a recoger tu pedido. Muestra este código.',
+    'shop.pickup_place'              => 'Lugar de recogida',
     'shop.preparing_note'            => 'Estamos preparando tu pedido. Te enviaremos un correo cuando esté listo para recoger.',
     'shop.ready_note'                => '¡Tu pedido ya está listo para recoger!',
     'shop.order_pending_note'         => 'Si has pagado, el estado se actualizará en unos instantes. Refresca la página.',

@@ -44,5 +44,14 @@ $badge = match ($estado) {
         <div class="alert alert-info" style="text-align:center;"><?= e(t('shop.order_pending_note')) ?></div>
     <?php endif; ?>
 
+    <?php $lugar = \App\Models\Ajuste::get(\App\Models\Ajuste::TIENDA_LUGAR); $horario = \App\Models\Ajuste::get(\App\Models\Ajuste::TIENDA_HORARIO); ?>
+    <?php if ($pagado && $lugar): ?>
+        <div style="text-align:center;margin-top:.8rem;">
+            <strong>📍 <?= e(t('shop.pickup_place')) ?></strong><br>
+            <?= nl2br(e($lugar)) ?>
+            <?php if ($horario): ?><br><span class="muted"><?= nl2br(e($horario)) ?></span><?php endif; ?>
+        </div>
+    <?php endif; ?>
+
     <p style="text-align:center;margin-top:1rem;"><a class="btn" href="<?= e(base_url('/tienda')) ?>"><?= e(t('shop.continue')) ?></a></p>
 </div>
