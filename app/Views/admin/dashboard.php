@@ -22,8 +22,9 @@ $isSuper = ($user->rol ?? '') === 'superadmin';
 </section>
 
 <?php if ($isSuper): ?>
-<section style="margin-top:1.4rem;">
-    <a class="btn" href="<?= e(base_url('/admin/migracions')) ?>">⚙ Migracions de base de dades</a>
+<section style="margin-top:1.4rem;display:flex;gap:.6rem;flex-wrap:wrap;">
+    <a class="btn" href="<?= e(base_url('/admin/configuracio')) ?>">⚙ Configuració general</a>
+    <a class="btn" href="<?= e(base_url('/admin/migracions')) ?>">🗄 Migracions de base de dades</a>
 </section>
 <?php endif; ?>
 

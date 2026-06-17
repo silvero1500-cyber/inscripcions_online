@@ -112,6 +112,11 @@ final class InscripcionController
             }
         }
 
+        // Consentiment RGPD obligatori
+        if (empty($_POST['acepta_privacidad'])) {
+            $v->addError('acepta_privacidad', t('form.privacy.required'));
+        }
+
         if ($v->fails()) {
             $post = $_POST;
             unset($post['_csrf']);
@@ -324,6 +329,11 @@ final class InscripcionController
                 'valores'   => $valores,
                 'descuento' => strtoupper(trim((string) ($p['descuento_codigo'] ?? ''))),
             ];
+        }
+
+        // Consentiment RGPD obligatori
+        if (empty($_POST['acepta_privacidad'])) {
+            $errors['acepta_privacidad'] = [t('form.privacy.required')];
         }
 
         if (!empty($errors)) {

@@ -15,6 +15,7 @@ final class Ajuste
     // Claus conegudes
     public const TIENDA_LUGAR   = 'tienda_lugar_recogida';
     public const TIENDA_HORARIO = 'tienda_horario_recogida';
+    public const PRIVACIDAD_URL = 'privacidad_url';
 
     /** @var array<string,?string>|null */
     private static ?array $cache = null;

@@ -21,6 +21,7 @@ use App\Controllers\InscripcionController;
 use App\Controllers\TiendaController;
 use App\Controllers\WaitingListController;
 use App\Controllers\MigrationController;
+use App\Controllers\ConfigController;
 use App\Controllers\TiendaAdminController;
 use App\Controllers\LangController;
 
@@ -109,6 +110,10 @@ $router->post('/admin/eventos/{id}/llista-espera/avisar',   [WaitingListControll
 // Migracions de base de dades (superadmin) — substitueix el runner PHP amb token
 $router->get ('/admin/migracions',                   [MigrationController::class, 'index'],  $superadmin);
 $router->post('/admin/migracions/aplicar',           [MigrationController::class, 'apply'],  $superadmin);
+
+// Configuració general (superadmin)
+$router->get ('/admin/configuracio',                 [ConfigController::class, 'index'],  $superadmin);
+$router->post('/admin/configuracio',                 [ConfigController::class, 'store'],  $superadmin);
 
 // Tienda — gestió de productes (NOMÉS superadmin)
 $router->get ('/admin/tienda',                       [TiendaAdminController::class, 'index'],   $superadmin);

@@ -18,6 +18,25 @@ $val = fn(string $k, string $d = ''): string => (string)($old[$k] ?? $d);
 $err = fn(string $k): ?string => $errors[$k][0] ?? null;
 $img = ImageUploader::publicUrl($evento['imagen_portada']);
 
+// Consentiment RGPD obligatori (mateix per a individual i grup)
+$privacidadUrl = \App\Models\Ajuste::get(\App\Models\Ajuste::PRIVACIDAD_URL);
+$privacidadErr = $errors['acepta_privacidad'][0] ?? null;
+$consentField = function () use ($privacidadUrl, $privacidadErr): void { ?>
+    <div class="form-row consent-row">
+        <label class="inline-check">
+            <input type="checkbox" name="acepta_privacidad" value="1" required>
+            <?= e(t('form.privacy.accept')) ?>
+            <?php if (!empty($privacidadUrl)): ?>
+                <a href="<?= e($privacidadUrl) ?>" target="_blank" rel="noopener"><?= e(t('form.privacy.link')) ?></a>
+            <?php else: ?>
+                <?= e(t('form.privacy.link')) ?>
+            <?php endif; ?>
+            <span class="req">*</span>
+        </label>
+        <?php if ($privacidadErr): ?><div class="field-error"><?= e($privacidadErr) ?></div><?php endif; ?>
+    </div>
+<?php };
+
 // Configuració dels camps fixos d'aquest esdeveniment
 $cf      = CamposFijos::resolve($evento['campos_fijos'] ?? null);
 $cfVis   = fn(string $k): bool => CamposFijos::visible($cf, $k);
@@ -374,6 +393,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
             </details>
         </div>
 
+        <?php $consentField(); ?>
         <button type="submit" class="btn btn-primary btn-block btn-large"><?= e(t('form.submit')) ?></button>
         <p class="form-note"><?= e(t('form.submit.note')) ?></p>
     </form>
@@ -622,6 +642,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
             <div class="group-total"><span><?= e(t('group.total')) ?></span> <strong id="group-total-val">—</strong></div>
         </div>
 
+        <?php $consentField(); ?>
         <button type="submit" class="btn btn-primary btn-block btn-large"><?= e(t('form.submit')) ?></button>
         <p class="form-note"><?= e(t('form.submit.note')) ?></p>
     </form>
