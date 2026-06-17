@@ -244,9 +244,17 @@ final class EmailService
     {
         $pedido = \App\Models\PedidoTienda::findById($pedidoId);
         if ($pedido === null) return;
-        $destinataris = \App\Core\Database::getInstance()->query(
-            "SELECT email FROM usuarios WHERE rol = 'superadmin' AND activo = 1 AND email <> ''"
+        $db = \App\Core\Database::getInstance();
+        // L'avís va als ORGANITZADORS (qui prepara/entrega les comandes). Si no n'hi
+        // ha cap actiu, recau en els superadmins i, finalment, en MAIL_FROM.
+        $destinataris = $db->query(
+            "SELECT email FROM usuarios WHERE rol = 'organizador' AND activo = 1 AND email <> ''"
         )->fetchAll(\PDO::FETCH_COLUMN);
+        if (!$destinataris) {
+            $destinataris = $db->query(
+                "SELECT email FROM usuarios WHERE rol = 'superadmin' AND activo = 1 AND email <> ''"
+            )->fetchAll(\PDO::FETCH_COLUMN);
+        }
         if (!$destinataris) {
             $from = (string) Env::get('MAIL_FROM', '');
             if ($from !== '') $destinataris = [$from];
