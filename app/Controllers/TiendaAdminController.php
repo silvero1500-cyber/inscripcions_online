@@ -123,6 +123,24 @@ final class TiendaAdminController
         ], layout: 'admin');
     }
 
+    public function comandaLlest(Request $req, array $params): void
+    {
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+        $id = (int) ($params['id'] ?? 0);
+        $pedido = PedidoTienda::findById($id);
+        if ($pedido !== null && $pedido['estado'] === 'pagado') {
+            PedidoTienda::marcarListo($id);
+            try {
+                \App\Services\EmailService::sendComandaTiendaLista($id);
+                Session::flash('success', 'Comanda ' . $pedido['codigo'] . ' marcada com a llesta. S\'ha avisat el client per correu.');
+            } catch (\Throwable $e) {
+                error_log('[Tienda] email llest: ' . $e->getMessage());
+                Session::flash('success', 'Comanda ' . $pedido['codigo'] . ' marcada com a llesta (l\'email no s\'ha pogut enviar).');
+            }
+        }
+        Response::redirect(base_url('/admin/tienda/comandes'));
+    }
+
     public function comandaEntregat(Request $req, array $params): void
     {
         if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();

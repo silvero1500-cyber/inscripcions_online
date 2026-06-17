@@ -238,6 +238,68 @@ final class EmailService
     }
 
     /**
+     * Avisa l'organitzador (superadmins) que hi ha una NOVA comanda de botiga pagada.
+     */
+    public static function sendComandaTiendaAdmin(int $pedidoId): void
+    {
+        $pedido = \App\Models\PedidoTienda::findById($pedidoId);
+        if ($pedido === null) return;
+        $destinataris = \App\Core\Database::getInstance()->query(
+            "SELECT email FROM usuarios WHERE rol = 'superadmin' AND activo = 1 AND email <> ''"
+        )->fetchAll(\PDO::FETCH_COLUMN);
+        if (!$destinataris) {
+            $from = (string) Env::get('MAIL_FROM', '');
+            if ($from !== '') $destinataris = [$from];
+        }
+        if (!$destinataris) return;
+
+        $lineas = \App\Models\PedidoTienda::lineas($pedidoId);
+        // Sempre en català per a l'organitzador
+        $localeOriginal = $_COOKIE['IO_LOCALE'] ?? null;
+        $_COOKIE['IO_LOCALE'] = \App\Core\Lang::DEFAULT_LOCALE;
+        \App\Core\Lang::reset();
+
+        $html = View::renderToString('emails/comanda_tienda_admin', [
+            'pedido' => $pedido, 'lineas' => $lineas, 'baseUrl' => base_url('/'),
+        ]);
+        $subject = \App\Core\Lang::t('shop.email_admin_subject', ['codi' => $pedido['codigo']]);
+
+        if ($localeOriginal !== null) { $_COOKIE['IO_LOCALE'] = $localeOriginal; }
+        else { unset($_COOKIE['IO_LOCALE']); }
+        \App\Core\Lang::reset();
+
+        foreach ($destinataris as $to) {
+            try { self::send((string) $to, $subject, $html); }
+            catch (\Throwable $e) { error_log('[EmailService] avís admin comanda: ' . $e->getMessage()); }
+        }
+    }
+
+    /**
+     * Avisa el client que la seva comanda ja està LLESTA per recollir.
+     */
+    public static function sendComandaTiendaLista(int $pedidoId): void
+    {
+        $pedido = \App\Models\PedidoTienda::findById($pedidoId);
+        if ($pedido === null || empty($pedido['email'])) return;
+
+        $localePedido   = !empty($pedido['locale']) ? (string) $pedido['locale'] : \App\Core\Lang::DEFAULT_LOCALE;
+        $localeOriginal = $_COOKIE['IO_LOCALE'] ?? null;
+        $_COOKIE['IO_LOCALE'] = $localePedido;
+        \App\Core\Lang::reset();
+
+        $html = View::renderToString('emails/comanda_tienda_lista', [
+            'pedido' => $pedido, 'lineas' => \App\Models\PedidoTienda::lineas($pedidoId), 'baseUrl' => base_url('/'),
+        ]);
+        $subject = \App\Core\Lang::t('shop.email_lista_subject', ['codi' => $pedido['codigo']]);
+
+        if ($localeOriginal !== null) { $_COOKIE['IO_LOCALE'] = $localeOriginal; }
+        else { unset($_COOKIE['IO_LOCALE']); }
+        \App\Core\Lang::reset();
+
+        self::send((string) $pedido['email'], $subject, $html);
+    }
+
+    /**
      * Envía un email de prueba al destinatario indicado.
      */
     public static function sendTest(string $to): void

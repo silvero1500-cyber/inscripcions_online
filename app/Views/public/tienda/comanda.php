@@ -2,11 +2,11 @@
 /** @var array $pedido */
 /** @var list<array> $lineas */
 $estado = (string) $pedido['estado'];
-$pagado = in_array($estado, ['pagado', 'entregado'], true);
+$pagado = in_array($estado, ['pagado', 'listo', 'entregado'], true);
 $badge = match ($estado) {
-    'pagado', 'entregado' => 'badge-success',
-    'pendiente'           => 'badge-warning',
-    default               => 'badge-muted',
+    'pagado', 'listo', 'entregado' => 'badge-success',
+    'pendiente'                    => 'badge-warning',
+    default                        => 'badge-muted',
 };
 ?>
 <div class="comanda-box panel" style="max-width:640px;margin:2rem auto;">
@@ -34,7 +34,11 @@ $badge = match ($estado) {
         </tbody>
     </table>
 
-    <?php if ($pagado): ?>
+    <?php if ($estado === 'listo'): ?>
+        <div class="alert alert-success" style="text-align:center;">✅ <?= e(t('shop.ready_note')) ?></div>
+    <?php elseif ($estado === 'pagado'): ?>
+        <div class="alert alert-info" style="text-align:center;"><?= e(t('shop.preparing_note')) ?></div>
+    <?php elseif ($estado === 'entregado'): ?>
         <div class="alert alert-success" style="text-align:center;"><?= e(t('shop.pickup_info')) ?></div>
     <?php elseif ($estado === 'pendiente'): ?>
         <div class="alert alert-info" style="text-align:center;"><?= e(t('shop.order_pending_note')) ?></div>

@@ -426,7 +426,8 @@ final class PagoController
         if ($resultado['success']) {
             try {
                 if (!empty($pago['tienda_pedido_id'])) {
-                    EmailService::sendComandaTienda((int) $pago['tienda_pedido_id']);
+                    EmailService::sendComandaTienda((int) $pago['tienda_pedido_id']);        // client: confirmada, en preparació
+                    EmailService::sendComandaTiendaAdmin((int) $pago['tienda_pedido_id']);   // organitzador: nova comanda
                 } elseif (!empty($pago['pedido_id'])) {
                     InscripcionController::enviarConfirmacionPedido((int) $pago['pedido_id']);
                 } else {

@@ -145,6 +145,14 @@ final class PedidoTienda
         );
     }
 
+    public static function marcarListo(int $id): void
+    {
+        Database::getInstance()->query(
+            "UPDATE tienda_pedidos SET estado = 'listo' WHERE id = ? AND estado = 'pagado'",
+            [$id]
+        );
+    }
+
     public static function marcarEntregat(int $id): void
     {
         Database::getInstance()->query(

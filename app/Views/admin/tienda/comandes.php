@@ -2,7 +2,13 @@
 /** @var list<array> $pedidos */
 /** @var array<int,list<array>> $lineas */
 /** @var array $flash */
-$estats = ['pendiente' => ['Pendent', 'badge-warning'], 'pagado' => ['Pagada', 'badge-success'], 'entregado' => ['Recollida', 'badge-muted'], 'cancelado' => ['Cancel·lada', 'badge-muted']];
+$estats = [
+    'pendiente' => ['Pendent de pagament', 'badge-warning'],
+    'pagado'    => ['En preparació', 'badge-success'],
+    'listo'     => ['Llest per recollir', 'badge-info'],
+    'entregado' => ['Recollit', 'badge-muted'],
+    'cancelado' => ['Cancel·lada', 'badge-muted'],
+];
 ?>
 <section class="page-head with-action">
     <div>
@@ -42,10 +48,16 @@ $estats = ['pendiente' => ['Pendent', 'badge-warning'], 'pagado' => ['Pagada', '
                     </td>
                     <td class="td-actions">
                         <?php if ($p['estado'] === 'pagado'): ?>
-                            <form method="post" action="<?= e(base_url('/admin/tienda/comandes/' . (int) $p['id'] . '/entregat')) ?>" class="inline"
-                                  onsubmit="return confirm('Marcar la comanda <?= e($p['codigo']) ?> com a recollida?');">
+                            <form method="post" action="<?= e(base_url('/admin/tienda/comandes/' . (int) $p['id'] . '/llest')) ?>" class="inline"
+                                  onsubmit="return confirm('Marcar «<?= e($p['codigo']) ?>» com a LLESTA per recollir? S\'enviarà un correu al client.');">
                                 <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
-                                <button type="submit" class="btn-small">📦 Recollida</button>
+                                <button type="submit" class="btn-small btn-primary">✅ Llest per recollir</button>
+                            </form>
+                        <?php elseif ($p['estado'] === 'listo'): ?>
+                            <form method="post" action="<?= e(base_url('/admin/tienda/comandes/' . (int) $p['id'] . '/entregat')) ?>" class="inline"
+                                  onsubmit="return confirm('Marcar «<?= e($p['codigo']) ?>» com a recollit (entregat)?');">
+                                <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+                                <button type="submit" class="btn-small">📦 Recollit</button>
                             </form>
                         <?php else: ?>
                             <span class="muted">—</span>

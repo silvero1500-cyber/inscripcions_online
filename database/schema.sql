@@ -365,7 +365,7 @@ CREATE TABLE IF NOT EXISTS `tienda_pedidos` (
     `email`       VARCHAR(255)  NOT NULL,
     `telefono`    VARCHAR(20)   NULL,
     `total`       DECIMAL(10,2) NOT NULL,
-    `estado`      ENUM('pendiente','pagado','cancelado','entregado') NOT NULL DEFAULT 'pendiente',
+    `estado`      ENUM('pendiente','pagado','listo','cancelado','entregado') NOT NULL DEFAULT 'pendiente',
     `notas`       VARCHAR(500)  NULL,
     `recollit_at` DATETIME      NULL,
     `locale`      VARCHAR(5)    NULL,
