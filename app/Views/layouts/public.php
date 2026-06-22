@@ -8,7 +8,8 @@ if ($basePrefix !== '' && str_starts_with($currentPath, $basePrefix)) {
 }
 $ret = urlencode($currentPath ?: '/');
 $cartCount = \App\Services\Cart::count();
-$tiendaActiva = \App\Models\Producto::hayActivos();
+// Mostra la nav de botiga només si està activada I té algun producte actiu
+$tiendaActiva = \App\Models\Ajuste::tiendaActiva() && \App\Models\Producto::hayActivos();
 ?><!DOCTYPE html>
 <html lang="<?= e($currentLocale) ?>">
 <head>

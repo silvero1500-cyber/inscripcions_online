@@ -1,13 +1,29 @@
 <?php
 /** @var list<array> $productos */
+/** @var bool $tiendaActiva */
 /** @var array $flash */
 ?>
 <section class="page-head with-action">
     <div>
-        <h1>Tenda</h1>
-        <p class="muted">Productes a la venda (recollida en tenda).</p>
+        <h1>Botiga
+            <?php if ($tiendaActiva): ?>
+                <span class="badge badge-success" style="vertical-align:middle;">Activa</span>
+            <?php else: ?>
+                <span class="badge badge-muted" style="vertical-align:middle;">Desactivada</span>
+            <?php endif; ?>
+        </h1>
+        <p class="muted">Productes a la venda (recollida en botiga).</p>
     </div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <form method="post" action="<?= e(base_url('/admin/tienda/toggle')) ?>" class="inline"
+              onsubmit="return confirm('<?= $tiendaActiva ? 'Desactivar la botiga? Deixarà de veure\'s al públic (ni botó ni carret).' : 'Activar la botiga? Tornarà a ser visible al públic.' ?>');">
+            <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+            <?php if ($tiendaActiva): ?>
+                <button type="submit" class="btn btn-danger">⏸ Desactivar botiga</button>
+            <?php else: ?>
+                <button type="submit" class="btn btn-primary">▶ Activar botiga</button>
+            <?php endif; ?>
+        </form>
         <a class="btn" href="<?= e(base_url('/admin/tienda/config')) ?>">⚙ Configuració</a>
         <a class="btn" href="<?= e(base_url('/admin/tienda/comandes')) ?>">📦 Comandes</a>
         <a class="btn btn-primary" href="<?= e(base_url('/admin/tienda/nou')) ?>">+ Nou producte</a>
@@ -19,6 +35,9 @@
 <?php endif; ?>
 <?php if (!empty($flash['error'])): ?>
     <div class="alert alert-error"><?= e($flash['error']) ?></div>
+<?php endif; ?>
+<?php if (!$tiendaActiva): ?>
+    <div class="alert alert-warning">La botiga està <strong>desactivada</strong>: no es mostra al públic (ni el botó «Botiga» ni el carret) i no s'hi pot comprar. Pots seguir editant productes.</div>
 <?php endif; ?>
 
 <?php if (count($productos) === 0): ?>

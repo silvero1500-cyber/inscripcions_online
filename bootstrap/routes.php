@@ -117,6 +117,7 @@ $router->post('/admin/configuracio',                 [ConfigController::class, '
 
 // Tienda — gestió de productes (NOMÉS superadmin)
 $router->get ('/admin/tienda',                       [TiendaAdminController::class, 'index'],   $superadmin);
+$router->post('/admin/tienda/toggle',                [TiendaAdminController::class, 'toggleActiva'], $superadmin);
 $router->get ('/admin/tienda/nou',                   [TiendaAdminController::class, 'create'],  $superadmin);
 $router->post('/admin/tienda',                       [TiendaAdminController::class, 'store'],   $superadmin);
 $router->get ('/admin/tienda/{id}/editar',           [TiendaAdminController::class, 'edit'],    $superadmin);

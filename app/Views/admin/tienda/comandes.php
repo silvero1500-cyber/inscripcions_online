@@ -12,8 +12,8 @@ $estats = [
 ?>
 <section class="page-head with-action">
     <div>
-        <h1>Comandes de la tenda</h1>
-        <p class="muted">Pedidos de la botiga · recollida en tenda.</p>
+        <h1>Comandes de la botiga</h1>
+        <p class="muted">Comandes de la botiga · recollida en botiga.</p>
     </div>
     <a class="btn" href="<?= e(base_url('/admin/tienda')) ?>">← Productes</a>
 </section>

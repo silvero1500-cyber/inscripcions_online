@@ -23,10 +23,21 @@ final class TiendaAdminController
     public function index(Request $req): void
     {
         View::render('admin/tienda/index', [
-            'user'      => Auth::user(),
-            'productos' => Producto::listAll(),
-            'flash'     => Session::pullAllFlashes(),
+            'user'         => Auth::user(),
+            'productos'    => Producto::listAll(),
+            'tiendaActiva' => Ajuste::tiendaActiva(),
+            'flash'        => Session::pullAllFlashes(),
         ], layout: 'admin');
+    }
+
+    /** Activa o desactiva la botiga sencera (visibilitat pública). */
+    public function toggleActiva(Request $req): void
+    {
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+        $nova = Ajuste::tiendaActiva() ? '0' : '1';
+        Ajuste::set(Ajuste::TIENDA_ACTIVA, $nova);
+        Session::flash('success', $nova === '1' ? 'Botiga activada.' : 'Botiga desactivada (oculta al públic).');
+        Response::redirect(base_url('/admin/tienda'));
     }
 
     public function create(Request $req): void

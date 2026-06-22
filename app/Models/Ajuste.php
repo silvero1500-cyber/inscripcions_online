@@ -13,9 +13,17 @@ use App\Core\Database;
 final class Ajuste
 {
     // Claus conegudes
-    public const TIENDA_LUGAR   = 'tienda_lugar_recogida';
-    public const TIENDA_HORARIO = 'tienda_horario_recogida';
-    public const PRIVACIDAD_URL = 'privacidad_url';
+    public const TIENDA_LUGAR    = 'tienda_lugar_recogida';
+    public const TIENDA_HORARIO  = 'tienda_horario_recogida';
+    public const TIENDA_ACTIVA   = 'tienda_activa';
+    public const PRIVACIDAD_URL   = 'privacidad_url';
+    public const PRIVACIDAD_TEXTO = 'privacidad_texto';
+
+    /** La botiga està activada? (per defecte sí, si mai s'ha tocat). */
+    public static function tiendaActiva(): bool
+    {
+        return self::get(self::TIENDA_ACTIVA, '1') !== '0';
+    }
 
     /** @var array<string,?string>|null */
     private static ?array $cache = null;

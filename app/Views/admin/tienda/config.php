@@ -18,7 +18,7 @@ use App\Core\Csrf;
 <form method="post" action="<?= e(base_url('/admin/tienda/config')) ?>" class="form-admin" style="max-width:640px;">
     <?= Csrf::field() ?>
     <fieldset>
-        <legend>Recollida en tenda</legend>
+        <legend>Recollida en botiga</legend>
         <div class="form-row">
             <label for="lugar">Lloc de recollida <span class="muted">(adreça)</span></label>
             <textarea id="lugar" name="lugar" rows="2" maxlength="500" placeholder="Ex: Botiga WeRun · C/ Major 12, Sabadell"><?= e((string) $lugar) ?></textarea>

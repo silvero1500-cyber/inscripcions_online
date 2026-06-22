@@ -16,7 +16,7 @@ $val = fn(string $k, $d = '') => e((string) ($producto[$k] ?? $d));
 <section class="page-head with-action">
     <div>
         <h1><?= $isEdit ? 'Editar producte' : 'Nou producte' ?></h1>
-        <p class="muted">Recollida en tenda · gestió de superadmin.</p>
+        <p class="muted">Recollida en botiga · gestió de superadmin.</p>
     </div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
         <?php if ($isEdit): ?>
@@ -50,7 +50,7 @@ $val = fn(string $k, $d = '') => e((string) ($producto[$k] ?? $d));
                 <label class="inline-check"><input type="radio" name="tipo" value="variable" <?= $tipo === 'variable' ? 'checked' : '' ?>> Variable (colors, talles…)</label>
             </div>
             <div class="form-row">
-                <label class="inline-check"><input type="checkbox" name="activo" value="1" <?= !$isEdit || (int)$producto['activo'] === 1 ? 'checked' : '' ?>> Actiu (visible a la tenda)</label>
+                <label class="inline-check"><input type="checkbox" name="activo" value="1" <?= !$isEdit || (int)$producto['activo'] === 1 ? 'checked' : '' ?>> Actiu (visible a la botiga)</label>
                 <label class="inline-check"><input type="checkbox" name="destacado" value="1" <?= $isEdit && !empty($producto['destacado']) ? 'checked' : '' ?>> Destacat</label>
             </div>
         </div>

@@ -10,6 +10,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
+use App\Models\Ajuste;
 use App\Models\Pago;
 use App\Models\PedidoTienda;
 use App\Models\Producto;
@@ -17,12 +18,19 @@ use App\Services\Cart;
 use App\Services\RedsysService;
 
 /**
- * Botiga pública: catàleg, fitxa de producte i carret. Recollida en tenda.
+ * Botiga pública: catàleg, fitxa de producte i carret. Recollida en botiga.
  */
 final class TiendaController
 {
+    /** Si la botiga està desactivada, les pàgines públiques no existeixen. */
+    private static function ensureActiva(): void
+    {
+        if (!Ajuste::tiendaActiva()) Response::notFound();
+    }
+
     public function index(Request $req): void
     {
+        self::ensureActiva();
         View::render('public/tienda/index', [
             'productos'       => Producto::listActivos(),
             'cartCount'       => Cart::count(),
@@ -35,6 +43,7 @@ final class TiendaController
 
     public function show(Request $req, array $params): void
     {
+        self::ensureActiva();
         $slug = (string) ($params['slug'] ?? '');
         $producto = Producto::findBySlug($slug);
         if ($producto === null || (int) $producto['activo'] !== 1) {
@@ -59,6 +68,7 @@ final class TiendaController
 
     public function cartAdd(Request $req): void
     {
+        self::ensureActiva();
         $slug = (string) $req->post('slug', '');
         $back = base_url('/tienda/' . $slug);
 
@@ -99,6 +109,7 @@ final class TiendaController
 
     public function cart(Request $req): void
     {
+        self::ensureActiva();
         View::render('public/tienda/cistella', [
             'items'     => Cart::items(),
             'total'     => Cart::total(),
@@ -109,6 +120,7 @@ final class TiendaController
 
     public function cartUpdate(Request $req): void
     {
+        self::ensureActiva();
         if (Csrf::verify($req->post('_csrf'))) {
             $key = (string) $req->post('key', '');
             $cantidad = (int) $req->post('cantidad', '0');
@@ -119,6 +131,7 @@ final class TiendaController
 
     public function cartRemove(Request $req): void
     {
+        self::ensureActiva();
         if (Csrf::verify($req->post('_csrf'))) {
             $key = (string) $req->post('key', '');
             if ($key !== '') Cart::remove($key);
@@ -129,6 +142,7 @@ final class TiendaController
     // ── Checkout ────────────────────────────────────────────
     public function checkout(Request $req): void
     {
+        self::ensureActiva();
         PedidoTienda::expirarPendientes(); // allibera stock de comandes abandonades
         $items = Cart::items();
         if ($items === []) {
@@ -146,6 +160,7 @@ final class TiendaController
 
     public function checkoutStore(Request $req): void
     {
+        self::ensureActiva();
         if (!Csrf::verify($req->post('_csrf'))) {
             Session::flash('shop_error', t('shop.err_session'));
             Response::redirect(base_url('/tienda/checkout'));
