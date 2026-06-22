@@ -172,6 +172,8 @@ final class InscripcionController
                         $datos['descuento_porcentaje'] = $desc['porcentaje'];
                         DescuentoEvento::incrementarUsos((int) $desc['id']);
                     }
+                    // Bloqueja el preu vigent (trams de data) en aquest moment
+                    $datos['precio_aplicado'] = Tarifa::precioVigente($tarifa);
                     return Inscrito::createWithCustomFields($datos, $valoresCampos);
                 }
             );
@@ -197,9 +199,11 @@ final class InscripcionController
         ]);
 
         // Si el preu final (amb descompte) és 0, no hi ha pagament: confirmar directe
-        $tarifaInfo = Tarifa::findById($tarifaId);
-        $precio = (float) ($tarifaInfo['precio'] ?? 0);
         $inscritoCreat = Inscrito::findById($inscritoId);
+        $tarifaInfo = Tarifa::findById($tarifaId);
+        $precio = $inscritoCreat['precio_aplicado'] !== null
+            ? (float) $inscritoCreat['precio_aplicado']
+            : (float) ($tarifaInfo['precio'] ?? 0);
         if (!empty($inscritoCreat['descuento_porcentaje'])) {
             $precio = round($precio * (1 - (float)$inscritoCreat['descuento_porcentaje'] / 100), 2);
         }
@@ -370,16 +374,17 @@ final class InscripcionController
                             : Tarifa::tieneCapacidad($tarifa);
                         if (!$capacidadOk) throw new \DomainException('tarifa_esgotada');
 
-                        $precio = (float) $tarifa['precio'];
+                        $precio = Tarifa::precioVigente($tarifa); // preu vigent (trams de data)
                         $datos = array_merge($p['data'], [
-                            'evento_id'   => $eventoId,
-                            'tarifa_id'   => $p['tarifaId'],
-                            'pedido_id'   => $pedidoId,
-                            'estado'      => 'pendiente',
-                            'ip_registro' => $req->ip,
-                            'locale'      => current_locale(),
-                            'email'       => $contactEmail,
-                            'telefono'    => $contactTel !== '' ? $contactTel : null,
+                            'evento_id'      => $eventoId,
+                            'tarifa_id'      => $p['tarifaId'],
+                            'pedido_id'      => $pedidoId,
+                            'estado'         => 'pendiente',
+                            'ip_registro'    => $req->ip,
+                            'locale'         => current_locale(),
+                            'email'          => $contactEmail,
+                            'telefono'       => $contactTel !== '' ? $contactTel : null,
+                            'precio_aplicado' => $precio, // bloquejat (abans de descompte)
                         ]);
 
                         // Cupó per participant (un codi descompta NOMÉS aquest participant)

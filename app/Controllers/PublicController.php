@@ -60,6 +60,7 @@ final class PublicController
 
         $tarifas    = Tarifa::listDisponibles((int) $evento['id']);
         $gruposRest = GrupoAforo::plazasRestantesByEvento((int) $evento['id']);
+        $tramosMap  = Tarifa::tramosByTarifas(array_map(fn($t) => (int) $t['id'], $tarifas));
 
         // Places per tarifa (per marcar les esgotades al desplegable).
         // Si la tarifa té grup, fa servir les places restants del grup (compartides).
@@ -72,6 +73,8 @@ final class PublicController
             }
             $t['_plazas']  = $rest;                          // null = sense límit
             $t['_agotada'] = ($rest !== null && $rest <= 0);
+            // Preu vigent ARA (segons els trams de data); cau al preu base si no n'hi ha
+            $t['precio_actual'] = Tarifa::precioVigente($t, $tramosMap[(int) $t['id']] ?? []);
             if (!$t['_agotada']) $hayDisponibles = true;
         }
         unset($t);

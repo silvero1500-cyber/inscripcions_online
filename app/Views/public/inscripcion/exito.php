@@ -21,7 +21,7 @@ $confirmada = ($inscrito['estado'] ?? '') === 'confirmado';
             <dt><?= e(t('success.summary.email')) ?></dt><dd><?= e($inscrito['email']) ?></dd>
             <dt><?= e(t('success.summary.event')) ?></dt><dd><?= e($evento['titulo']) ?> · <?= e(format_date_ca((string)$evento['fecha_evento'])) ?></dd>
             <?php if ($tarifa): ?>
-                <dt><?= e(t('success.summary.tarifa')) ?></dt><dd><?= e($tarifa['nombre']) ?> · <?= e(format_price((float)$tarifa['precio'])) ?></dd>
+                <dt><?= e(t('success.summary.tarifa')) ?></dt><dd><?= e($tarifa['nombre']) ?> · <?= e(format_price((float)($inscrito['precio_aplicado'] ?? $tarifa['precio']))) ?></dd>
             <?php endif; ?>
             <dt><?= e(t('success.summary.status')) ?></dt>
             <dd>

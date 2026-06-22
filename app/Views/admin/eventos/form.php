@@ -260,6 +260,11 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                                     <input type="datetime-local" name="tarifas[<?= (int)$idx ?>][fecha_fin]" value="<?= e(str_replace(' ', 'T', substr((string)($t['fecha_fin'] ?? ''), 0, 16))) ?>">
                                 </div>
                             </div>
+                            <div class="tarifa-tramos" style="margin-top:.6rem;">
+                                <label>Preus per trams <span class="muted">(opcional · inscripció anticipada)</span></label>
+                                <textarea name="tarifas[<?= (int)$idx ?>][tramos_text]" rows="3" placeholder="2026-03-01 | 15&#10;2026-04-01 | 20&#10;| 25"><?php foreach (\App\Models\Tarifa::tramos((int)$t['id']) as $tr): ?><?= ($tr['fecha_hasta'] ? substr((string)$tr['fecha_hasta'], 0, 10) : '') . ' | ' . number_format((float)$tr['precio'], 2, '.', '') . "\n" ?><?php endforeach; ?></textarea>
+                                <small class="muted">Una línia per tram: <code>data límit | preu</code> (ex. <code>2026-03-01 | 15</code>). L'última sense data = preu final. Buit = s'usa el preu de dalt.</small>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -492,6 +497,11 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                 <label>Disponible fins a</label>
                 <input type="datetime-local" name="tarifas[__IDX__][fecha_fin]">
             </div>
+        </div>
+        <div class="tarifa-tramos" style="margin-top:.6rem;">
+            <label>Preus per trams <span class="muted">(opcional · inscripció anticipada)</span></label>
+            <textarea name="tarifas[__IDX__][tramos_text]" rows="3" placeholder="2026-03-01 | 15&#10;2026-04-01 | 20&#10;| 25"></textarea>
+            <small class="muted">Una línia per tram: <code>data límit | preu</code> (ex. <code>2026-03-01 | 15</code>). L'última sense data = preu final. Buit = s'usa el preu de dalt.</small>
         </div>
     </div>
 </template>

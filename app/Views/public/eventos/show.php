@@ -202,7 +202,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                                 data-nac-max="<?= $nMax !== null ? $nMax : '' ?>"
                                 <?= $ag ? 'disabled' : '' ?>
                                 <?= (!$ag && (int)$val('tarifa_id') === (int)$t['id']) ? 'selected' : '' ?>>
-                            <?= e($t['nombre']) ?> · <?= e(format_price((float)$t['precio'])) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
+                            <?= e($t['nombre']) ?> · <?= e(format_price((float)($t['precio_actual'] ?? $t['precio']))) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
                                 if ($nacHint !== '') echo ' · ' . e($nacHint);
                                 if ($ag) {
                                     echo ' — ' . e(t('form.tarifa.soldout'));
@@ -433,12 +433,12 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                         elseif ($nMax !== null)                    $nacHint = t('form.tarifa.nac_hint_until', ['max' => $nMax]);
                     ?>
                         <option value="<?= (int) $t['id'] ?>"
-                                data-precio="<?= (float) $t['precio'] ?>"
+                                data-precio="<?= (float) ($t['precio_actual'] ?? $t['precio']) ?>"
                                 data-nac-min="<?= $nMin !== null ? $nMin : '' ?>"
                                 data-nac-max="<?= $nMax !== null ? $nMax : '' ?>"
                                 <?= $ag ? 'disabled' : '' ?>
                                 <?= (!$ag && (int) $pv('tarifa_id') === (int) $t['id']) ? 'selected' : '' ?>>
-                            <?= e($t['nombre']) ?> · <?= e(format_price((float) $t['precio'])) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
+                            <?= e($t['nombre']) ?> · <?= e(format_price((float) ($t['precio_actual'] ?? $t['precio']))) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
                                 if ($nacHint !== '') echo ' · ' . e($nacHint);
                                 if ($ag) echo ' — ' . e(t('form.tarifa.soldout'));
                             ?>

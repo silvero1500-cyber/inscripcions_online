@@ -203,8 +203,11 @@ final class PagoController
             return;
         }
 
-        // Calcular precio final aplicando descompte si el inscrit el va usar
-        $precioOriginal = (float) $tarifa['precio'];
+        // Calcular precio final aplicando descompte si el inscrit el va usar.
+        // Preu bloquejat a la inscripció (trams de data); cau al preu base si no n'hi ha.
+        $precioOriginal = ($inscrito['precio_aplicado'] ?? null) !== null
+            ? (float) $inscrito['precio_aplicado']
+            : (float) $tarifa['precio'];
         $precioFinal = $precioOriginal;
         if (!empty($inscrito['descuento_porcentaje'])) {
             $precioFinal = round($precioOriginal * (1 - (float)$inscrito['descuento_porcentaje'] / 100), 2);

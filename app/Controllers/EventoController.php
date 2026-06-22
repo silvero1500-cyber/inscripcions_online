@@ -480,6 +480,12 @@ final class EventoController
                     if (!empty($t['grupo_aforo_id'])) {
                         $grupoId = $cidMap['old_' . (int)$t['grupo_aforo_id']] ?? null;
                     }
+                    // Copiar els trams de preu de la tarifa original
+                    $tramos = array_map(fn($tr) => [
+                        'fecha_hasta' => $tr['fecha_hasta'] ?? null,
+                        'precio'      => (float) $tr['precio'],
+                    ], Tarifa::tramos((int) $t['id']));
+
                     return [
                         'id'            => null,
                         'nombre'        => $t['nombre'],
@@ -492,6 +498,7 @@ final class EventoController
                         'fecha_inicio'  => $t['fecha_inicio'],
                         'fecha_fin'     => $t['fecha_fin'],
                         'activo'        => (int) $t['activo'],
+                        'tramos'        => $tramos,
                     ];
                 }, $tarifas);
                 Tarifa::syncForEvento($newId, $tarifasNuevas);
@@ -679,7 +686,27 @@ final class EventoController
                 'fecha_inicio' => $fIni,
                 'fecha_fin'    => $fFin,
                 'activo'       => isset($t['activo']) ? 1 : 0,
+                'tramos'       => self::parseTramos((string)($t['tramos_text'] ?? '')),
             ];
+        }
+        return $out;
+    }
+
+    /**
+     * Parseja el textarea de trams de preu. Una línia per tram:
+     *   "2026-03-01 | 15"  (fins l'1/3 → 15 €) · "| 25" o "25" (preu final sense data).
+     * @return list<array{fecha_hasta:?string, precio:float}>
+     */
+    private static function parseTramos(string $text): array
+    {
+        $out = [];
+        foreach (preg_split('/\r\n|\r|\n/', $text) ?: [] as $line) {
+            $line = trim($line);
+            if ($line === '') continue;
+            $fecha = preg_match('/(\d{4}-\d{2}-\d{2})/', $line, $md) ? $md[1] : null;
+            $rest = $fecha !== null ? str_replace($fecha, '', $line) : $line;
+            if (!preg_match('/(\d+(?:[.,]\d{1,2})?)/', $rest, $mp)) continue; // sense preu → ignora
+            $out[] = ['fecha_hasta' => $fecha, 'precio' => (float) str_replace(',', '.', $mp[1])];
         }
         return $out;
     }

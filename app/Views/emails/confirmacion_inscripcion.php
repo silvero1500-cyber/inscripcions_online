@@ -47,7 +47,7 @@
                             <tr><td style="font-size:15px;color:#1f2937;font-weight:600;padding-bottom:14px;"><?= e(format_date_ca((string)$evento['fecha_evento'], true)) ?></td></tr>
 
                             <tr><td style="font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;padding-bottom:4px;"><?= e(t('email.field.tarifa')) ?></td></tr>
-                            <tr><td style="font-size:15px;color:#1f2937;font-weight:600;padding-bottom:14px;"><?= e($tarifa['nombre']) ?> · <?= e(format_price((float)$tarifa['precio'])) ?></td></tr>
+                            <tr><td style="font-size:15px;color:#1f2937;font-weight:600;padding-bottom:14px;"><?= e($tarifa['nombre']) ?> · <?= e(format_price((float)($inscrito['precio_aplicado'] ?? $tarifa['precio']))) ?></td></tr>
 
                             <?php if (!empty($inscrito['talla_camiseta'])): ?>
                                 <tr><td style="font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;padding-bottom:4px;"><?= e(t('form.label.shirt')) ?></td></tr>

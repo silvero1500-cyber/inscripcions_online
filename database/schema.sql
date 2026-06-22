@@ -401,6 +401,21 @@ CREATE TABLE IF NOT EXISTS `ajustes` (
     PRIMARY KEY (`clave`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ------------------------------------------------------------
+-- 16. TARIFA_PRECIOS (preus per trams de data · early bird)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `tarifa_precios` (
+    `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `tarifa_id`   INT UNSIGNED NOT NULL,
+    `precio`      DECIMAL(8,2) NOT NULL,
+    `fecha_hasta` DATE         NULL,
+    `orden`       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`),
+    KEY `idx_tarifa` (`tarifa_id`, `orden`),
+    CONSTRAINT `fk_tprecio_tarifa` FOREIGN KEY (`tarifa_id`)
+        REFERENCES `tarifas_evento` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ------------------------------------------------------------

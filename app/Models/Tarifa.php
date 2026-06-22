@@ -149,6 +149,90 @@ final class Tarifa
         return $min === false || $min === null ? null : (float) $min;
     }
 
+    // ── Preus per trams de data (early bird) ─────────────────
+
+    /** Trams de preu d'una tarifa, ordenats. @return list<array<string,mixed>> */
+    public static function tramos(int $tarifaId): array
+    {
+        return Database::getInstance()->query(
+            'SELECT * FROM tarifa_precios WHERE tarifa_id = ? ORDER BY orden ASC, id ASC',
+            [$tarifaId]
+        )->fetchAll();
+    }
+
+    /**
+     * Trams de preu per a un conjunt de tarifes (carrega en bloc, evita N+1).
+     * @param list<int> $tarifaIds
+     * @return array<int, list<array<string,mixed>>>  [tarifa_id => trams]
+     */
+    public static function tramosByTarifas(array $tarifaIds): array
+    {
+        $ids = array_values(array_filter(array_map('intval', $tarifaIds), fn($n) => $n > 0));
+        if ($ids === []) return [];
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        $rows = Database::getInstance()->query(
+            "SELECT * FROM tarifa_precios WHERE tarifa_id IN ($ph) ORDER BY orden ASC, id ASC",
+            $ids
+        )->fetchAll();
+        $out = [];
+        foreach ($rows as $r) $out[(int) $r['tarifa_id']][] = $r;
+        return $out;
+    }
+
+    /**
+     * Preu vigent ARA d'una tarifa: el tram amb la data límit més propera que
+     * encara no ha passat; si no n'hi ha, el tram sense data; si tampoc, el preu
+     * base. La data es compara a nivell de dia en hora local (la data límit
+     * s'entén "fins a final d'aquell dia").
+     *
+     * @param array<string,mixed>            $tarifa
+     * @param list<array<string,mixed>>|null $tramos  (si no es passa, es carrega)
+     */
+    public static function precioVigente(array $tarifa, ?array $tramos = null): float
+    {
+        if ($tramos === null) $tramos = self::tramos((int) $tarifa['id']);
+
+        $today    = date('Y-m-d');
+        $best     = null;
+        $bestDate = null;
+        $fallback = null;
+
+        foreach ($tramos as $tr) {
+            $precio = (float) $tr['precio'];
+            $fh     = trim((string) ($tr['fecha_hasta'] ?? ''));
+            if ($fh === '') { $fallback = $precio; continue; }
+            $fh = substr($fh, 0, 10);
+            if ($fh >= $today) { // encara no ha vençut
+                if ($bestDate === null || $fh < $bestDate) { $bestDate = $fh; $best = $precio; }
+            }
+        }
+
+        if ($best !== null) return $best;
+        if ($fallback !== null) return $fallback;
+        return (float) ($tarifa['precio'] ?? 0);
+    }
+
+    /**
+     * Reemplaça els trams de preu d'una tarifa (dins una transacció ja oberta).
+     * @param list<array{precio:float|string, fecha_hasta:?string}> $tramos
+     */
+    public static function syncTramos($db, int $tarifaId, array $tramos): void
+    {
+        $db->query('DELETE FROM tarifa_precios WHERE tarifa_id = ?', [$tarifaId]);
+        $orden = 0;
+        foreach ($tramos as $tr) {
+            $precio = round((float) ($tr['precio'] ?? 0), 2);
+            $fh = trim((string) ($tr['fecha_hasta'] ?? ''));
+            $fh = preg_match('/^\d{4}-\d{2}-\d{2}$/', $fh) ? $fh : null;
+            $db->insert('tarifa_precios', [
+                'tarifa_id'   => $tarifaId,
+                'precio'      => $precio,
+                'fecha_hasta' => $fh,
+                'orden'       => $orden++,
+            ]);
+        }
+    }
+
     /**
      * Reemplaza todas las tarifas de un evento. Atómico.
      * Si una tarifa enviada tiene `id` >= 1 y existía, se actualiza; las que no
@@ -189,9 +273,11 @@ final class Tarifa
                     $db->update('tarifas_evento', $payload, ['id' => $tid]);
                     $keepIds[] = $tid;
                 } else {
-                    $newId = $db->insert('tarifas_evento', $payload);
-                    $keepIds[] = $newId;
+                    $tid = $db->insert('tarifas_evento', $payload);
+                    $keepIds[] = $tid;
                 }
+                // Trams de preu d'aquesta tarifa
+                self::syncTramos($db, $tid, $t['tramos'] ?? []);
             }
 
             // Borrar las que ya no estén — pero solo si no tienen inscritos
