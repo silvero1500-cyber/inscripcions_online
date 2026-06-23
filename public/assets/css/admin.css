@@ -1192,6 +1192,12 @@ li.col-manager-item label {
 .recollida-grid .cell-actions input[type="text"],
 .recollida-grid .cell-actions input[type="number"] { font-size: 1.2rem; }
 
+/* Escaneig amb pistola QR */
+.recollida-gun { display: flex; align-items: center; gap: .8rem; background: #eff6ff; border: 2px dashed #93c5fd; border-radius: 10px; padding: .7rem 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.recollida-gun label { font-weight: 700; color: #1e40af; white-space: nowrap; margin: 0; }
+.recollida-gun input { flex: 1; min-width: 220px; font-size: 1.2rem; padding: .6rem .8rem; border: 1px solid #cbd5e1; border-radius: 8px; }
+.recollida-gun input:focus { outline: 2px solid #3b82f6; border-color: #3b82f6; }
+
 /* Targeta del corredor escanejat via QR */
 .recollida-scan-card {
     background: #fff;

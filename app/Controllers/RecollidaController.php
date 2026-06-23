@@ -37,7 +37,7 @@ final class RecollidaController
         // ── QR escanejat: ?token=... → localitza l'inscrit i fixa el seu event ──
         $scanned    = null;
         $scanError  = null;
-        $scanToken  = (string) ($req->query('token') ?? '');
+        $scanToken  = self::normalizeToken((string) ($req->query('token') ?? ''));
         $eventoId   = $req->query('evento_id') ? (int) $req->query('evento_id') : null;
 
         if ($scanToken !== '') {
@@ -212,6 +212,25 @@ final class RecollidaController
         }
 
         $this->back($req, (int) $inscrito['evento_id']);
+    }
+
+    /**
+     * Normalitza el token escanejat. La càmera ja envia el token net; la pistola
+     * QR pot disparar la URL sencera del comprovant (…/admin/checkin/TOKEN) →
+     * n'extraiem l'últim segment del path.
+     */
+    private static function normalizeToken(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '') return '';
+        if (str_contains($raw, '/')) {
+            $path = parse_url($raw, PHP_URL_PATH);
+            $path = rtrim((string) ($path !== false && $path !== null ? $path : $raw), '/');
+            $pos = strrpos($path, '/');
+            $raw = $pos !== false ? substr($path, $pos + 1) : $path;
+        }
+        // Per seguretat, només caràcters de token vàlids
+        return preg_replace('/[^A-Za-z0-9_\-]/', '', $raw) ?? '';
     }
 
     // ── Helpers ──────────────────────────────────────────────
