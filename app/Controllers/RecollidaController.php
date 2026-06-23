@@ -27,7 +27,7 @@ use App\Models\Usuario;
  */
 final class RecollidaController
 {
-    private const PER_PAGE = 100;
+    private const PER_PAGE = 50;
 
     public function index(Request $req): void
     {
