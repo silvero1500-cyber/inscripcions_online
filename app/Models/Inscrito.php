@@ -31,9 +31,11 @@ final class Inscrito
         if ($min <= 0 || $eventoId <= 0) return 0;
 
         try {
-            $stmt = Database::getInstance()->query(
-                "UPDATE inscritos i
-                 SET i.estado = 'cancelado'
+            $db = Database::getInstance();
+            // Pendents caducats sense cap pagament completat (ni propi ni del grup).
+            // S'ESBORREN (abans es marcaven 'cancelado' i s'acumulaven).
+            $ids = $db->query(
+                "SELECT i.id FROM inscritos i
                  WHERE i.evento_id = ?
                    AND i.estado = 'pendiente'
                    AND i.created_at < (NOW() - INTERVAL ? MINUTE)
@@ -44,8 +46,17 @@ final class Inscrito
                               OR (i.pedido_id IS NOT NULL AND p.pedido_id = i.pedido_id))
                    )",
                 [$eventoId, $min]
-            );
-            return $stmt->rowCount();
+            )->fetchAll(\PDO::FETCH_COLUMN);
+
+            if (!$ids) return 0;
+            $in = implode(',', array_map('intval', $ids));
+
+            return $db->transaction(function () use ($db, $in, $ids) {
+                // pagos primer (FK RESTRICT); inscrito_campos_valores cau en cascada
+                $db->query("DELETE FROM pagos WHERE inscrito_id IN ($in)");
+                $db->query("DELETE FROM inscritos WHERE id IN ($in)");
+                return count($ids);
+            });
         } catch (\Throwable $e) {
             error_log('[Inscrito::expirarPendientes] ' . $e->getMessage());
             return 0;

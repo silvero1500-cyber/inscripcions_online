@@ -67,8 +67,8 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         <div class="filtre">
             <label for="f-estado">Estat</label>
             <select id="f-estado" name="estado" onchange="this.form.submit()">
-                <option value="">Actius (sense cancel·lats ni pendents)</option>
-                <?php foreach (['pendiente' => 'Pendents', 'confirmado' => 'Confirmats', 'cancelado' => 'Cancel·lats', 'reembolsado' => 'Reembossats'] as $k => $label): ?>
+                <option value="">Actius (per defecte)</option>
+                <?php foreach (['confirmado' => 'Confirmats', 'reembolsado' => 'Reembossats'] as $k => $label): ?>
                     <option value="<?= $k ?>" <?= $filters['estado'] === $k ? 'selected' : '' ?>><?= $label ?></option>
                 <?php endforeach; ?>
             </select>
@@ -100,12 +100,10 @@ $pageUrl = function (int $p) use ($filtersClean): string {
     </div>
 <?php else: ?>
 
-    <!-- ── Resum estats (totals respectant filtres) ──────── -->
-    <div class="kpi-grid kpi-grid-4" style="margin-bottom:1.2rem;">
+    <!-- ── Resum (totals respectant filtres) ──────── -->
+    <div class="kpi-grid" style="margin-bottom:1.2rem; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; max-width:520px;">
         <div class="kpi-card"><div class="kpi-label">Total filtrat</div><div class="kpi-value"><?= $total ?></div></div>
         <div class="kpi-card"><div class="kpi-label">Confirmats</div><div class="kpi-value" style="color:#16a34a"><?= $counts['confirmado'] ?></div></div>
-        <div class="kpi-card"><div class="kpi-label">Pendents</div><div class="kpi-value" style="color:#f59e0b"><?= $counts['pendiente'] ?></div></div>
-        <div class="kpi-card"><div class="kpi-label">Cancel·lats</div><div class="kpi-value" style="color:#dc2626"><?= $counts['cancelado'] ?></div></div>
     </div>
 
     <?php
