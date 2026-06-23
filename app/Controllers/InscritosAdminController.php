@@ -145,8 +145,15 @@ final class InscritosAdminController
 
         $back = base_url('/admin/inscritos?' . http_build_query(['evento_id' => (int) $inscrito['evento_id']]));
 
-        if (empty($inscrito['email'])) {
-            Session::flash('error', 'Aquest inscrit no té email.');
+        // Correu alternatiu opcional (p. ex. si el de l'inscrit era erroni)
+        $emailTo = trim((string) $req->post('email_to', ''));
+        if ($emailTo !== '' && !filter_var($emailTo, FILTER_VALIDATE_EMAIL)) {
+            Session::flash('error', 'El correu indicat no és vàlid.');
+            Response::redirect($back);
+        }
+        $recipient = $emailTo !== '' ? $emailTo : (string) $inscrito['email'];
+        if ($recipient === '') {
+            Session::flash('error', 'Aquest inscrit no té email. Indica un correu per reenviar-ho.');
             Response::redirect($back);
         }
 
@@ -166,8 +173,8 @@ final class InscritosAdminController
             Inscrito::ensureQrToken($id);
             $inscrito = Inscrito::findById($id); // recarregar amb qr_token
 
-            EmailService::sendConfirmacionInscripcion($inscrito, $evento, $tarifa, $pago);
-            Session::flash('success', 'Email de confirmació reenviat a ' . $inscrito['email'] . '.');
+            EmailService::sendConfirmacionInscripcion($inscrito, $evento, $tarifa, $pago, $emailTo !== '' ? $emailTo : null);
+            Session::flash('success', 'Email de confirmació reenviat a ' . $recipient . '.');
         } catch (\Throwable $e) {
             error_log('[InscritosAdmin] Reenviament fallit: ' . $e->getMessage());
             Session::flash('error', 'No s\'ha pogut enviar l\'email: ' . $e->getMessage());

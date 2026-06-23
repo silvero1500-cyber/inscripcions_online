@@ -71,12 +71,14 @@ final class EmailService
      * @param array  $evento    Fila de eventos
      * @param array  $tarifa    Fila de tarifas_evento
      * @param array  $pago      Fila de pagos (opcional pero recomendable para mostrar order/auth)
+     * @param ?string $toOverride  Si s'indica, s'envia a aquest correu (no al de l'inscrit)
      */
     public static function sendConfirmacionInscripcion(
         array $inscrito,
         array $evento,
         array $tarifa,
-        array $pago = []
+        array $pago = [],
+        ?string $toOverride = null
     ): void {
         $qrUrl   = base_url('/admin/checkin/' . $inscrito['qr_token']);
         $qrPng   = QrService::pngBytes($qrUrl, 300);
@@ -108,8 +110,9 @@ final class EmailService
         }
         \App\Core\Lang::reset();
 
+        $to = ($toOverride !== null && trim($toOverride) !== '') ? trim($toOverride) : (string) $inscrito['email'];
         self::send(
-            (string) $inscrito['email'],
+            $to,
             $subject,
             $html,
             [[
