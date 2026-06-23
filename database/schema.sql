@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
     `nombre`         VARCHAR(100)     NOT NULL,
     `email`          VARCHAR(255)     NOT NULL,
     `password_hash`  VARCHAR(255)     NOT NULL,
-    `rol`            ENUM('superadmin','organizador') NOT NULL DEFAULT 'organizador',
+    `rol`            ENUM('superadmin','organizador','recollida') NOT NULL DEFAULT 'organizador',
     `activo`         TINYINT(1)       NOT NULL DEFAULT 1,
     `ultimo_login`   DATETIME         NULL,
     `token_reset`    VARCHAR(100)     NULL COMMENT 'Token para reset de contraseña',
@@ -414,6 +414,23 @@ CREATE TABLE IF NOT EXISTS `tarifa_precios` (
     KEY `idx_tarifa` (`tarifa_id`, `orden`),
     CONSTRAINT `fk_tprecio_tarifa` FOREIGN KEY (`tarifa_id`)
         REFERENCES `tarifas_evento` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- 17. RECOLLIDA_LOG (auditoria d'accions de recollida de dorsals)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `recollida_log` (
+    `id`           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `evento_id`    INT UNSIGNED NOT NULL,
+    `inscrito_id`  INT UNSIGNED NULL,
+    `inscrito_nom` VARCHAR(255) NULL,
+    `dorsal`       INT UNSIGNED NULL,
+    `usuario_id`   INT UNSIGNED NULL,
+    `usuario_nom`  VARCHAR(150) NULL,
+    `accion`       VARCHAR(30)  NOT NULL,
+    `created_at`   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_evento_time` (`evento_id`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

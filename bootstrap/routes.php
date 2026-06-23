@@ -71,6 +71,9 @@ $auth = [[Auth::class, 'requireLogin']];
 // i camps) reservada a superadmin. Els organitzadors només operen els seus events.
 $superadmin = [[Auth::class, 'requireSuperadmin']];
 
+// Global: els usuaris 'recollida' només poden accedir a la seva zona
+$router->middleware([Auth::class, 'recollidaScope']);
+
 $router->get ('/admin',                              [AdminController::class, 'dashboard'], $auth);
 
 // CRUD eventos — el llistat el veuen tots els admins; crear/editar/etc. NOMÉS superadmin
@@ -147,6 +150,7 @@ $router->post('/admin/checkin/{token}',              [CheckinController::class, 
 
 // Recollida de dorsal (entrega de dorsal/material)
 $router->get ('/admin/recollida',                    [RecollidaController::class, 'index'],    $auth);
+$router->get ('/admin/recollida/historial',          [RecollidaController::class, 'historial'], $auth);
 $router->get ('/admin/recollida/escanejar',          [RecollidaController::class, 'scanner'],  $auth);
 $router->post('/admin/recollida/{id}/marcar',        [RecollidaController::class, 'marcar'],   $auth);
 $router->post('/admin/recollida/{id}/desfer',        [RecollidaController::class, 'desfer'],   $auth);

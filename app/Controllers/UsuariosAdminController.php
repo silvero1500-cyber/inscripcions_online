@@ -69,8 +69,8 @@ final class UsuariosAdminController
             'activo'   => $data['activo'],
         ]);
 
-        // Si és organizador i hi ha eventos assignats al form, guardar-los
-        if ($data['rol'] === 'organizador') {
+        // Organizador o recollida → guardar els eventos assignats del form
+        if (in_array($data['rol'], ['organizador', 'recollida'], true)) {
             $eventIds = is_array($_POST['eventos'] ?? null) ? array_map('intval', $_POST['eventos']) : [];
             Usuario::setAssignedEvents($newId, $eventIds);
         }
@@ -141,12 +141,11 @@ final class UsuariosAdminController
         }
         Usuario::update($id, $payload);
 
-        // Guardar assignacions d'eventos només si és organizador
-        if ($data['rol'] === 'organizador') {
+        // Guardar assignacions d'eventos per organizador/recollida; superadmin no en necessita
+        if (in_array($data['rol'], ['organizador', 'recollida'], true)) {
             $eventIds = is_array($_POST['eventos'] ?? null) ? array_map('intval', $_POST['eventos']) : [];
             Usuario::setAssignedEvents($id, $eventIds);
         } else {
-            // Si ha passat a superadmin, no necessita assignacions explícites
             Usuario::setAssignedEvents($id, []);
         }
 
@@ -254,7 +253,7 @@ final class UsuariosAdminController
             'nombre'   => trim((string)($post['nombre'] ?? '')),
             'email'    => strtolower(trim((string)($post['email'] ?? ''))),
             'password' => (string)($post['password'] ?? ''),
-            'rol'      => in_array($post['rol'] ?? '', ['superadmin', 'organizador'], true) ? $post['rol'] : 'organizador',
+            'rol'      => in_array($post['rol'] ?? '', ['superadmin', 'organizador', 'recollida'], true) ? $post['rol'] : 'organizador',
             'activo'   => isset($post['activo']) ? 1 : 0,
         ];
     }

@@ -13,6 +13,7 @@ use App\Core\Session;
 use App\Core\View;
 use App\Models\Evento;
 use App\Models\Inscrito;
+use App\Models\RecollidaLog;
 use App\Models\Tarifa;
 use App\Models\Usuario;
 
@@ -124,6 +125,32 @@ final class RecollidaController
     }
 
     /**
+     * Historial d'accions de recollida (auditoria) — només per a gestors
+     * (superadmin/organizador), no per als usuaris de rol 'recollida'.
+     */
+    public function historial(Request $req): void
+    {
+        $user = Auth::user();
+        if ($user->rol === 'recollida') Response::forbidden();
+
+        $eventos  = self::listEventosForUser($user);
+        $eventoId = $req->query('evento_id') ? (int) $req->query('evento_id')
+            : (count($eventos) > 0 ? (int) $eventos[0]['id'] : null);
+        if ($eventoId && !Evento::userCanEdit($user->id, $user->rol, $eventoId)) {
+            Response::forbidden();
+        }
+
+        View::render('admin/recollida/historial', [
+            'user'     => $user,
+            'eventos'  => $eventos,
+            'eventoId' => $eventoId,
+            'logs'     => $eventoId ? RecollidaLog::listByEvento($eventoId) : [],
+            'flash'    => Session::pullAllFlashes(),
+            'wide'     => true,
+        ], layout: 'admin');
+    }
+
+    /**
      * Marca la recollida. Accepta un `dorsal` opcional (assignar + recollir alhora).
      */
     public function marcar(Request $req, array $params): void
@@ -144,6 +171,10 @@ final class RecollidaController
         }
 
         $ok = Inscrito::marcarRecollida((int) $inscrito['id'], $user->id);
+        if ($ok) {
+            $dorsalLog = $dorsalRaw !== '' && ctype_digit($dorsalRaw) ? (int) $dorsalRaw : (!empty($inscrito['numero_dorsal']) ? (int) $inscrito['numero_dorsal'] : null);
+            RecollidaLog::registrar((int) $inscrito['evento_id'], $inscrito, $user, 'recollit', $dorsalLog);
+        }
         Session::flash($ok ? 'success' : 'error', $ok
             ? 'Dorsal recollit · ' . $inscrito['nombre'] . ' ' . ($inscrito['apellido'] ?? '')
             : 'Aquest dorsal ja constava com a recollit.');
@@ -158,6 +189,7 @@ final class RecollidaController
     {
         [$user, $inscrito] = $this->guard($req, $params);
         Inscrito::desferRecollida((int) $inscrito['id']);
+        RecollidaLog::registrar((int) $inscrito['evento_id'], $inscrito, $user, 'desfet', !empty($inscrito['numero_dorsal']) ? (int) $inscrito['numero_dorsal'] : null);
         Session::flash('success', 'Recollida desfeta · ' . $inscrito['nombre']);
         $this->back($req, (int) $inscrito['evento_id']);
     }
@@ -172,8 +204,10 @@ final class RecollidaController
         $dorsalRaw = trim((string) $req->post('dorsal'));
         if ($dorsalRaw === '') {
             Inscrito::setDorsal((int) $inscrito['id'], null);
+            RecollidaLog::registrar((int) $inscrito['evento_id'], $inscrito, $user, 'dorsal_esborrat', !empty($inscrito['numero_dorsal']) ? (int) $inscrito['numero_dorsal'] : null);
             Session::flash('success', 'Dorsal esborrat · ' . $inscrito['nombre']);
         } elseif ($this->assignDorsal($inscrito, $dorsalRaw)) {
+            RecollidaLog::registrar((int) $inscrito['evento_id'], $inscrito, $user, 'dorsal', (int) $dorsalRaw);
             Session::flash('success', 'Dorsal ' . (int) $dorsalRaw . ' assignat · ' . $inscrito['nombre']);
         }
 

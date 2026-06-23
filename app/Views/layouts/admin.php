@@ -47,6 +47,9 @@ $navActive = function (string $rel, bool $exact = false) use ($curPath): string 
         </button>
         <div class="topbar-collapse" id="navMenu">
             <nav class="topnav">
+                <?php if ($currentUser && $currentUser->rol === 'recollida'): ?>
+                    <a class="<?= trim($navActive('/admin/recollida')) ?>" href="<?= e(base_url('/admin/recollida')) ?>">Recollida de dorsals</a>
+                <?php else: ?>
                 <a class="<?= trim($navActive('/admin', true)) ?>" href="<?= e(base_url('/admin')) ?>">Panel</a>
                 <a class="<?= trim($navActive('/admin/eventos')) ?>" href="<?= e(base_url('/admin/eventos')) ?>">Esdeveniments</a>
                 <a class="<?= trim($navActive('/admin/recollida')) ?>" href="<?= e(base_url('/admin/recollida')) ?>">Recollida</a>
@@ -54,6 +57,7 @@ $navActive = function (string $rel, bool $exact = false) use ($curPath): string 
                 <?php if ($currentUser && $currentUser->rol === 'superadmin'): ?>
                     <a class="<?= trim($navActive('/admin/tienda')) ?>" href="<?= e(base_url('/admin/tienda')) ?>">Botiga</a>
                     <a class="<?= trim($navActive('/admin/usuarios')) ?>" href="<?= e(base_url('/admin/usuarios')) ?>">Usuaris</a>
+                <?php endif; ?>
                 <?php endif; ?>
             </nav>
             <div class="user-menu">

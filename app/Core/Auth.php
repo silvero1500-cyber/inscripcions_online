@@ -102,4 +102,19 @@ final class Auth
             Response::forbidden();
         }
     }
+
+    /**
+     * Middleware GLOBAL: tanca els usuaris amb rol 'recollida' a la seva zona.
+     * Només poden accedir a /admin/recollida* (i login/logout); qualsevol altra
+     * ruta /admin els redirigeix a la recollida. Les pàgines públiques es permeten.
+     */
+    public static function recollidaScope(Request $req): void
+    {
+        if (self::rol() !== 'recollida') return;
+        $p = $req->path;
+        if (str_starts_with($p, '/admin/recollida')) return;
+        if ($p === '/admin/logout' || $p === '/admin/login') return;
+        if (!str_starts_with($p, '/admin')) return; // públic: permès
+        Response::redirect(base_url('/admin/recollida'));
+    }
 }
