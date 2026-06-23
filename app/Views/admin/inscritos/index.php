@@ -239,15 +239,21 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                     <td data-col="dorsal" class="cell-right"><?= !empty($i['numero_dorsal']) ? (int)$i['numero_dorsal'] : '—' ?></td>
                     <td data-col="estado">
                         <?php
-                        $estado = $i['estado'];
-                        $badge = match ($estado) {
-                            'confirmado' => 'badge-success',
-                            'pendiente'  => 'badge-warning',
-                            'cancelado'  => 'badge-muted',
-                            default      => 'badge-muted',
-                        };
+                        // Si ja ha recollit el dorsal, mostrem "recollit" (verd); si no, l'estat
+                        if (!empty($i['dorsal_recollit_at'])) {
+                            $estLbl = '✓ recollit';
+                            $badge  = 'badge-success';
+                        } else {
+                            [$estLbl, $badge] = match ($i['estado']) {
+                                'confirmado'  => ['confirmat',  'badge-info'],
+                                'pendiente'   => ['pendent',    'badge-warning'],
+                                'cancelado'   => ['cancel·lat', 'badge-muted'],
+                                'reembolsado' => ['reembossat', 'badge-muted'],
+                                default       => [$i['estado'], 'badge-muted'],
+                            };
+                        }
                         ?>
-                        <span class="badge <?= $badge ?>"><?= e($estado) ?></span>
+                        <span class="badge <?= $badge ?>"><?= e($estLbl) ?></span>
                     </td>
                     <td data-col="accions" class="cell-actions">
                         <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'])) ?>" title="Veure fitxa completa">👁 Fitxa</a>
