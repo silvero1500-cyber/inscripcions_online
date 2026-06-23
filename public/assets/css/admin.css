@@ -1226,4 +1226,12 @@ li.col-manager-item label {
 .rsc-action label { display: flex; flex-direction: column; gap: .3rem; font-size: .8rem; font-weight: 600; color: #374151; }
 .rsc-action input { padding: .55rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1.05rem; text-align: center; }
 .rsc-done { font-size: 1rem; color: #15803d; margin-bottom: 1rem; }
+/* Talla i Dorsal ben grans a la targeta escanejada */
+.rsc-big { display: flex; gap: 1.2rem; margin: .6rem 0 1.1rem; flex-wrap: wrap; }
+.rsc-big-item { display: flex; flex-direction: column; align-items: center; gap: .25rem; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: .7rem 1.4rem; min-width: 8rem; }
+.rsc-big-item span { font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; font-weight: 700; }
+.rsc-big-item .rsc-xl { font-size: 2.6rem; font-weight: 800; line-height: 1; color: #1e293b; }
+.rsc-action-row { display: flex; gap: 1.2rem; align-items: flex-end; flex-wrap: wrap; }
+.rsc-action input { font-size: 1.7rem; width: 7.5rem; font-weight: 700; padding: .45rem .6rem; }
+.rsc-action label { font-size: .9rem; }
 .btn-lg { padding: .7rem 1.4rem; font-size: 1.05rem; }

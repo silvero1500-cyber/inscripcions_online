@@ -46,7 +46,6 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
         <a class="btn btn-primary" href="<?= e(base_url('/admin/recollida/escanejar')) ?>">📷 Escanejar QR</a>
         <?php if (($user->rol ?? '') !== 'recollida'): ?>
             <a class="btn btn-secondary" href="<?= e(base_url('/admin/recollida/historial' . ($selEvento ? '?evento_id=' . $selEvento : ''))) ?>">📋 Historial</a>
-            <a class="btn btn-secondary" href="<?= e(base_url('/admin/checkin')) ?>">✓ Check-in (dia de cursa)</a>
         <?php endif; ?>
     </div>
 </section>
@@ -95,9 +94,20 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
             <span class="rsc-tag">QR escanejat</span>
             <h2><?= e($ins['nombre'] . ' ' . ($ins['apellido'] ?? '')) ?></h2>
         </div>
+        <?php /* Talla i Dorsal ben grans (el que més mira qui entrega) */ ?>
+        <div class="rsc-big">
+            <div class="rsc-big-item">
+                <span>Talla</span>
+                <strong class="rsc-xl"><?= e($ins['talla_camiseta'] ?? '—') ?></strong>
+            </div>
+            <div class="rsc-big-item">
+                <span>Dorsal</span>
+                <strong class="rsc-xl"><?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '—' ?></strong>
+            </div>
+        </div>
+
         <div class="rsc-facts">
             <div><span>DNI</span><strong><?= e($ins['dni'] ?? '—') ?></strong></div>
-            <div><span>Talla</span><strong class="talla-big"><?= e($ins['talla_camiseta'] ?? '—') ?></strong></div>
             <div><span>Tarifa</span><strong><?= e($scanned['tarifa']['nombre'] ?? '—') ?></strong></div>
             <div><span>Club</span><strong><?= e($ins['club'] ?? '—') ?></strong></div>
         </div>
@@ -105,22 +115,28 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
         <?php if ($jaRecollit): ?>
             <div class="rsc-done">
                 ✓ Ja recollit el <?= e(format_datetime_local((string) $ins['dorsal_recollit_at'], 'd/m/Y H:i')) ?>
-                <?php if (!empty($scanned['recollitPor'])): ?>
-                    per <?= e($scanned['recollitPor']['nombre']) ?>
-                <?php endif; ?>
-                · Dorsal <strong><?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '—' ?></strong>
+                <?php if (!empty($scanned['recollitPor'])): ?>per <?= e($scanned['recollitPor']['nombre']) ?><?php endif; ?>
             </div>
-            <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/desfer')) ?>" class="inline">
-                <?= Csrf::field() ?>
-                <button type="submit" class="btn btn-secondary">↩ Desfer recollida</button>
-            </form>
+            <div class="rsc-action-row">
+                <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/dorsal')) ?>" class="rsc-action">
+                    <?= Csrf::field() ?>
+                    <label>Editar dorsal
+                        <input type="number" name="dorsal" min="1" inputmode="numeric"
+                               value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>" placeholder="—">
+                    </label>
+                    <button type="submit" class="btn">💾 Desa dorsal</button>
+                </form>
+                <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/desfer')) ?>" class="inline">
+                    <?= Csrf::field() ?>
+                    <button type="submit" class="btn btn-secondary">↩ Desfer recollida</button>
+                </form>
+            </div>
         <?php else: ?>
             <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/marcar')) ?>" class="rsc-action" onsubmit="return confirmRecollit(this)">
                 <?= Csrf::field() ?>
-                <label>Dorsal
+                <label>Assignar dorsal
                     <input type="number" name="dorsal" min="1" inputmode="numeric"
-                           value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>"
-                           placeholder="—" style="width:7rem;">
+                           value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>" placeholder="—">
                 </label>
                 <button type="submit" class="btn btn-primary btn-lg">✓ Marcar recollit</button>
             </form>
