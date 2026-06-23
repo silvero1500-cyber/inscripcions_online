@@ -310,7 +310,7 @@ final class Inscrito
             return false;
         }
         $db->update('inscritos', [
-            'check_in_at'  => date('Y-m-d H:i:s'),
+            'check_in_at'  => gmdate('Y-m-d H:i:s'), // UTC (es mostra convertit a local)
             'check_in_por' => $usuarioId,
         ], ['id' => $id]);
         return true;
@@ -330,7 +330,7 @@ final class Inscrito
             return false;
         }
         $db->update('inscritos', [
-            'dorsal_recollit_at'  => date('Y-m-d H:i:s'),
+            'dorsal_recollit_at'  => gmdate('Y-m-d H:i:s'), // UTC (es mostra convertit a local)
             'dorsal_recollit_por' => $usuarioId,
         ], ['id' => $id]);
         return true;
