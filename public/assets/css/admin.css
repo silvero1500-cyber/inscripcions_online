@@ -1180,6 +1180,18 @@ li.col-manager-item label {
 .recollida-grid tr.row-done { background: #f0fdf4; }
 .recollida-grid tr.row-done:hover { background: #dcfce7; }
 
+/* Recollida: lletres grans que omplen el recuadre (es llegeix al mostrador) */
+.recollida-grid { font-size: 1.1rem; }
+.recollida-grid thead th { font-size: .9rem; padding: .7rem 1rem; }
+.recollida-grid tbody td { padding: .8rem 1rem; line-height: 1.3; }
+.recollida-grid tbody td strong { font-size: 1.2rem; }
+.recollida-grid .talla-big { font-size: 1.3rem; min-width: 3rem; padding: .3rem .7rem; }
+.recollida-grid .badge { font-size: .9rem; padding: .25rem .6rem; }
+.recollida-grid .cell-actions .btn-tiny,
+.recollida-grid .cell-actions button,
+.recollida-grid .cell-actions input[type="text"],
+.recollida-grid .cell-actions input[type="number"] { font-size: 1rem; }
+
 /* Targeta del corredor escanejat via QR */
 .recollida-scan-card {
     background: #fff;
