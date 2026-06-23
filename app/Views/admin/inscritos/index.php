@@ -101,9 +101,10 @@ $pageUrl = function (int $p) use ($filtersClean): string {
 <?php else: ?>
 
     <!-- ── Resum (totals respectant filtres) ──────── -->
-    <div class="kpi-grid" style="margin-bottom:1.2rem; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; max-width:520px;">
+    <div class="kpi-grid" style="margin-bottom:1.2rem; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; max-width:780px;">
         <div class="kpi-card"><div class="kpi-label">Total filtrat</div><div class="kpi-value"><?= $total ?></div></div>
         <div class="kpi-card"><div class="kpi-label">Confirmats</div><div class="kpi-value" style="color:#16a34a"><?= $counts['confirmado'] ?></div></div>
+        <div class="kpi-card"><div class="kpi-label">Recollit dorsal</div><div class="kpi-value" style="color:#2563eb"><?= $recollits ?></div></div>
     </div>
 
     <?php

@@ -294,6 +294,21 @@ final class Inscrito
     }
 
     /**
+     * Conta els inscrits que ja han recollit el dorsal, respectant els filtres.
+     */
+    public static function countRecollitsForAdmin(array $filters = []): int
+    {
+        [$whereSql, $params] = self::buildAdminWhere($filters);
+        $clause = $whereSql !== ''
+            ? $whereSql . ' AND i.dorsal_recollit_at IS NOT NULL'
+            : 'WHERE i.dorsal_recollit_at IS NOT NULL';
+        return (int) Database::getInstance()->query(
+            "SELECT COUNT(*) FROM inscritos i {$clause}",
+            $params
+        )->fetchColumn();
+    }
+
+    /**
      * @deprecated Usat per l'export CSV. Usa listForAdmin amb perPage alt.
      */
     public static function listForAdminExport(array $filters = [], int $limit = 5000): array

@@ -53,6 +53,7 @@ final class InscritosAdminController
         $total = 0;
         $inscritos = [];
         $counts = ['pendiente' => 0, 'confirmado' => 0, 'cancelado' => 0, 'reembolsado' => 0];
+        $recollits = 0;
         $totalPages = 1;
 
         if ($filters['evento_id']) {
@@ -61,6 +62,7 @@ final class InscritosAdminController
             if ($page > $totalPages) $page = $totalPages;
             $inscritos = Inscrito::listForAdmin($filtersClean, $page, $perPage);
             $counts = Inscrito::countsByEstadoForAdmin($filtersClean);
+            $recollits = Inscrito::countRecollitsForAdmin($filtersClean);
         }
 
         $from = $total > 0 ? ($page - 1) * $perPage + 1 : 0;
@@ -72,6 +74,7 @@ final class InscritosAdminController
             'inscritos'  => $inscritos,
             'filters'    => $filters,
             'counts'     => $counts,
+            'recollits'  => $recollits,
             'total'      => $total,
             'page'       => $page,
             'perPage'    => $perPage,
