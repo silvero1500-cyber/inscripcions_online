@@ -42,11 +42,14 @@
                 </td>
                 <td><?= e($u['email']) ?></td>
                 <td>
-                    <?php if ($u['rol'] === 'superadmin'): ?>
-                        <span class="badge badge-warning">superadmin</span>
-                    <?php else: ?>
-                        <span class="badge badge-muted">organitzador</span>
-                    <?php endif; ?>
+                    <?php
+                    [$rolLbl, $rolBdg] = match ($u['rol']) {
+                        'superadmin' => ['superadmin', 'badge-warning'],
+                        'recollida'  => ['recollida', 'badge-info'],
+                        default      => ['organitzador', 'badge-muted'],
+                    };
+                    ?>
+                    <span class="badge <?= $rolBdg ?>"><?= e($rolLbl) ?></span>
                 </td>
                 <td><?= (int)$u['num_eventos'] ?></td>
                 <td>
