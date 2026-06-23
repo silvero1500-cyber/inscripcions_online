@@ -67,7 +67,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         <div class="filtre">
             <label for="f-estado">Estat</label>
             <select id="f-estado" name="estado" onchange="this.form.submit()">
-                <option value="">Tots</option>
+                <option value="">Actius (sense cancel·lats ni pendents)</option>
                 <?php foreach (['pendiente' => 'Pendents', 'confirmado' => 'Confirmats', 'cancelado' => 'Cancel·lats', 'reembolsado' => 'Reembossats'] as $k => $label): ?>
                     <option value="<?= $k ?>" <?= $filters['estado'] === $k ? 'selected' : '' ?>><?= $label ?></option>
                 <?php endforeach; ?>

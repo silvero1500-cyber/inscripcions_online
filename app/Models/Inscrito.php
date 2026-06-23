@@ -196,6 +196,10 @@ final class Inscrito
         }
         if (!empty($filters['estado'])) {
             $where[] = 'i.estado = ?'; $params[] = (string) $filters['estado'];
+        } elseif (empty($filters['_allEstados'])) {
+            // Per defecte el llistat no mostra cancel·lats ni pendents
+            // (es poden veure triant-los explícitament al filtre d'estat)
+            $where[] = "i.estado NOT IN ('cancelado','pendiente')";
         }
         if (!empty($filters['club'])) {
             $where[] = 'i.club LIKE ?'; $params[] = '%' . $filters['club'] . '%';
@@ -261,9 +265,11 @@ final class Inscrito
      */
     public static function countsByEstadoForAdmin(array $filters = []): array
     {
-        // No filtrem per estat (volem el desglossament complet del filtre actual)
+        // No filtrem per estat (volem el desglossament complet del filtre actual,
+        // incloent cancel·lats i pendents per als KPIs encara que el llistat els amagui)
         $filtersNoEstado = $filters;
         unset($filtersNoEstado['estado']);
+        $filtersNoEstado['_allEstados'] = true;
         [$whereSql, $params] = self::buildAdminWhere($filtersNoEstado);
 
         $rows = Database::getInstance()->query(
