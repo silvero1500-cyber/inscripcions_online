@@ -31,7 +31,7 @@ $yaEstabaMarcado = ($flash === 'already');
         <?php if ($yaMarcado): ?>
             <span class="status-badge status-done">JA VALIDAT</span>
             <p class="status-meta">
-                <?= e(date('d/m/Y H:i', strtotime((string)$inscrito['check_in_at']))) ?>
+                <?= e(format_datetime_local((string)$inscrito['check_in_at'], 'd/m/Y H:i')) ?>
                 <?php if ($marcadoPor): ?>· per <?= e($marcadoPor['nombre']) ?><?php endif; ?>
             </p>
         <?php else: ?>
