@@ -57,12 +57,11 @@ $isSuper = isset($user) && ($user->rol ?? '') === 'superadmin';
         </div>
     <?php endif; ?>
     <div class="table-wrap">
-        <table class="data-table">
+        <table class="data-table eventos-table">
             <thead>
                 <tr>
                     <th>Títol</th>
                     <th>Data</th>
-                    <th>Tarifes</th>
                     <th>Inscrits</th>
                     <th>Estat</th>
                     <th class="th-actions">Accions</th>
@@ -75,16 +74,6 @@ $isSuper = isset($user) && ($user->rol ?? '') === 'superadmin';
                         <strong><?= e($ev['titulo']) ?></strong>
                     </td>
                     <td><?= e(date('d/m/Y', strtotime((string)$ev['fecha_evento']))) ?></td>
-                    <td>
-                        <?php if ((int)($ev['tarifas_activas'] ?? 0) === 0): ?>
-                            <span class="muted">Sense tarifes</span>
-                        <?php else: ?>
-                            <?= (int)$ev['tarifas_activas'] ?>
-                            <?php if ($ev['precio_min'] !== null): ?>
-                                <span class="row-sub">des de <?= number_format((float)$ev['precio_min'], 2, ',', '.') ?> €</span>
-                            <?php endif; ?>
-                        <?php endif; ?>
-                    </td>
                     <td><?= (int)$ev['_inscritos'] ?></td>
                     <td>
                         <?php if (!empty($ev['archivado_at'])): ?>

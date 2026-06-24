@@ -423,6 +423,12 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 .btn-small:hover { background: #e5e7eb; text-decoration: none; }
 .btn-small.btn-danger { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
 .btn-small.btn-danger:hover { background: #fecaca; }
+
+/* Botons d'accions més grans a la llista d'esdeveniments */
+.eventos-table .td-actions { white-space: normal; }
+.eventos-table .td-actions > a,
+.eventos-table .td-actions > form { margin: .22rem .4rem .22rem 0; }
+.eventos-table .btn-small { font-size: .92rem; padding: .5rem .9rem; border-radius: 8px; }
 .btn-secondary {
     background: #f3f4f6; color: #1f2937;
     border: 1px solid #d1d5db;
