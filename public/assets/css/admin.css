@@ -1262,6 +1262,7 @@ li.col-manager-item label {
 
 /* KPIs */
 .dash-kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.dash-kpis.dash-kpis-3 { grid-template-columns: repeat(3, minmax(0,1fr)); max-width: 780px; }
 .dash-kpi {
     display: flex; flex-direction: column; gap: .15rem; text-decoration: none;
     background: #fff; border: 1px solid #e5e7eb; border-left: 5px solid #94a3b8;
@@ -1337,4 +1338,15 @@ li.col-manager-item label {
     .dash-kpis { grid-template-columns: repeat(2, 1fr); }
     .dash-cols { grid-template-columns: 1fr; }
     .dash-list-row { grid-template-columns: 90px 1fr; row-gap: .3rem; }
+}
+@media (max-width: 680px) {
+    .dash-kpis.dash-kpis-3 { grid-template-columns: 1fr; }
+    .dash-chart { gap: 3px; height: 130px; }
+    .dash-col-val { font-size: .6rem; height: 1rem; line-height: 1rem; }
+    .dash-col-day { font-size: .58rem; margin-top: .25rem; }
+    .dash-hero { padding: 1.6rem 1.2rem; }
+    .dash-hero h1 { font-size: 1.4rem; }
+}
+@media (max-width: 480px) {
+    .dash-kpis { grid-template-columns: 1fr; }
 }

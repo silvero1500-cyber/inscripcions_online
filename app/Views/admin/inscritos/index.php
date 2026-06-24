@@ -101,7 +101,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
 <?php else: ?>
 
     <!-- ── Resum (totals respectant filtres) ──────── -->
-    <div class="dash-kpis" style="grid-template-columns:repeat(3,minmax(0,1fr)); max-width:780px; margin-bottom:1.4rem;">
+    <div class="dash-kpis dash-kpis-3" style="margin-bottom:1.4rem;">
         <div class="dash-kpi kpi-blue">
             <span class="dash-kpi-ico">📋</span>
             <span class="dash-kpi-val"><?= $total ?></span>
