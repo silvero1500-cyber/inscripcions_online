@@ -240,7 +240,9 @@ final class Inscrito
     public static function listForAdmin(array $filters = [], int $page = 1, int $perPage = 100): array
     {
         [$whereSql, $params] = self::buildAdminWhere($filters);
-        $perPage = max(10, min(500, $perPage));
+        // Tope alt: el llistat paginat fa servir 25/pàgina, però l'export reutilitza
+        // aquest mètode i necessita poder treure'ls tots (no només 500).
+        $perPage = max(10, min(50000, $perPage));
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
@@ -311,7 +313,7 @@ final class Inscrito
     /**
      * @deprecated Usat per l'export CSV. Usa listForAdmin amb perPage alt.
      */
-    public static function listForAdminExport(array $filters = [], int $limit = 5000): array
+    public static function listForAdminExport(array $filters = [], int $limit = 50000): array
     {
         return self::listForAdmin($filters, 1, $limit);
     }

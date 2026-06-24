@@ -249,7 +249,7 @@ final class InscritosAdminController
 
         $evento = Evento::findById((int) $filters['evento_id']);
         AuditLog::registrar(AuditLog::INSCRITS_EXPORT, 'Evento «' . ($evento['titulo'] ?? '') . '» #' . (int) $filters['evento_id']);
-        $inscritos = Inscrito::listForAdminExport(array_filter($filters), 5000);
+        $inscritos = Inscrito::listForAdminExport(array_filter($filters));
 
         // Camps personalitzats (visibles + ocults) com a columnes extra del CSV.
         // Els ocults serveixen per omplir info a mà i tornar-la a importar.
