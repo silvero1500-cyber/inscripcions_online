@@ -117,10 +117,10 @@ $val = fn(string $k, $d = '') => e((string) ($producto[$k] ?? $d));
                 <?php foreach ($imagenes as $img): ?>
                     <div style="position:relative;">
                         <img src="<?= e(ImageUploader::publicUrl($img['ruta'])) ?>" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;">
-                        <form method="post" action="<?= e(base_url('/admin/tienda/imatge/' . (int)$img['id'] . '/eliminar')) ?>" onsubmit="return confirm('Eliminar aquesta imatge?');" style="position:absolute;top:-8px;right:-8px;margin:0;">
-                            <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
-                            <button type="submit" title="Eliminar" style="background:#dc2626;color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;line-height:1;">✕</button>
-                        </form>
+                        <?php /* Botó fora del <form> principal (els forms niats trenquen el desat); esborra via JS amb un form ocult. */ ?>
+                        <button type="button" class="img-del-btn" title="Eliminar"
+                                data-url="<?= e(base_url('/admin/tienda/imatge/' . (int)$img['id'] . '/eliminar')) ?>"
+                                style="position:absolute;top:-8px;right:-8px;background:#dc2626;color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;line-height:1;">✕</button>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -136,6 +136,24 @@ $val = fn(string $k, $d = '') => e((string) ($producto[$k] ?? $d));
         <a href="<?= e(base_url('/admin/tienda')) ?>" class="btn">Cancel·la</a>
     </div>
 </form>
+
+<?php /* Form ocult (fora del principal) per esborrar imatges sense niar formularis */ ?>
+<form method="post" id="img-del-form" style="display:none;">
+    <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
+</form>
+<script>
+(function () {
+    var delForm = document.getElementById('img-del-form');
+    document.querySelectorAll('.img-del-btn').forEach(function (b) {
+        b.addEventListener('click', function () {
+            if (!delForm) return;
+            if (!confirm('Eliminar aquesta imatge?')) return;
+            delForm.action = b.getAttribute('data-url');
+            delForm.submit();
+        });
+    });
+})();
+</script>
 
 <script>
 (function () {
