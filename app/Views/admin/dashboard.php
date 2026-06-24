@@ -65,6 +65,7 @@ $pctAforo = function (array $ev): ?int {
         <?php if ($isSuper): ?>
             <a class="dash-quick-btn" href="<?= e(base_url('/admin/tienda')) ?>">🛍️ <span>Botiga</span></a>
             <a class="dash-quick-btn" href="<?= e(base_url('/admin/usuarios')) ?>">👥 <span>Usuaris</span></a>
+            <a class="dash-quick-btn" href="<?= e(base_url('/admin/auditoria')) ?>">🛡️ <span>Auditoria</span></a>
             <a class="dash-quick-btn" href="<?= e(base_url('/admin/configuracio')) ?>">⚙️ <span>Configuració</span></a>
             <a class="dash-quick-btn" href="<?= e(base_url('/admin/migracions')) ?>">🗄️ <span>Migracions</span></a>
         <?php endif; ?>

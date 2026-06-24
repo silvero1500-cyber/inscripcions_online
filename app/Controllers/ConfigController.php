@@ -11,6 +11,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
 use App\Models\Ajuste;
+use App\Models\AuditLog;
 
 /**
  * Configuració general de la plataforma (només superadmin).
@@ -40,6 +41,7 @@ final class ConfigController
             Response::redirect(base_url('/admin/configuracio'));
         }
         Ajuste::set(Ajuste::PRIVACIDAD_URL, $url !== '' ? mb_substr($url, 0, 500) : null);
+        AuditLog::registrar(AuditLog::CONFIG_DESADA, 'privacidad_url');
         Session::flash('success', 'Configuració desada.');
         Response::redirect(base_url('/admin/configuracio'));
     }

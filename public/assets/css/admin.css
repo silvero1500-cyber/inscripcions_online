@@ -404,6 +404,7 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 .badge-warning { background: #fef3c7; color: #92400e; }
 .badge-muted   { background: #f3f4f6; color: #6b7280; }
 .badge-info    { background: #dbeafe; color: #1e40af; }
+.badge-danger  { background: #fee2e2; color: #991b1b; }
 
 /* ── Botones pequeños ──────────────────────────────────── */
 .btn-small {

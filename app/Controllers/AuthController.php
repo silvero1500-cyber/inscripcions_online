@@ -10,6 +10,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
+use App\Models\AuditLog;
 use App\Models\LoginThrottle;
 
 final class AuthController
@@ -58,12 +59,14 @@ final class AuthController
 
         if (!Auth::attempt($email, $pass)) {
             LoginThrottle::recordFailure($ip, $email);
+            AuditLog::registrar(AuditLog::LOGIN_FAIL, $email, null, null, $ip);
             Session::flash('login_error', 'Credenciales no válidas.');
             Session::flash('login_email', $email);
             Response::redirect(base_url('/admin/login'));
         }
 
         LoginThrottle::clearFailures($email);
+        AuditLog::registrar(AuditLog::LOGIN_OK, $email, null, null, $ip);
 
         $next = Session::pullFlash('redirect_after_login');
         Response::redirect(base_url($next ?: '/admin'));

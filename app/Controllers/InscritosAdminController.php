@@ -11,6 +11,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
+use App\Models\AuditLog;
 use App\Models\CampoPersonalizado;
 use App\Models\Evento;
 use App\Models\Inscrito;
@@ -247,6 +248,7 @@ final class InscritosAdminController
         }
 
         $evento = Evento::findById((int) $filters['evento_id']);
+        AuditLog::registrar(AuditLog::INSCRITS_EXPORT, 'Evento «' . ($evento['titulo'] ?? '') . '» #' . (int) $filters['evento_id']);
         $inscritos = Inscrito::listForAdminExport(array_filter($filters), 5000);
 
         // Camps personalitzats (visibles + ocults) com a columnes extra del CSV.

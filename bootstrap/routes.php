@@ -8,6 +8,7 @@ use App\Core\Response;
 use App\Core\Router;
 use App\Controllers\AuthController;
 use App\Controllers\AdminController;
+use App\Controllers\AuditController;
 use App\Controllers\CheckinController;
 use App\Controllers\RecollidaController;
 use App\Controllers\DescuentosController;
@@ -117,6 +118,9 @@ $router->post('/admin/migracions/aplicar',           [MigrationController::class
 // Configuració general (superadmin)
 $router->get ('/admin/configuracio',                 [ConfigController::class, 'index'],  $superadmin);
 $router->post('/admin/configuracio',                 [ConfigController::class, 'store'],  $superadmin);
+
+// Auditoria de seguretat (superadmin)
+$router->get ('/admin/auditoria',                    [AuditController::class, 'index'],   $superadmin);
 
 // Tienda — gestió de productes (NOMÉS superadmin)
 $router->get ('/admin/tienda',                       [TiendaAdminController::class, 'index'],   $superadmin);

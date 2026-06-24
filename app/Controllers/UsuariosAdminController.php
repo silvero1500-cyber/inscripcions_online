@@ -12,6 +12,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Core\Validator;
 use App\Core\View;
+use App\Models\AuditLog;
 use App\Models\Usuario;
 
 /**
@@ -75,6 +76,7 @@ final class UsuariosAdminController
             Usuario::setAssignedEvents($newId, $eventIds);
         }
 
+        AuditLog::registrar(AuditLog::USUARI_CREAT, $data['email'] . ' (' . $data['rol'] . ')');
         Session::flash('success', 'Usuari creat correctament.');
         Response::redirect(base_url('/admin/usuarios'));
     }
@@ -238,6 +240,7 @@ final class UsuariosAdminController
         }
 
         Usuario::delete($id);
+        AuditLog::registrar(AuditLog::USUARI_ESBORRAT, ($u['email'] ?? '') . ' #' . $id);
         Session::flash('success', 'Usuari esborrat.');
         Response::redirect(base_url('/admin/usuarios'));
     }

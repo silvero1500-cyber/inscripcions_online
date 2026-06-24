@@ -12,6 +12,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Core\Validator;
 use App\Core\View;
+use App\Models\AuditLog;
 use App\Models\Evento;
 use App\Models\CampoPersonalizado;
 use App\Models\CamposFijos;
@@ -376,6 +377,7 @@ final class EventoController
 
         ImageUploader::deleteEventImage($evento['imagen_portada'] ?? null);
         Evento::delete($id);
+        AuditLog::registrar(AuditLog::EVENTO_ESBORRAT, ($evento['titulo'] ?? '') . ' #' . $id);
 
         Session::flash('success', 'Esdeveniment esborrat.');
         Response::redirect(base_url('/admin/eventos'));
@@ -397,6 +399,7 @@ final class EventoController
         if (!Evento::userCanEdit($user->id, $user->rol, $id)) Response::forbidden();
 
         Evento::archive($id);
+        AuditLog::registrar(AuditLog::EVENTO_ARXIVAT, ($evento['titulo'] ?? '') . ' #' . $id);
         Session::flash('success', 'Esdeveniment arxivat. El trobaràs a «Arxivats».');
         Response::redirect(base_url('/admin/eventos'));
     }
