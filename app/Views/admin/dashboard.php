@@ -131,15 +131,15 @@ $pctAforo = function (array $ev): ?int {
         <section class="dash-chart-box">
             <h3>Inscripcions · darrers 14 dies</h3>
             <div class="dash-chart">
-                <?php foreach ($chart as $c): $bp = $chartMax > 0 ? round($c['n'] / $chartMax * 100) : 0; ?>
-                    <div class="dash-bar" title="<?= e(date('d/m', strtotime($c['day']))) ?>: <?= (int) $c['n'] ?> inscripcions">
-                        <span class="dash-bar-fill" style="height:<?= $c['n'] > 0 ? max($bp, 6) : 0 ?>%"></span>
+                <?php foreach ($chart as $c): $n = (int) $c['n']; $bp = $chartMax > 0 ? round($n / $chartMax * 100) : 0; $d = strtotime($c['day']); ?>
+                    <div class="dash-col" title="<?= e(date('d/m', $d)) ?>: <?= $n ?> inscripcions">
+                        <span class="dash-col-val"><?= $n > 0 ? $n : '' ?></span>
+                        <div class="dash-col-track">
+                            <span class="dash-col-fill" style="height:<?= $n > 0 ? max($bp, 4) : 0 ?>%"></span>
+                        </div>
+                        <span class="dash-col-day"><?= e(date('j/n', $d)) ?></span>
                     </div>
                 <?php endforeach; ?>
-            </div>
-            <div class="dash-chart-axis">
-                <span><?= e(date('d/m', strtotime($chart[0]['day']))) ?></span>
-                <span><?= e(date('d/m', strtotime($chart[count($chart) - 1]['day']))) ?></span>
             </div>
         </section>
     <?php endif; ?>
