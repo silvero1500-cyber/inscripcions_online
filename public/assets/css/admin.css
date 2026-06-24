@@ -1175,15 +1175,17 @@ li.col-manager-item label {
 .talla-chip strong { color: #1e88c2; margin-right: .15rem; }
 
 /* Edició inline del dorsal a cada fila */
-.dorsal-edit { display: flex; align-items: center; gap: .25rem; }
+.dorsal-edit { display: flex; align-items: center; gap: .35rem; }
 .dorsal-edit input[type="number"] {
-    width: 4.5rem;
-    padding: .3rem .4rem;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: .9rem;
+    width: 6.5rem;
+    padding: .5rem .5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 1.75rem;
+    font-weight: 800;
     text-align: center;
 }
+.recollida-grid .dorsal-edit .btn-tiny { font-size: 1.3rem; padding: .35rem .55rem; }
 .recollida-grid tr.row-done { background: #f0fdf4; }
 .recollida-grid tr.row-done:hover { background: #dcfce7; }
 
