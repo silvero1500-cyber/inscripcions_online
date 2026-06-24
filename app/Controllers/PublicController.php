@@ -14,22 +14,9 @@ use App\Models\Evento;
 use App\Models\GrupoAforo;
 use App\Models\Tarifa;
 use App\Services\ImageUploader;
-use App\Services\PrivacyPolicy;
 
 final class PublicController
 {
-    /** Pàgina pública de la política de privacitat (enllaçada al consentiment RGPD). */
-    public function privacitat(Request $req): void
-    {
-        View::render('public/privacitat', [
-            'text'            => PrivacyPolicy::text(),
-            'pageTitle'       => "Política de privacitat · WeRun",
-            'metaDescription' => "Política de privacitat i protecció de dades de WeRun.",
-            'ogTitle'         => "Política de privacitat",
-            'ogDescription'   => "Com tractem les teves dades a WeRun.",
-            'ogUrl'           => base_url('/privacitat'),
-        ], layout: 'public');
-    }
 
     public function index(Request $req): void
     {

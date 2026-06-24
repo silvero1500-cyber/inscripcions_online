@@ -34,7 +34,6 @@ $router->get ('/lang/{code}',                         [LangController::class, 's
 
 // ── Pública ─────────────────────────────────────────────
 $router->get ('/',                                    [PublicController::class,       'index']);
-$router->get ('/privacitat',                          [PublicController::class,       'privacitat']);
 $router->get ('/eventos/{slug}',                      [PublicController::class,       'show']);
 $router->post('/eventos/{slug}/inscriure',            [InscripcionController::class,  'store']);
 $router->post('/eventos/{slug}/llista-espera',        [WaitingListController::class,  'store']);
