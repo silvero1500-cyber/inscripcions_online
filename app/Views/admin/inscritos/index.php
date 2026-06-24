@@ -101,10 +101,22 @@ $pageUrl = function (int $p) use ($filtersClean): string {
 <?php else: ?>
 
     <!-- ── Resum (totals respectant filtres) ──────── -->
-    <div class="kpi-grid" style="margin-bottom:1.2rem; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; max-width:780px;">
-        <div class="kpi-card"><div class="kpi-label">Total filtrat</div><div class="kpi-value"><?= $total ?></div></div>
-        <div class="kpi-card"><div class="kpi-label">Confirmats</div><div class="kpi-value" style="color:#16a34a"><?= $counts['confirmado'] ?></div></div>
-        <div class="kpi-card"><div class="kpi-label">Recollit dorsal</div><div class="kpi-value" style="color:#2563eb"><?= $recollits ?></div></div>
+    <div class="dash-kpis" style="grid-template-columns:repeat(3,minmax(0,1fr)); max-width:780px; margin-bottom:1.4rem;">
+        <div class="dash-kpi kpi-blue">
+            <span class="dash-kpi-ico">📋</span>
+            <span class="dash-kpi-val"><?= $total ?></span>
+            <span class="dash-kpi-lbl">Total filtrat</span>
+        </div>
+        <div class="dash-kpi kpi-green">
+            <span class="dash-kpi-ico">✅</span>
+            <span class="dash-kpi-val"><?= $counts['confirmado'] ?></span>
+            <span class="dash-kpi-lbl">Confirmats</span>
+        </div>
+        <div class="dash-kpi kpi-indigo">
+            <span class="dash-kpi-ico">🎽</span>
+            <span class="dash-kpi-val"><?= $recollits ?></span>
+            <span class="dash-kpi-lbl">Recollit dorsal</span>
+        </div>
     </div>
 
     <?php
