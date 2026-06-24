@@ -20,13 +20,10 @@ use App\Services\ImageUploader;
             <?php foreach ($eventos as $ev): ?>
                 <a href="<?= e(base_url('/eventos/' . $ev['slug'])) ?>" class="event-card">
                     <?php $img = ImageUploader::publicUrl($ev['imagen_portada']); ?>
-                    <?php if ($img): ?>
-                        <div class="event-card-img" style="background-image:url('<?= e($img) ?>')"></div>
-                    <?php else: ?>
-                        <div class="event-card-img event-card-img-placeholder"></div>
-                    <?php endif; ?>
+                    <div class="event-card-img<?= $img ? '' : ' event-card-img-placeholder' ?>"<?= $img ? ' style="background-image:url(\'' . e($img) . '\')"' : '' ?>>
+                        <span class="event-card-datebadge">📅 <?= e(format_date_ca((string)$ev['fecha_evento'])) ?></span>
+                    </div>
                     <div class="event-card-body">
-                        <div class="event-card-date"><?= e(format_date_ca((string)$ev['fecha_evento'])) ?></div>
                         <h3 class="event-card-title"><?= e($ev['titulo']) ?></h3>
                         <div class="event-card-footer">
                             <?php if ($ev['precio_min'] !== null): ?>
