@@ -292,7 +292,8 @@ final class InscritosAdminController
                 $i['telefono'],
                 $i['club'] ?? '',
                 $i['poblacion'] ?? '',
-                $i['codigo_postal'] ?? '',
+                // Forçar text perquè Excel no elimini el 0 inicial del codi postal (08201 → 8201)
+                ($i['codigo_postal'] ?? '') !== '' ? '="' . $i['codigo_postal'] . '"' : '',
                 $i['talla_camiseta'] ?? '',
                 $i['tarifa_nombre'],
                 number_format((float) $i['tarifa_precio'], 2, ',', '.'),
