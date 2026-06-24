@@ -40,22 +40,6 @@ $isSuper = isset($user) && ($user->rol ?? '') === 'superadmin';
         <?php endif; ?>
     </div>
 <?php else: ?>
-    <?php
-    // Resum calculat de la llista carregada (sense query extra)
-    $totEv = count($eventos);
-    $oberts = 0; $insTot = 0;
-    foreach ($eventos as $evK) {
-        if ((int) ($evK['activo'] ?? 0) === 1 && (int) ($evK['inscripciones_abiertas'] ?? 0) === 1 && empty($evK['archivado_at'])) $oberts++;
-        $insTot += (int) ($evK['_inscritos'] ?? 0);
-    }
-    ?>
-    <?php if (!$showArchived): ?>
-        <div class="dash-kpis" style="grid-template-columns:repeat(3,minmax(0,1fr)); max-width:780px; margin-bottom:1.4rem;">
-            <div class="dash-kpi kpi-blue"><span class="dash-kpi-ico">📅</span><span class="dash-kpi-val"><?= $totEv ?></span><span class="dash-kpi-lbl">Esdeveniments</span></div>
-            <div class="dash-kpi kpi-green"><span class="dash-kpi-ico">✅</span><span class="dash-kpi-val"><?= $oberts ?></span><span class="dash-kpi-lbl">Oberts ara</span></div>
-            <div class="dash-kpi kpi-indigo"><span class="dash-kpi-ico">🏃</span><span class="dash-kpi-val"><?= $insTot ?></span><span class="dash-kpi-lbl">Inscrits totals</span></div>
-        </div>
-    <?php endif; ?>
     <div class="table-wrap">
         <table class="data-table eventos-table">
             <thead>
