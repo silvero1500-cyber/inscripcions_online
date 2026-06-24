@@ -331,7 +331,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                     $opts = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null);
                     $req  = (int) $c['requerido'] === 1;
                     ?>
-                    <div class="form-row form-row-wide" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
+                    <div class="form-row<?= $c['tipo'] === 'textarea' ? ' form-row-wide' : '' ?>" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
                         <label><?= e($c['etiqueta']) ?><?= $req ? ' <span class="req">*</span>' : '' ?></label>
                         <?php if ($c['tipo'] === 'textarea'): ?>
                             <textarea name="<?= e($key) ?>" rows="3" <?= $req ? 'required' : '' ?>><?= e($valC) ?></textarea>
@@ -534,7 +534,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                 $creq  = (int) $c['requerido'] === 1;
                 $cvalC = $pv($ckey);
                 ?>
-                <div class="form-row form-row-wide" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
+                <div class="form-row<?= $c['tipo'] === 'textarea' ? ' form-row-wide' : '' ?>" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
                     <label><?= e($c['etiqueta']) ?><?= $creq ? ' <span class="req">*</span>' : '' ?></label>
                     <?php if ($c['tipo'] === 'textarea'): ?>
                         <textarea name="<?= e($nm($ckey)) ?>" rows="3" <?= $creq ? 'required' : '' ?>><?= e($cvalC) ?></textarea>
