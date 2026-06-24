@@ -55,6 +55,22 @@ $pctAforo = function (array $ev): ?int {
     </section>
 <?php endif; ?>
 
+<!-- ── Accessos ràpids ──────────────────────────────── -->
+<section class="dash-quick">
+    <h3>Accessos ràpids</h3>
+    <div class="dash-quick-grid">
+        <a class="dash-quick-btn" href="<?= e(base_url('/admin/recollida')) ?>">🎽 <span>Recollida de dorsals</span></a>
+        <a class="dash-quick-btn" href="<?= e(base_url('/admin/inscritos')) ?>">📋 <span>Inscrits</span></a>
+        <a class="dash-quick-btn" href="<?= e(base_url('/admin/eventos')) ?>">📅 <span>Esdeveniments</span></a>
+        <?php if ($isSuper): ?>
+            <a class="dash-quick-btn" href="<?= e(base_url('/admin/tienda')) ?>">🛍️ <span>Botiga</span></a>
+            <a class="dash-quick-btn" href="<?= e(base_url('/admin/usuarios')) ?>">👥 <span>Usuaris</span></a>
+            <a class="dash-quick-btn" href="<?= e(base_url('/admin/configuracio')) ?>">⚙️ <span>Configuració</span></a>
+            <a class="dash-quick-btn" href="<?= e(base_url('/admin/migracions')) ?>">🗄️ <span>Migracions</span></a>
+        <?php endif; ?>
+    </div>
+</section>
+
 <!-- ── KPIs ───────────────────────────────────────── -->
 <section class="dash-kpis">
     <a class="dash-kpi kpi-blue" href="<?= e(base_url('/admin/eventos')) ?>">
@@ -150,19 +166,3 @@ $pctAforo = function (array $ev): ?int {
         </div>
     </section>
 <?php endif; ?>
-
-<!-- ── Accessos ràpids ──────────────────────────────── -->
-<section class="dash-quick">
-    <h3>Accessos ràpids</h3>
-    <div class="dash-quick-grid">
-        <a class="dash-quick-btn" href="<?= e(base_url('/admin/recollida')) ?>">🎽 <span>Recollida de dorsals</span></a>
-        <a class="dash-quick-btn" href="<?= e(base_url('/admin/inscritos')) ?>">📋 <span>Inscrits</span></a>
-        <a class="dash-quick-btn" href="<?= e(base_url('/admin/eventos')) ?>">📅 <span>Esdeveniments</span></a>
-        <?php if ($isSuper): ?>
-            <a class="dash-quick-btn" href="<?= e(base_url('/admin/tienda')) ?>">🛍️ <span>Botiga</span></a>
-            <a class="dash-quick-btn" href="<?= e(base_url('/admin/usuarios')) ?>">👥 <span>Usuaris</span></a>
-            <a class="dash-quick-btn" href="<?= e(base_url('/admin/configuracio')) ?>">⚙️ <span>Configuració</span></a>
-            <a class="dash-quick-btn" href="<?= e(base_url('/admin/migracions')) ?>">🗄️ <span>Migracions</span></a>
-        <?php endif; ?>
-    </div>
-</section>
