@@ -21,14 +21,14 @@ final class Session
             'samesite' => 'Lax',
         ]);
 
+        // Nota: sid_length i sid_bits_per_character es van deprecar a PHP 8.5;
+        // els defaults de PHP ja són segurs, així que no els passem.
         session_start([
             'use_strict_mode'    => true,
             'use_only_cookies'   => true,
             'cookie_httponly'    => true,
             'cookie_secure'      => $secureCookie,
             'cookie_samesite'    => 'Lax',
-            'sid_length'         => 48,
-            'sid_bits_per_character' => 6,
             'gc_maxlifetime'     => 7200,
         ]);
     }
