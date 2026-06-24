@@ -271,7 +271,7 @@ final class InscritosAdminController
         $headers = [
             'ID', 'Comanda', 'Data inscripció', 'Nom', 'Cognoms', 'DNI', 'Sexe', 'Data naixement',
             'Email', 'Telèfon', 'Club', 'Població', 'Codi postal', 'Talla',
-            'Tarifa', 'Preu', 'Estat', 'Check-in', 'Dorsal'
+            'Tarifa', 'Preu', 'Estat', 'Dorsal'
         ];
         foreach ($campos as $c) {
             $headers[] = (string) $c['etiqueta'] . (!empty($c['oculto']) ? ' (ocult)' : '');
@@ -297,7 +297,6 @@ final class InscritosAdminController
                 $i['tarifa_nombre'],
                 number_format((float) $i['tarifa_precio'], 2, ',', '.'),
                 $i['estado'],
-                !empty($i['check_in_at']) ? format_datetime_local($i['check_in_at'], 'd/m/Y H:i') : '',
                 $i['numero_dorsal'] ?? '',
             ];
             $vals = $valores[(int) $i['id']] ?? [];
