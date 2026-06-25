@@ -106,17 +106,17 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
                 <a class="btn btn-secondary" href="<?= e(base_url('/admin/recollida/escanejar')) ?>">📷 Escanejar QR</a>
             </div>
         <?php else: ?>
-            <div class="rsc-action-row">
-                <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/marcar')) ?>" class="rsc-action" onsubmit="return confirmRecollit(this)">
-                    <?= Csrf::field() ?>
-                    <label>Assignar dorsal
-                        <input type="number" name="dorsal" min="1" inputmode="numeric"
-                               value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>" placeholder="—">
-                    </label>
+            <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/marcar')) ?>" class="rsc-action" onsubmit="return confirmRecollit(this)">
+                <?= Csrf::field() ?>
+                <label>Assignar dorsal
+                    <input type="number" name="dorsal" min="1" inputmode="numeric"
+                           value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>" placeholder="—">
+                </label>
+                <div class="rsc-btns">
                     <button type="submit" class="btn btn-primary btn-lg">✓ Marcar recollit</button>
-                </form>
-                <a class="btn btn-secondary btn-lg" href="<?= e(base_url('/admin/recollida/escanejar')) ?>">📷 Escanejar QR</a>
-            </div>
+                    <a class="btn btn-secondary btn-lg" href="<?= e(base_url('/admin/recollida/escanejar')) ?>">📷 Escanejar QR</a>
+                </div>
+            </form>
         <?php endif; ?>
     </div>
     <script>

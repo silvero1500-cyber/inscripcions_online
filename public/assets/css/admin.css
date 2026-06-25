@@ -1227,6 +1227,7 @@ li.col-manager-item label {
 .rsc-facts span { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #9ca3af; font-weight: 600; }
 .rsc-facts strong { font-size: 1.05rem; color: #1f2937; }
 .rsc-action { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
+.rsc-btns { display: flex; gap: .6rem; flex-wrap: wrap; }
 .rsc-action label { display: flex; flex-direction: column; gap: .3rem; font-size: .8rem; font-weight: 600; color: #374151; }
 .rsc-action input { padding: .55rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1.05rem; text-align: center; }
 .rsc-done { font-size: 1rem; color: #15803d; margin-bottom: 1rem; }
@@ -1251,7 +1252,8 @@ li.col-manager-item label {
     .rsc-big-item.rsc-dorsal .rsc-xl { font-size: 3.6rem; }
     .rsc-facts strong { font-size: 1.2rem; }
     .rsc-facts span { font-size: .8rem; }
-    .rsc-action-row .btn-lg { width: 100%; text-align: center; }
+    .rsc-btns { width: 100%; }
+    .rsc-btns .btn { flex: 1; text-align: center; }   /* els dos botons AL COSTAT, repartint l'amplada */
 }
 .rsc-action-row { display: flex; gap: 1.2rem; align-items: flex-end; flex-wrap: wrap; }
 .rsc-action input { font-size: 1.7rem; width: 7.5rem; font-weight: 700; padding: .45rem .6rem; }
