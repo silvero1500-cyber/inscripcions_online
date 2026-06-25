@@ -645,6 +645,15 @@ small.muted { display: block; margin-top: .35rem; font-size: .8rem; }
 .btn-secondary:hover { background: var(--bg-section); border-color: var(--color-primary); color: var(--color-primary); }
 .btn-block { display: flex; width: 100%; }
 .btn-large { padding: 1rem 1.6rem; font-size: 1rem; }
+
+/* Codi de descompte: input + botó Aplicar + resultat */
+.cupo-row { display: flex; gap: .5rem; align-items: stretch; }
+.cupo-row input { flex: 1; }
+.cupo-row .btn { white-space: nowrap; padding: .6rem 1.1rem; }
+.cupo-result { margin-top: .55rem; padding: .55rem .8rem; border-radius: 8px; font-size: .9rem; line-height: 1.4; }
+.cupo-result.cupo-ok  { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.cupo-result.cupo-err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.cupo-result s { opacity: .65; }
 .form-note { text-align: center; margin-top: 1rem; font-size: .85rem; color: var(--text-muted); }
 
 /* ── Alertes ─────────────────────────────────────────────── */

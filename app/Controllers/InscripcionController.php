@@ -25,6 +25,39 @@ use App\Services\QrService;
 
 final class InscripcionController
 {
+    /**
+     * Valida un codi de descompte sense inscriure (AJAX, botó "Aplicar").
+     * Retorna JSON {valid, porcentaje, message}.
+     */
+    public function validarCupo(Request $req, array $params): void
+    {
+        $slug   = (string) ($params['slug'] ?? '');
+        $evento = Evento::findBySlug($slug);
+        if ($evento === null) {
+            Response::json(['valid' => false, 'message' => 'Esdeveniment no trobat.'], 404);
+        }
+        if (!Csrf::verify($req->post('_csrf'))) {
+            Response::json(['valid' => false, 'message' => 'Sessió expirada. Recarrega la pàgina.'], 419);
+        }
+        $codigo = strtoupper(trim((string) $req->post('codigo', '')));
+        if ($codigo === '') {
+            Response::json(['valid' => false, 'message' => 'Introdueix un codi.']);
+        }
+        $desc = DescuentoEvento::findByCodigo((int) $evento['id'], $codigo);
+        if ($desc === null) {
+            Response::json(['valid' => false, 'message' => 'El codi no és vàlid per a aquest esdeveniment.']);
+        }
+        $check = DescuentoEvento::checkUsable($desc);
+        if (!$check['valid']) {
+            Response::json(['valid' => false, 'message' => $check['error'] ?? 'El codi no es pot fer servir.']);
+        }
+        Response::json([
+            'valid'      => true,
+            'porcentaje' => (float) $desc['porcentaje'],
+            'message'    => 'Descompte del ' . rtrim(rtrim(number_format((float) $desc['porcentaje'], 2, ',', '.'), '0'), ',') . '% aplicat.',
+        ]);
+    }
+
     public function store(Request $req, array $params): void
     {
         $slug = (string) ($params['slug'] ?? '');

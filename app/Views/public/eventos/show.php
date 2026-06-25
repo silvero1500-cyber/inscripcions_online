@@ -200,6 +200,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                         <option value="<?= (int)$t['id'] ?>"
                                 data-nac-min="<?= $nMin !== null ? $nMin : '' ?>"
                                 data-nac-max="<?= $nMax !== null ? $nMax : '' ?>"
+                                data-precio="<?= (float) ($t['precio_actual'] ?? $t['precio']) ?>"
                                 <?= $ag ? 'disabled' : '' ?>
                                 <?= (!$ag && (int)$val('tarifa_id') === (int)$t['id']) ? 'selected' : '' ?>>
                             <?= e($t['nombre']) ?> · <?= e(format_price((float)($t['precio_actual'] ?? $t['precio']))) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
@@ -384,10 +385,15 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                 <summary><strong><?= e(t('form.label.discount_question')) ?></strong></summary>
                 <div class="form-row" style="margin-top:1rem;">
                     <label for="descuento_codigo"><?= e(t('form.label.discount')) ?></label>
-                    <input type="text" id="descuento_codigo" name="descuento_codigo"
-                           maxlength="40" placeholder="EX: EARLY-A4F2X9B1"
-                           style="text-transform:uppercase;"
-                           value="<?= e(strtoupper($val('descuento_codigo'))) ?>">
+                    <div class="cupo-row">
+                        <input type="text" id="descuento_codigo" name="descuento_codigo"
+                               maxlength="40" placeholder="EX: EARLY-A4F2X9B1"
+                               style="text-transform:uppercase;"
+                               value="<?= e(strtoupper($val('descuento_codigo'))) ?>">
+                        <button type="button" id="cupo-aplicar" class="btn btn-secondary"
+                                data-url="<?= e(base_url('/eventos/' . $evento['slug'] . '/validar-cupo')) ?>">Aplicar</button>
+                    </div>
+                    <div id="cupo-result" class="cupo-result" style="display:none;"></div>
                     <small class="muted"><?= e(t('form.label.discount.hint')) ?></small>
                 </div>
             </details>
@@ -582,7 +588,11 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
             <details class="participant-discount">
                 <summary><?= e(t('form.label.discount_question')) ?></summary>
                 <div class="form-row" style="margin-top:.6rem;margin-bottom:0;">
-                    <input type="text" name="<?= e($nm('descuento_codigo')) ?>" maxlength="40" placeholder="EX: EARLY-A4F2X9B1" style="text-transform:uppercase;" value="<?= e(strtoupper($pv('descuento_codigo'))) ?>">
+                    <div class="cupo-row">
+                        <input type="text" name="<?= e($nm('descuento_codigo')) ?>" class="p-cupo-input" maxlength="40" placeholder="EX: EARLY-A4F2X9B1" style="text-transform:uppercase;" value="<?= e(strtoupper($pv('descuento_codigo'))) ?>">
+                        <button type="button" class="btn btn-secondary cupo-aplicar-p">Aplicar</button>
+                    </div>
+                    <div class="cupo-result cupo-result-p" style="display:none;"></div>
                     <?php $e = $pe('descuento_codigo'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                 </div>
             </details>
@@ -1058,6 +1068,67 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         if (sx && tll) { window.filterTallasBySexo(sx, tll); sx.addEventListener('change', function () { window.filterTallasBySexo(sx, tll); }); }
         var pt = block.querySelector('.p-tarifa');
         if (pt) window.filterCampsByTarifa(block, pt.value);
+    });
+})();
+</script>
+
+<script>
+// ── Aplicar codi de descompte (validació en viu) — individual i grup ──
+(function () {
+    var CUPO_URL = <?= json_encode(base_url('/eventos/' . $evento['slug'] . '/validar-cupo')) ?>;
+    function fmtPrice(n) { return n.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; }
+    function csrfVal() { var el = document.querySelector('input[name="_csrf"]'); return el ? el.value : ''; }
+    function showRes(el, html, ok) { el.style.display = 'block'; el.className = 'cupo-result ' + (ok ? 'cupo-ok' : 'cupo-err'); el.innerHTML = html; }
+
+    function validar(codigo, btn, resEl, tarifaSel) {
+        codigo = (codigo || '').trim().toUpperCase();
+        if (!codigo) { showRes(resEl, 'Introdueix un codi.', false); return; }
+        var old = btn.textContent; btn.disabled = true; btn.textContent = '…';
+        fetch(CUPO_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+            body: 'codigo=' + encodeURIComponent(codigo) + '&_csrf=' + encodeURIComponent(csrfVal())
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (d && d.valid) {
+                var msg = '✓ ' + (d.message || ('Descompte del ' + d.porcentaje + '%'));
+                var opt = tarifaSel ? tarifaSel.options[tarifaSel.selectedIndex] : null;
+                var precio = opt ? parseFloat(opt.getAttribute('data-precio') || '0') : 0;
+                if (precio > 0) {
+                    var nou = precio * (1 - d.porcentaje / 100);
+                    msg += ' · Preu: <s>' + fmtPrice(precio) + '</s> <strong>' + fmtPrice(nou) + '</strong>';
+                } else {
+                    msg += ' (tria una tarifa per veure el preu final)';
+                }
+                showRes(resEl, msg, true);
+            } else {
+                showRes(resEl, '✗ ' + ((d && d.message) || 'Codi no vàlid.'), false);
+            }
+        }).catch(function () {
+            showRes(resEl, 'No s\'ha pogut validar ara mateix. Torna-ho a provar.', false);
+        }).finally(function () { btn.disabled = false; btn.textContent = old; });
+    }
+
+    // ── Formulari individual ──
+    var iBtn = document.getElementById('cupo-aplicar');
+    if (iBtn) {
+        var iInput = document.getElementById('descuento_codigo');
+        var iRes = document.getElementById('cupo-result');
+        var iTar = document.getElementById('tarifa_id');
+        iBtn.addEventListener('click', function () { validar(iInput.value, iBtn, iRes, iTar); });
+        iInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); validar(iInput.value, iBtn, iRes, iTar); } });
+        if (iTar) iTar.addEventListener('change', function () { if (iRes.style.display !== 'none' && iRes.className.indexOf('cupo-ok') !== -1) validar(iInput.value, iBtn, iRes, iTar); });
+    }
+
+    // ── Formulari de grup (delegació: cobreix participants afegits dinàmicament) ──
+    document.addEventListener('click', function (e) {
+        var b = e.target && e.target.closest ? e.target.closest('.cupo-aplicar-p') : null;
+        if (!b) return;
+        var block = b.closest('[data-participant]') || b.closest('.participant-discount');
+        if (!block) return;
+        var input = block.querySelector('.p-cupo-input');
+        var resEl = block.querySelector('.cupo-result-p');
+        var tar = block.querySelector('.p-tarifa');
+        if (input && resEl) validar(input.value, b, resEl, tar);
     });
 })();
 </script>
