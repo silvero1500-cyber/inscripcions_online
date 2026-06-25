@@ -60,49 +60,22 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
     <div class="alert alert-error"><?= e($scanError) ?></div>
 <?php endif; ?>
 
-<?php /* ── Escaneig amb PISTOLA QR (lector HID = teclat: dispara i fa Enter) ── */ ?>
-<form method="get" action="<?= e(base_url('/admin/recollida')) ?>" class="recollida-gun" id="gun-form" autocomplete="off">
-    <?php if ($selEvento): ?><input type="hidden" name="evento_id" value="<?= $selEvento ?>"><?php endif; ?>
-    <?php if ($recFilter !== ''): ?><input type="hidden" name="recollida" value="<?= e($recFilter) ?>"><?php endif; ?>
-    <label for="gun-input">🔫 Escaneja amb pistola</label>
-    <input type="text" name="token" id="gun-input" autocomplete="off" autofocus
-           placeholder="Dispara el QR aquí… (o fes servir el botó 📷 de la càmera)">
-</form>
-<script>
-(function () {
-    var form = document.getElementById('gun-form');
-    var input = document.getElementById('gun-input');
-    if (!form || !input) return;
-    // En enviar (la pistola fa Enter), extreu el token net si ha disparat una URL sencera
-    form.addEventListener('submit', function () {
-        var v = (input.value || '').trim();
-        if (v.indexOf('/') !== -1) {
-            v = v.split('?')[0].replace(/\/+$/, '');
-            v = v.substring(v.lastIndexOf('/') + 1);
-        }
-        input.value = v;
-    });
-    // Mantén el focus al camp de la pistola (si no s'està escrivint en un altre camp)
-    setTimeout(function () { input.focus(); }, 200);
-})();
-</script>
-
-<?php /* ── Targeta del corredor escanejat (QR) ───────────────── */ ?>
+<?php /* ── Targeta del corredor escanejat (QR amb la càmera) ───────────────── */ ?>
 <?php if ($scanned): $ins = $scanned['inscrito']; $jaRecollit = !empty($ins['dorsal_recollit_at']); ?>
     <div class="recollida-scan-card <?= $jaRecollit ? 'is-done' : '' ?>">
         <div class="rsc-head">
             <span class="rsc-tag">QR escanejat</span>
             <h2><?= e($ins['nombre'] . ' ' . ($ins['apellido'] ?? '')) ?></h2>
         </div>
-        <?php /* Talla i Dorsal ben grans (el que més mira qui entrega) */ ?>
+        <?php /* Dorsal i Talla ben grans (el que més mira qui entrega) — dorsal primer */ ?>
         <div class="rsc-big">
+            <div class="rsc-big-item rsc-dorsal">
+                <span>Dorsal</span>
+                <strong class="rsc-xl"><?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '—' ?></strong>
+            </div>
             <div class="rsc-big-item">
                 <span>Talla</span>
                 <strong class="rsc-xl"><?= e($ins['talla_camiseta'] ?? '—') ?></strong>
-            </div>
-            <div class="rsc-big-item">
-                <span>Dorsal</span>
-                <strong class="rsc-xl"><?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '—' ?></strong>
             </div>
         </div>
 
@@ -142,6 +115,15 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
             </form>
         <?php endif; ?>
     </div>
+    <script>
+    // En escanejar (sobretot al mòbil) porta la fitxa al centre de la pantalla
+    (function () {
+        var card = document.querySelector('.recollida-scan-card');
+        if (card && 'scrollIntoView' in card) {
+            try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { card.scrollIntoView(); }
+        }
+    })();
+    </script>
 <?php endif; ?>
 
 <?php /* ── Filtres ────────────────────────────────────────────── */ ?>

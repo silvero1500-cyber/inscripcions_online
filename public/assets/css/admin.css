@@ -1201,11 +1201,6 @@ li.col-manager-item label {
 .recollida-grid .cell-actions input[type="text"],
 .recollida-grid .cell-actions input[type="number"] { font-size: 1.2rem; }
 
-/* Escaneig amb pistola QR */
-.recollida-gun { display: flex; align-items: center; gap: .8rem; background: #eff6ff; border: 2px dashed #93c5fd; border-radius: 10px; padding: .7rem 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
-.recollida-gun label { font-weight: 700; color: #1e40af; white-space: nowrap; margin: 0; }
-.recollida-gun input { flex: 1; min-width: 220px; font-size: 1.2rem; padding: .6rem .8rem; border: 1px solid #cbd5e1; border-radius: 8px; }
-.recollida-gun input:focus { outline: 2px solid #3b82f6; border-color: #3b82f6; }
 
 /* Targeta del corredor escanejat via QR */
 .recollida-scan-card {
@@ -1236,10 +1231,27 @@ li.col-manager-item label {
 .rsc-action input { padding: .55rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1.05rem; text-align: center; }
 .rsc-done { font-size: 1rem; color: #15803d; margin-bottom: 1rem; }
 /* Talla i Dorsal ben grans a la targeta escanejada */
-.rsc-big { display: flex; gap: 1.2rem; margin: .6rem 0 1.1rem; flex-wrap: wrap; }
-.rsc-big-item { display: flex; flex-direction: column; align-items: center; gap: .25rem; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: .7rem 1.4rem; min-width: 8rem; }
+.rsc-big { display: flex; gap: 1rem; margin: .6rem 0 1.1rem; }
+.rsc-big-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .25rem; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1rem 1.2rem; }
 .rsc-big-item span { font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; font-weight: 700; }
-.rsc-big-item .rsc-xl { font-size: 2.6rem; font-weight: 800; line-height: 1; color: #1e293b; }
+.rsc-big-item .rsc-xl { font-size: 3rem; font-weight: 800; line-height: 1; color: #1e293b; }
+/* Dorsal destacat (és el més important en entregar) */
+.rsc-big-item.rsc-dorsal { background: #eff6ff; border-color: #93c5fd; }
+.rsc-big-item.rsc-dorsal span { color: #1e40af; }
+.rsc-big-item.rsc-dorsal .rsc-xl { font-size: 3.6rem; color: #1d4ed8; }
+
+/* En MÒBIL: fitxa escanejada gran, dorsal i talla enormes a pantalla */
+@media (max-width: 640px) {
+    .recollida-scan-card { padding: 1rem; }
+    .recollida-scan-card .rsc-head h2 { font-size: 1.15rem; }
+    .rsc-big { flex-direction: column; gap: .8rem; }
+    .rsc-big-item { padding: 1.1rem; }
+    .rsc-big-item span { font-size: 1rem; }
+    .rsc-big-item .rsc-xl { font-size: 4.5rem; }
+    .rsc-big-item.rsc-dorsal .rsc-xl { font-size: 6rem; }
+    .rsc-facts strong { font-size: 1.2rem; }
+    .rsc-facts span { font-size: .8rem; }
+}
 .rsc-action-row { display: flex; gap: 1.2rem; align-items: flex-end; flex-wrap: wrap; }
 .rsc-action input { font-size: 1.7rem; width: 7.5rem; font-weight: 700; padding: .45rem .6rem; }
 .rsc-action label { font-size: .9rem; }
