@@ -1240,17 +1240,18 @@ li.col-manager-item label {
 .rsc-big-item.rsc-dorsal span { color: #1e40af; }
 .rsc-big-item.rsc-dorsal .rsc-xl { font-size: 3.6rem; color: #1d4ed8; }
 
-/* En MÒBIL: fitxa escanejada gran, dorsal i talla enormes a pantalla */
+/* En MÒBIL: fitxa escanejada gran, dorsal i talla GRANS i UN AL COSTAT DE L'ALTRE */
 @media (max-width: 640px) {
     .recollida-scan-card { padding: 1rem; }
     .recollida-scan-card .rsc-head h2 { font-size: 1.15rem; }
-    .rsc-big { flex-direction: column; gap: .8rem; }
-    .rsc-big-item { padding: 1.1rem; }
-    .rsc-big-item span { font-size: 1rem; }
-    .rsc-big-item .rsc-xl { font-size: 4.5rem; }
-    .rsc-big-item.rsc-dorsal .rsc-xl { font-size: 6rem; }
+    .rsc-big { gap: .55rem; }                 /* es mantenen en fila */
+    .rsc-big-item { padding: .85rem .4rem; min-width: 0; }
+    .rsc-big-item span { font-size: .9rem; }
+    .rsc-big-item .rsc-xl { font-size: 3rem; }
+    .rsc-big-item.rsc-dorsal .rsc-xl { font-size: 3.6rem; }
     .rsc-facts strong { font-size: 1.2rem; }
     .rsc-facts span { font-size: .8rem; }
+    .rsc-action-row .btn-lg { width: 100%; text-align: center; }
 }
 .rsc-action-row { display: flex; gap: 1.2rem; align-items: flex-end; flex-wrap: wrap; }
 .rsc-action input { font-size: 1.7rem; width: 7.5rem; font-weight: 700; padding: .45rem .6rem; }
