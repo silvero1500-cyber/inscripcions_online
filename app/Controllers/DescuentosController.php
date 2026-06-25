@@ -194,7 +194,7 @@ final class DescuentosController
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         $out = fopen('php://output', 'w');
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, ['Codi', '% Descompte', 'Usos actuals', 'Usos màx', 'Vàlid des de', 'Vàlid fins', 'Actiu', 'Lote', 'Nota'], ';');
+        fputcsv($out, ['Codi', '% Descompte', 'Usos actuals', 'Usos màx', 'Vàlid des de', 'Vàlid fins', 'Actiu', 'Lote', 'Nota'], ';', '"', '\\');
         foreach ($descuentos as $d) {
             fputcsv($out, [
                 $d['codigo'],
@@ -206,7 +206,7 @@ final class DescuentosController
                 (int)$d['activo'] === 1 ? 'sí' : 'no',
                 $d['lote'] ?? '',
                 $d['nota'] ?? '',
-            ], ';');
+            ], ';', '"', '\\');
         }
         fclose($out);
         exit;

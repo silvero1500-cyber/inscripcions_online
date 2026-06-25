@@ -276,7 +276,7 @@ final class InscritosAdminController
         foreach ($campos as $c) {
             $headers[] = (string) $c['etiqueta'] . (!empty($c['oculto']) ? ' (ocult)' : '');
         }
-        fputcsv($out, $headers, ';');
+        fputcsv($out, $headers, ';', '"', '\\'); // escape explícit (deprecat a PHP 8.4+)
 
         foreach ($inscritos as $i) {
             $row = [
@@ -304,7 +304,7 @@ final class InscritosAdminController
             foreach ($campos as $c) {
                 $row[] = $vals[(int) $c['id']] ?? '';
             }
-            fputcsv($out, $row, ';');
+            fputcsv($out, $row, ';', '"', '\\');
         }
 
         fclose($out);
