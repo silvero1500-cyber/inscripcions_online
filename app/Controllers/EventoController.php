@@ -283,15 +283,6 @@ final class EventoController
             [$id]
         )->fetchAll(\PDO::FETCH_KEY_PAIR);
 
-        // ── Por talla ──────────────────────────────────────────
-        $porTalla = $db->query(
-            "SELECT COALESCE(talla_camiseta, 'Sense talla') AS talla, COUNT(*) AS n
-             FROM inscritos
-             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
-             GROUP BY talla",
-            [$id]
-        )->fetchAll(\PDO::FETCH_KEY_PAIR);
-
         // ── Por tarifa ─────────────────────────────────────────
         $porTarifa = $db->query(
             "SELECT t.nombre, t.precio, COUNT(i.id) AS n
@@ -320,21 +311,54 @@ final class EventoController
             [$id]
         )->fetch();
 
-        // ── Top clubs ──────────────────────────────────────────
-        $topClubs = $db->query(
-            "SELECT club, COUNT(*) AS n FROM inscritos
-             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
-               AND club IS NOT NULL AND club <> ''
-             GROUP BY club ORDER BY n DESC LIMIT 10",
+        // ── Per mètode de pagament (TPV vs Manual/Import) ──────
+        // TPV = té un pagament Redsys completat; si no, es considera manual/importat.
+        $porPagament = $db->query(
+            "SELECT CASE WHEN EXISTS (
+                        SELECT 1 FROM pagos p WHERE p.inscrito_id = i.id AND p.estado = 'completado'
+                    ) THEN 'TPV' ELSE 'Manual' END AS metode,
+                    COUNT(*) AS n
+             FROM inscritos i
+             WHERE i.evento_id = ? AND i.estado IN ('pendiente','confirmado')
+             GROUP BY metode",
+            [$id]
+        )->fetchAll(\PDO::FETCH_KEY_PAIR);
+
+        // ── Per franja d'edat × categoria (tarifa) — per al drill-down ──
+        $edatCategoriaRows = $db->query(
+            "SELECT t.nombre AS categoria,
+                    CASE
+                        WHEN edad < 18 THEN '<18'
+                        WHEN edad BETWEEN 18 AND 29 THEN '18-29'
+                        WHEN edad BETWEEN 30 AND 39 THEN '30-39'
+                        WHEN edad BETWEEN 40 AND 49 THEN '40-49'
+                        WHEN edad BETWEEN 50 AND 59 THEN '50-59'
+                        WHEN edad >= 60 THEN '60+'
+                        ELSE 'Sense data'
+                    END AS franja,
+                    COUNT(*) AS n
+             FROM (
+                SELECT i.tarifa_id, TIMESTAMPDIFF(YEAR, i.fecha_nacimiento, CURDATE()) AS edad
+                FROM inscritos i
+                WHERE i.evento_id = ? AND i.estado IN ('pendiente','confirmado')
+             ) x
+             JOIN tarifas_evento t ON t.id = x.tarifa_id
+             GROUP BY t.nombre, franja",
             [$id]
         )->fetchAll();
 
-        // ── Top poblacions ─────────────────────────────────────
-        $topPoblaciones = $db->query(
-            "SELECT poblacion, COUNT(*) AS n FROM inscritos
-             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
-               AND poblacion IS NOT NULL AND poblacion <> ''
-             GROUP BY poblacion ORDER BY n DESC LIMIT 10",
+        // ── Venda per trams (preus early-bird) ─────────────────
+        // Inscrits agrupats pel preu que se'ls va aplicar (precio_aplicado);
+        // si la tarifa no té trams definits, no apareix com a tram.
+        $vendaTrams = $db->query(
+            "SELECT t.nombre AS tarifa, i.precio_aplicado AS preu, COUNT(*) AS n
+             FROM inscritos i
+             JOIN tarifas_evento t ON t.id = i.tarifa_id
+             WHERE i.evento_id = ? AND i.estado IN ('pendiente','confirmado')
+               AND i.precio_aplicado IS NOT NULL
+               AND EXISTS (SELECT 1 FROM tarifa_precios tp WHERE tp.tarifa_id = t.id)
+             GROUP BY t.nombre, i.precio_aplicado
+             ORDER BY t.nombre, i.precio_aplicado",
             [$id]
         )->fetchAll();
 
@@ -346,6 +370,17 @@ final class EventoController
             [$id]
         )->fetchAll();
 
+        // ── Inscrits últims 7 dies ─────────────────────────────
+        $darrers7 = (int) $db->query(
+            "SELECT COUNT(*) FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+               AND created_at >= (NOW() - INTERVAL 7 DAY)",
+            [$id]
+        )->fetchColumn();
+
+        // ── Comparativa amb l'edició anterior (mateix punt del compte enrere) ──
+        $comparativa = $this->edicioAnterior($evento, $totalActivas, $darrers7);
+
         View::render('admin/eventos/kpis', [
             'user'                => $user,
             'evento'              => $evento,
@@ -354,14 +389,94 @@ final class EventoController
             'ingresosConfirmados' => $ingresosConfirmados,
             'ingresosPotenciales' => $ingresosPotenciales,
             'porSexo'             => $porSexo,
-            'porTalla'            => $porTalla,
             'porTarifa'           => $porTarifa,
             'rangos'              => $rangos,
-            'topClubs'            => $topClubs,
-            'topPoblaciones'      => $topPoblaciones,
+            'porPagament'         => $porPagament,
+            'edatCategoria'       => $edatCategoriaRows,
+            'vendaTrams'          => $vendaTrams,
             'evolucion'           => $evolucion,
+            'darrers7'            => $darrers7,
+            'comparativa'         => $comparativa,
             'aforoMax'            => $evento['aforo_maximo'] !== null ? (int) $evento['aforo_maximo'] : null,
         ], layout: 'admin');
+    }
+
+    /**
+     * Comparativa amb l'edició anterior de la mateixa carrera (anio_edicion − 1),
+     * mesurada al MATEIX punt del compte enrere (mateixos dies abans de la cursa).
+     * Retorna null si l'edició no pertany a cap carrera o no hi ha edició anterior.
+     *
+     * @return array{
+     *   anyAnterior:int, inscritsMateixPunt:int, totalFinal:int, darrers7Ant:int,
+     *   deltaTotal:int, delta7:int, previsio:?int
+     * }|null
+     */
+    private function edicioAnterior(array $evento, int $totalActivas, int $darrers7): ?array
+    {
+        $carreraId = $evento['carrera_id'] ?? null;
+        $anio      = $evento['anio_edicion'] ?? null;
+        if (empty($carreraId) || empty($anio)) return null;
+
+        $db = Database::getInstance();
+        $ant = $db->query(
+            "SELECT id, fecha_evento, anio_edicion FROM eventos
+             WHERE carrera_id = ? AND anio_edicion = ? LIMIT 1",
+            [(int) $carreraId, (int) $anio - 1]
+        )->fetch();
+        if (!$ant) return null;
+
+        $antId = (int) $ant['id'];
+
+        // Dies que falten ara per a la cursa actual (mínim 0)
+        $diesFalten = (int) $db->query(
+            "SELECT GREATEST(0, DATEDIFF(?, CURDATE()))",
+            [(string) $evento['fecha_evento']]
+        )->fetchColumn();
+
+        // Data tall equivalent dins l'edició anterior (la seva data − dies que falten)
+        $tall = $db->query(
+            "SELECT DATE_SUB(?, INTERVAL ? DAY)",
+            [(string) $ant['fecha_evento'], $diesFalten]
+        )->fetchColumn();
+
+        $inscritsMateixPunt = (int) $db->query(
+            "SELECT COUNT(*) FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+               AND created_at <= ?",
+            [$antId, $tall . ' 23:59:59']
+        )->fetchColumn();
+
+        $totalFinal = (int) $db->query(
+            "SELECT COUNT(*) FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')",
+            [$antId]
+        )->fetchColumn();
+
+        // Mateixos 7 dies abans de la cursa anterior (al voltant del punt equivalent)
+        $darrers7Ant = (int) $db->query(
+            "SELECT COUNT(*) FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+               AND created_at > DATE_SUB(?, INTERVAL 7 DAY)
+               AND created_at <= ?",
+            [$antId, $tall . ' 23:59:59', $tall . ' 23:59:59']
+        )->fetchColumn();
+
+        // Previsió d'inscrits aplicant el creixement de l'edició anterior
+        $previsio = null;
+        if ($inscritsMateixPunt > 0) {
+            $factor = $totalFinal / $inscritsMateixPunt;
+            $previsio = (int) round($totalActivas * $factor);
+        }
+
+        return [
+            'anyAnterior'        => (int) $ant['anio_edicion'],
+            'inscritsMateixPunt' => $inscritsMateixPunt,
+            'totalFinal'         => $totalFinal,
+            'darrers7Ant'        => $darrers7Ant,
+            'deltaTotal'         => $totalActivas - $inscritsMateixPunt,
+            'delta7'             => $darrers7 - $darrers7Ant,
+            'previsio'           => $previsio,
+        ];
     }
 
     public function destroy(Request $req, array $params): void

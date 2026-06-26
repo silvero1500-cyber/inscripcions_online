@@ -760,6 +760,41 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
     font-size: .82rem;
     color: #6b7280;
 }
+
+/* Targetes de Nivell 1 (proposta KPIs): accent blau */
+.kpi-card-lvl1 {
+    background: linear-gradient(160deg, #2563eb 0%, #1e3a8a 100%);
+    border-color: transparent;
+}
+.kpi-card-lvl1 .kpi-label { color: rgba(255,255,255,.82); }
+.kpi-card-lvl1 .kpi-value { color: #fff; font-size: 2.4rem; }
+.kpi-card-lvl1 .kpi-sub { color: rgba(255,255,255,.8); }
+.kpi-card-lvl1 .kpi-progress { background: rgba(255,255,255,.25); }
+.kpi-card-lvl1 .kpi-progress-bar { background: #fff; }
+
+/* Línia de comparativa amb l'edició anterior */
+.kpi-cmp {
+    margin-top: .55rem;
+    font-size: .85rem;
+    font-weight: 700;
+    display: inline-block;
+    padding: .18rem .55rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,.16);
+    color: #fff;
+}
+.kpi-cmp.kpi-delta-up   { background: rgba(22,163,74,.95);  color: #fff; }
+.kpi-cmp.kpi-delta-down { background: rgba(220,38,38,.95);  color: #fff; }
+.kpi-cmp.kpi-delta-flat { background: rgba(255,255,255,.22); color: #fff; }
+.kpi-cmp.kpi-delta-prev { background: rgba(255,255,255,.18); color: #fff; font-weight: 600; }
+.kpi-cmp .muted { color: rgba(255,255,255,.7) !important; font-weight: 400; }
+
+/* Capçalera de panell amb acció (drill-down franja d'edat) */
+.kpi-panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap;
+}
+.kpi-panel-head h2 { margin: 0; }
 .kpi-progress {
     margin-top: .7rem;
     height: 6px;
