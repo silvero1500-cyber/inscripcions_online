@@ -27,13 +27,13 @@ final class CarreraController
 
         $carrera = Carrera::findBySlug($slug);
         if ($carrera === null) {
-            Session::flash('error', 'Carrera no trobada.');
+            Session::flash('error', 'Cursa no trobada.');
             Response::redirect(base_url('/admin/eventos'));
         }
 
         $edicion = Carrera::edicionActiva((int) $carrera['id']);
         if ($edicion === null) {
-            Session::flash('error', 'La carrera «' . $carrera['nombre'] . '» encara no té cap edició. Crea\'n una.');
+            Session::flash('error', 'La cursa «' . $carrera['nombre'] . '» encara no té cap edició. Crea\'n una.');
             Response::redirect(base_url('/admin/eventos'));
         }
 

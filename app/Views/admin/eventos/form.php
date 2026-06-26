@@ -57,7 +57,7 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
         <?php /* Carrera (marca) + any d'aquesta edició */ ?>
         <div class="form-grid-2">
             <div class="form-row">
-                <label for="carrera_id">Carrera</label>
+                <label for="carrera_id">Cursa</label>
                 <select id="carrera_id" name="carrera_id">
                     <option value="">— Cap (esdeveniment solt) —</option>
                     <?php foreach (($carreres ?? []) as $c): ?>

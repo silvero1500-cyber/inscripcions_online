@@ -69,7 +69,7 @@ if (count($carreres) > 0) {
                        href="<?= e(base_url('/admin/recollida')) ?>">Recollida de dorsals</a>
                 </nav>
             <?php elseif (count($carreres) > 0): ?>
-                <nav class="race-nav" aria-label="Carreres">
+                <nav class="race-nav" aria-label="Curses">
                     <?php foreach ($carreres as $c): ?>
                         <a class="race-pill<?= ($activeCarreraId !== null && (int) $activeCarreraId === (int) $c['id']) ? ' active' : '' ?>"
                            href="<?= e(base_url('/admin/carrera/' . rawurlencode((string) $c['slug']))) ?>">

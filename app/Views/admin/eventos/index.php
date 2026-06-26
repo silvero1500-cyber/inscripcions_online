@@ -9,7 +9,7 @@ $isSuper = isset($user) && ($user->rol ?? '') === 'superadmin';
 <section class="page-head with-action">
     <div>
         <h1>Esdeveniments</h1>
-        <p class="muted">Llistat de carreres que pots gestionar.</p>
+        <p class="muted">Llistat de curses que pots gestionar.</p>
     </div>
     <?php if ($isSuper): ?>
         <a class="btn btn-primary" href="<?= e(base_url('/admin/eventos/nou')) ?>">+ Nou esdeveniment</a>

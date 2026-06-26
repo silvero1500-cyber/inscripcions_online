@@ -826,7 +826,7 @@ final class EventoController
             $v->integer('max_participantes', 1, 50);
         }
         if (!empty($data['carrera_id']) && \App\Models\Carrera::findById((int) $data['carrera_id']) === null) {
-            $v->addError('carrera_id', 'La carrera seleccionada no existeix.');
+            $v->addError('carrera_id', 'La cursa seleccionada no existeix.');
         }
         if (isset($data['anio_edicion']) && $data['anio_edicion'] !== null) {
             $v->integer('anio_edicion', 2000, 2100);
