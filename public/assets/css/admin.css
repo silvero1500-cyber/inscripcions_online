@@ -691,6 +691,10 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
     .tarifa-grid-2 { grid-template-columns: 1fr; }
     .grupo-grid { grid-template-columns: 1fr; }
     .page-head.with-action { flex-direction: column; align-items: stretch; }
+    /* Al mòbil, a recollida, amaga el text de capçalera per guanyar espai
+       (el botó d'acció es manté) */
+    .page-head.hide-text-mobile h1,
+    .page-head.hide-text-mobile p { display: none; }
     .data-table { font-size: .85rem; }
     .data-table thead th, .data-table tbody td { padding: .6rem .5rem; }
 }

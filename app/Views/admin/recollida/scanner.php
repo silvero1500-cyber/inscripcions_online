@@ -1,7 +1,7 @@
 <?php
 /** @var object $user */
 ?>
-<section class="page-head with-action">
+<section class="page-head with-action hide-text-mobile">
     <div>
         <h1>Escanejar QR · Recollida</h1>
         <p class="muted">Apunta la càmera al QR del comprovant del corredor.</p>
@@ -86,43 +86,43 @@
             var size = Math.floor(min * 0.7);
             return { width: size, height: size };
         },
-        aspectRatio: 1.7777778,
-        videoConstraints: {
-            facingMode: { ideal: "environment" },
-            width:  { ideal: 1280 },
-            height: { ideal: 720 }
-        }
+        // Sense forçar resolució: el navegador obre la càmera més de pressa amb la
+        // resolució nativa que negociant 1280×720 (sobretot al mòbil).
+        aspectRatio: 1.7777778
     };
 
     function startWithCamera(cameraId) {
         return reader.start(cameraId, config, onSuccess, onError);
     }
 
-    function startBackPreferred() {
-        return Html5Qrcode.getCameras().then(function (cams) {
+    // Llista de càmeres en segon pla (NOMÉS per al botó "Canviar càmera").
+    // No bloqueja l'arrencada: enumerar abans obre i tanca una càmera de més.
+    function loadCamerasLazily() {
+        Html5Qrcode.getCameras().then(function (cams) {
             cameras = cams || [];
-            if (cameras.length === 0) {
-                setStatus('No hi ha cap càmera disponible.', 'err');
-                return;
-            }
-            var back = cameras.find(function (c) { return /back|rear|environment|trasera|posterior/i.test(c.label); });
-            var camera = back || cameras[cameras.length - 1];
-            currentIdx = cameras.indexOf(camera);
+            if (cameras.length > 1 && !stopped) btnSwitch.style.display = 'inline-block';
+        }).catch(function () { /* sense permís encara, ho ignorem */ });
+    }
 
-            return startWithCamera(camera.id).then(function () {
-                setStatus('Apunta al QR del corredor', 'ok');
-                btnStop.style.display = 'inline-block';
-                if (cameras.length > 1) btnSwitch.style.display = 'inline-block';
-            }).catch(function (err) {
-                return reader.start({ facingMode: { ideal: "environment" } }, config, onSuccess, onError)
-                    .then(function () {
-                        setStatus('Apunta al QR del corredor', 'ok');
-                        btnStop.style.display = 'inline-block';
-                    });
+    function startBackPreferred() {
+        setStatus('Obrint càmera…', '');
+        // Arrenca DIRECTE amb la càmera del darrere (facingMode), sense enumerar
+        // primer: és bastant més ràpid en obrir-se al mòbil.
+        return reader.start({ facingMode: { exact: "environment" } }, config, onSuccess, onError)
+            .then(onStarted)
+            .catch(function () {
+                // Alguns mòbils no accepten {exact}; provem {ideal}
+                return reader.start({ facingMode: { ideal: "environment" } }, config, onSuccess, onError).then(onStarted);
+            })
+            .catch(function (err) {
+                setStatus('Error iniciant càmera: ' + (err && err.name ? err.name + ' - ' + err.message : err), 'err');
             });
-        }).catch(function (err) {
-            setStatus('Error iniciant càmera: ' + err.name + ' - ' + err.message, 'err');
-        });
+    }
+
+    function onStarted() {
+        setStatus('Apunta al QR del corredor', 'ok');
+        btnStop.style.display = 'inline-block';
+        loadCamerasLazily();
     }
 
     btnSwitch.addEventListener('click', function () {
@@ -131,6 +131,7 @@
             currentIdx = (currentIdx + 1) % cameras.length;
             startWithCamera(cameras[currentIdx].id).then(function () {
                 setStatus('Càmera: ' + (cameras[currentIdx].label || 'desconeguda'), 'ok');
+                btnStop.style.display = 'inline-block';
             });
         });
     });

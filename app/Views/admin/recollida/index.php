@@ -37,7 +37,7 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
     ], fn($v) => $v !== '' && $v !== null));
 };
 ?>
-<section class="page-head with-action">
+<section class="page-head with-action hide-text-mobile">
     <div>
         <h1>Recollida dorsal</h1>
         <p class="muted">Entrega de dorsals i material. Cerca el corredor o escaneja el seu QR.</p>
