@@ -35,31 +35,49 @@ $navActive = function (string $rel, bool $exact = false) use ($curPath): string 
     <title>Panel · Inscripcions Online</title>
     <link rel="stylesheet" href="<?= e(asset('css/admin.css')) ?>?v=<?= @filemtime(dirname(__DIR__, 3) . '/public/assets/css/admin.css') ?: time() ?>">
 </head>
+<?php
+// ── Carreres (marques) per a la barra superior ───────────────
+// Cada pastilla obre l'edició activa d'aquella carrera. Marquem l'activa si la
+// pàgina actual treballa amb una edició d'aquesta carrera (per ?evento_id o ruta).
+$isRecollida = $currentUser && (($currentUser->rol ?? '') === 'recollida');
+$carreres = (!$isRecollida && function_exists('current_carreres')) ? current_carreres() : [];
+$activeCarreraId = null;
+if (count($carreres) > 0) {
+    $evId = isset($_GET['evento_id']) ? (int) $_GET['evento_id'] : 0;
+    if ($evId === 0 && preg_match('#/admin/eventos/(\d+)(?:/|$)#', $curPath, $mm)) {
+        $evId = (int) $mm[1];
+    }
+    if ($evId > 0) {
+        $evRow = \App\Models\Evento::findById($evId);
+        $activeCarreraId = $evRow['carrera_id'] ?? null;
+    }
+}
+?>
 <body class="layout-admin">
-    <header class="topbar">
+    <header class="topbar topbar-light">
         <a class="brand" href="<?= e(base_url('/admin')) ?>">
-            <span class="brand-dot" aria-hidden="true"></span>
-            Inscripcions <strong>Online</strong>
+            <img class="brand-logo" src="<?= e(asset('img/werun-logo.png')) ?>" alt="WeRun">
         </a>
         <button type="button" class="nav-toggle" id="navToggle"
                 aria-label="Menú" aria-controls="navMenu" aria-expanded="false">
             <span></span><span></span><span></span>
         </button>
         <div class="topbar-collapse" id="navMenu">
-            <nav class="topnav">
-                <?php if ($currentUser && $currentUser->rol === 'recollida'): ?>
-                    <a class="<?= trim($navActive('/admin/recollida')) ?>" href="<?= e(base_url('/admin/recollida')) ?>">Recollida de dorsals</a>
-                <?php else: ?>
-                <a class="<?= trim($navActive('/admin', true)) ?>" href="<?= e(base_url('/admin')) ?>">Panel</a>
-                <a class="<?= trim($navActive('/admin/eventos')) ?>" href="<?= e(base_url('/admin/eventos')) ?>">Esdeveniments</a>
-                <a class="<?= trim($navActive('/admin/recollida')) ?>" href="<?= e(base_url('/admin/recollida')) ?>">Recollida</a>
-                <a class="<?= trim($navActive('/admin/inscritos')) ?>" href="<?= e(base_url('/admin/inscritos')) ?>">Inscrits</a>
-                <?php if ($currentUser && $currentUser->rol === 'superadmin'): ?>
-                    <a class="<?= trim($navActive('/admin/tienda')) ?>" href="<?= e(base_url('/admin/tienda')) ?>">Botiga</a>
-                    <a class="<?= trim($navActive('/admin/usuarios')) ?>" href="<?= e(base_url('/admin/usuarios')) ?>">Usuaris</a>
-                <?php endif; ?>
-                <?php endif; ?>
-            </nav>
+            <?php if ($isRecollida): ?>
+                <nav class="race-nav" aria-label="Recollida">
+                    <a class="race-pill<?= trim($navActive('/admin/recollida')) ? ' active' : '' ?>"
+                       href="<?= e(base_url('/admin/recollida')) ?>">Recollida de dorsals</a>
+                </nav>
+            <?php elseif (count($carreres) > 0): ?>
+                <nav class="race-nav" aria-label="Carreres">
+                    <?php foreach ($carreres as $c): ?>
+                        <a class="race-pill<?= ($activeCarreraId !== null && (int) $activeCarreraId === (int) $c['id']) ? ' active' : '' ?>"
+                           href="<?= e(base_url('/admin/carrera/' . rawurlencode((string) $c['slug']))) ?>">
+                            <?= e($c['nombre']) ?>
+                        </a>
+                    <?php endforeach; ?>
+                </nav>
+            <?php endif; ?>
             <div class="user-menu">
                 <?php if ($currentUser): ?>
                     <span class="user-avatar" aria-hidden="true"><?= e($initials) ?></span>
@@ -72,35 +90,6 @@ $navActive = function (string $rel, bool $exact = false) use ($curPath): string 
             </div>
         </div>
     </header>
-
-    <?php
-    // ── Barra de carreres (marques) ──────────────────────────────
-    // Cada pastilla obre l'edició activa d'aquella carrera. Marquem
-    // l'activa si la pàgina actual treballa amb una edició d'aquesta carrera.
-    $carreres = function_exists('current_carreres') ? current_carreres() : [];
-    if ($currentUser && ($currentUser->rol ?? '') !== 'recollida' && count($carreres) > 0):
-        // Carrera activa: a partir de ?evento_id o /admin/eventos/{id}/...
-        $activeCarreraId = null;
-        $evId = isset($_GET['evento_id']) ? (int) $_GET['evento_id'] : 0;
-        if ($evId === 0 && preg_match('#/admin/eventos/(\d+)(?:/|$)#', $curPath, $mm)) {
-            $evId = (int) $mm[1];
-        }
-        if ($evId > 0) {
-            $evRow = \App\Models\Evento::findById($evId);
-            $activeCarreraId = $evRow['carrera_id'] ?? null;
-        }
-    ?>
-    <nav class="race-bar" aria-label="Carreres">
-        <div class="race-bar-inner">
-            <?php foreach ($carreres as $c): ?>
-                <a class="race-pill<?= ($activeCarreraId !== null && (int) $activeCarreraId === (int) $c['id']) ? ' active' : '' ?>"
-                   href="<?= e(base_url('/admin/carrera/' . rawurlencode((string) $c['slug']))) ?>">
-                    <?= e($c['nombre']) ?>
-                </a>
-            <?php endforeach; ?>
-        </div>
-    </nav>
-    <?php endif; ?>
 
     <main class="content<?= !empty($wide) ? ' content-wide' : '' ?>">
         <?= $content ?? '' ?>
