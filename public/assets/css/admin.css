@@ -1361,6 +1361,9 @@ li.col-manager-item label {
 .dash-list-date { font-weight: 700; color: #475569; }
 .dash-list-title { font-weight: 600; }
 .dash-list-ins { color: #64748b; font-size: .85rem; }
+.dash-list-row.is-current { border-color: #16a34a; box-shadow: 0 0 0 1px #16a34a inset; }
+.dash-list-row.dash-list-add { color: #4338ca; border-style: dashed; justify-content: flex-start; }
+.dash-list-row.dash-list-add:hover { border-color: #4338ca; background: #f5f3ff; }
 
 /* Accessos ràpids */
 .dash-quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: .8rem; }
