@@ -157,8 +157,8 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 .brand:hover { text-decoration: none; opacity: .92; }
 .brand-logo {
     display: block;
-    height: 62px; width: auto;
-    max-width: 260px;
+    height: 85px; width: auto;
+    max-width: 320px;
 }
 
 /* Contenidor col·lapsable: carreres a l'esquerra (just al costat del logo),
