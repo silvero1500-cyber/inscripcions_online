@@ -157,15 +157,18 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 .brand:hover { text-decoration: none; opacity: .92; }
 .brand-logo {
     display: block;
-    height: 42px; width: auto;
-    max-width: 200px;
+    height: 62px; width: auto;
+    max-width: 260px;
 }
 
-/* Contenidor col·lapsable (carreres + user-menu) — empès a la dreta */
+/* Contenidor col·lapsable: carreres a l'esquerra (just al costat del logo),
+   user-menu empès a la dreta. Ocupa tot l'ample disponible. */
 .topbar-collapse {
-    margin-left: auto;
+    flex: 1;
     display: flex; align-items: center; gap: 1.4rem;
 }
+/* L'usuari va a la dreta del tot; les carreres queden a l'esquerra */
+.topbar-collapse .user-menu { margin-left: auto; }
 
 /* ── Carreres (marques) a la dreta de la barra ───────────── */
 .race-nav {
