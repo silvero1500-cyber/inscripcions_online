@@ -28,11 +28,30 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
--- 2. EVENTOS (Carreras populars)
+-- 1.5 CARRERES (marques) — agrupen edicions per any
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `carreres` (
+    `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `nombre`     VARCHAR(150) NOT NULL,
+    `slug`       VARCHAR(160) NOT NULL,
+    `color`      VARCHAR(7)   NULL COMMENT 'Accent del botó (hex), opcional',
+    `orden`      SMALLINT     NOT NULL DEFAULT 0,
+    `activa`     TINYINT(1)   NOT NULL DEFAULT 1,
+    `created_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_carrera_slug` (`slug`),
+    KEY `idx_carrera_activa_orden` (`activa`, `orden`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- 2. EVENTOS (edicions de carreres)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `eventos` (
     `id`                        INT UNSIGNED    NOT NULL AUTO_INCREMENT,
     `propietario_id`            INT UNSIGNED    NOT NULL COMMENT 'Organizador principal del evento',
+    `carrera_id`                INT UNSIGNED    NULL COMMENT 'Carrera (marca) a què pertany aquesta edició',
+    `anio_edicion`              SMALLINT UNSIGNED NULL COMMENT 'Any de l''edició (ex: 2026)',
     `titulo`                    VARCHAR(255)    NOT NULL,
     `slug`                      VARCHAR(255)    NOT NULL,
     `descripcion`               LONGTEXT        NULL,
@@ -54,9 +73,13 @@ CREATE TABLE IF NOT EXISTS `eventos` (
     KEY `idx_propietario` (`propietario_id`),
     KEY `idx_fecha_evento` (`fecha_evento`),
     KEY `idx_activo` (`activo`),
+    KEY `idx_evento_carrera_anio` (`carrera_id`, `anio_edicion`),
     CONSTRAINT `fk_evento_propietario`
         FOREIGN KEY (`propietario_id`) REFERENCES `usuarios` (`id`)
-        ON DELETE RESTRICT ON UPDATE CASCADE
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `fk_evento_carrera`
+        FOREIGN KEY (`carrera_id`) REFERENCES `carreres` (`id`)
+        ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

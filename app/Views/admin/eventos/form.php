@@ -3,6 +3,7 @@
 /** @var list<array> $campos */
 /** @var list<array> $tarifas */
 /** @var list<array> $grupos */
+/** @var list<array> $carreres */
 /** @var array $old */
 /** @var array $errors */
 use App\Core\Csrf;
@@ -51,6 +52,30 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
             <input type="text" id="titulo" name="titulo" required maxlength="255"
                    value="<?= e($val('titulo')) ?>">
             <?php if ($err('titulo')): ?><div class="field-error"><?= e($err('titulo')) ?></div><?php endif; ?>
+        </div>
+
+        <?php /* Carrera (marca) + any d'aquesta edició */ ?>
+        <div class="form-grid-2">
+            <div class="form-row">
+                <label for="carrera_id">Carrera</label>
+                <select id="carrera_id" name="carrera_id">
+                    <option value="">— Cap (esdeveniment solt) —</option>
+                    <?php foreach (($carreres ?? []) as $c): ?>
+                        <option value="<?= (int) $c['id'] ?>" <?= (string) $val('carrera_id') === (string) $c['id'] ? 'selected' : '' ?>>
+                            <?= e($c['nombre']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <small class="muted">La marca a què pertany aquesta edició (apareix a la barra superior).</small>
+                <?php if ($err('carrera_id')): ?><div class="field-error"><?= e($err('carrera_id')) ?></div><?php endif; ?>
+            </div>
+            <div class="form-row">
+                <label for="anio_edicion">Any de l'edició</label>
+                <input type="number" id="anio_edicion" name="anio_edicion" min="2000" max="2100"
+                       placeholder="Ex: 2026" value="<?= e($val('anio_edicion')) ?>">
+                <small class="muted">Si es deixa buit, s'agafa l'any de la data de l'esdeveniment.</small>
+                <?php if ($err('anio_edicion')): ?><div class="field-error"><?= e($err('anio_edicion')) ?></div><?php endif; ?>
+            </div>
         </div>
 
         <div class="form-grid-2">

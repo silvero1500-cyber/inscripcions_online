@@ -101,7 +101,7 @@ $pctAforo = function (array $ev): ?int {
     <?php if ($proxima): $pct = $pctAforo($proxima); ?>
         <section class="dash-next">
             <div class="dash-next-head">
-                <span class="dash-next-tag">🏁 Pròxima carrera</span>
+                <span class="dash-next-tag">🏁 Pròxima cursa</span>
                 <span class="dash-next-count"><?= e($textProxima) ?></span>
             </div>
             <h2><?= e($proxima['titulo']) ?></h2>

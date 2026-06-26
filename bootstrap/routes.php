@@ -9,6 +9,7 @@ use App\Core\Router;
 use App\Controllers\AuthController;
 use App\Controllers\AdminController;
 use App\Controllers\AuditController;
+use App\Controllers\CarreraController;
 use App\Controllers\CheckinController;
 use App\Controllers\RecollidaController;
 use App\Controllers\DescuentosController;
@@ -77,6 +78,9 @@ $superadmin = [[Auth::class, 'requireSuperadmin']];
 $router->middleware([Auth::class, 'recollidaScope']);
 
 $router->get ('/admin',                              [AdminController::class, 'dashboard'], $auth);
+
+// Entrada per carrera (barra superior) → obre l'edició activa d'aquesta carrera
+$router->get ('/admin/carrera/{slug}',               [CarreraController::class, 'enter'],   $auth);
 
 // CRUD eventos — el llistat el veuen tots els admins; crear/editar/etc. NOMÉS superadmin
 $router->get ('/admin/eventos',                      [EventoController::class, 'index'],   $auth);

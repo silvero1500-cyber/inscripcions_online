@@ -52,13 +52,14 @@ final class EventoController
         $errorsJson = Session::pullFlash('form_errors');
 
         View::render('admin/eventos/form', [
-            'user'    => $user,
-            'evento'  => null,
-            'campos'  => [],
-            'tarifas' => [],
-            'grupos'  => [],
-            'old'     => $oldJson    ? (json_decode($oldJson, true) ?: [])    : [],
-            'errors'  => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
+            'user'     => $user,
+            'evento'   => null,
+            'campos'   => [],
+            'tarifas'  => [],
+            'grupos'   => [],
+            'carreres' => \App\Models\Carrera::allActivas(),
+            'old'      => $oldJson    ? (json_decode($oldJson, true) ?: [])    : [],
+            'errors'   => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
         ], layout: 'admin');
     }
 
@@ -95,6 +96,8 @@ final class EventoController
             function () use ($user, $data, $imagePath, $slug, $tarifas, $campos, $grupos): void {
                 $eventoId = Evento::create([
                     'propietario_id'           => $user->id,
+                    'carrera_id'               => $data['carrera_id'],
+                    'anio_edicion'             => $data['anio_edicion'],
                     'titulo'                   => $data['titulo'],
                     'slug'                     => $slug,
                     'localizacion'             => $data['localizacion'],
@@ -142,13 +145,14 @@ final class EventoController
         $errorsJson = Session::pullFlash('form_errors');
 
         View::render('admin/eventos/form', [
-            'user'    => $user,
-            'evento'  => $evento,
-            'campos'  => $campos,
-            'tarifas' => $tarifas,
-            'grupos'  => $grupos,
-            'old'     => $oldJson    ? (json_decode($oldJson, true) ?: [])    : [],
-            'errors'  => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
+            'user'     => $user,
+            'evento'   => $evento,
+            'campos'   => $campos,
+            'tarifas'  => $tarifas,
+            'grupos'   => $grupos,
+            'carreres' => \App\Models\Carrera::allActivas(),
+            'old'      => $oldJson    ? (json_decode($oldJson, true) ?: [])    : [],
+            'errors'   => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
         ], layout: 'admin');
     }
 
@@ -176,6 +180,8 @@ final class EventoController
 
         $update = [
             'titulo'                   => $data['titulo'],
+            'carrera_id'               => $data['carrera_id'],
+            'anio_edicion'             => $data['anio_edicion'],
             'localizacion'             => $data['localizacion'],
             'reglamento_url'           => $data['reglamento_url'],
             'web_oficial_url'          => $data['web_oficial_url'],
@@ -450,6 +456,8 @@ final class EventoController
             function () use ($evento, $tarifas, $campos, $grupos, $nuevoTitulo, $slug, &$newId): void {
                 $newId = Evento::create([
                     'propietario_id'           => (int) $evento['propietario_id'],
+                    'carrera_id'               => $evento['carrera_id'] ?? null,
+                    'anio_edicion'             => !empty($evento['anio_edicion']) ? (int) $evento['anio_edicion'] + 1 : null,
                     'titulo'                   => $nuevoTitulo,
                     'slug'                     => $slug,
                     'descripcion'              => $evento['descripcion'],
@@ -534,13 +542,23 @@ final class EventoController
         $aforo  = trim((string)($post['aforo_maximo'] ?? ''));
         $maxPart = trim((string)($post['max_participantes'] ?? ''));
         $fechaLimite = self::normalizeDateTime(trim((string)($post['fecha_limite_inscripcion'] ?? '')));
+        $fechaEvento = trim((string)($post['fecha_evento'] ?? ''));
+
+        $carreraId = trim((string)($post['carrera_id'] ?? ''));
+        $anioEd    = trim((string)($post['anio_edicion'] ?? ''));
+        // Si no s'indica l'any de l'edició, s'agafa el de la data de l'esdeveniment
+        if ($anioEd === '' && preg_match('/^(\d{4})-/', $fechaEvento, $m)) {
+            $anioEd = $m[1];
+        }
 
         return [
             'titulo'                   => trim((string)($post['titulo'] ?? '')),
+            'carrera_id'               => $carreraId === '' ? null : (int)$carreraId,
+            'anio_edicion'             => $anioEd === '' ? null : (int)$anioEd,
             'localizacion'             => trim((string)($post['localizacion'] ?? '')) ?: null,
             'reglamento_url'           => self::normalizeUrl((string)($post['reglamento_url'] ?? '')),
             'web_oficial_url'          => self::normalizeUrl((string)($post['web_oficial_url'] ?? '')),
-            'fecha_evento'             => trim((string)($post['fecha_evento'] ?? '')),
+            'fecha_evento'             => $fechaEvento,
             'fecha_limite_inscripcion' => $fechaLimite,
             'aforo_maximo'             => $aforo === '' ? null : (int)$aforo,
             'max_participantes'        => $maxPart === '' ? null : max(1, (int)$maxPart),
@@ -634,6 +652,12 @@ final class EventoController
         }
         if (isset($data['max_participantes']) && $data['max_participantes'] !== null) {
             $v->integer('max_participantes', 1, 50);
+        }
+        if (!empty($data['carrera_id']) && \App\Models\Carrera::findById((int) $data['carrera_id']) === null) {
+            $v->addError('carrera_id', 'La carrera seleccionada no existeix.');
+        }
+        if (isset($data['anio_edicion']) && $data['anio_edicion'] !== null) {
+            $v->integer('anio_edicion', 2000, 2100);
         }
         return $v;
     }

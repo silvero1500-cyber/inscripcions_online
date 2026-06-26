@@ -98,6 +98,27 @@ if (!function_exists('current_locale')) {
 }
 
 /**
+ * Carreres (marques) actives per a la barra superior de l'admin.
+ * Es cau en memòria per petició i és tolerant: si la taula encara no existeix
+ * (abans d'aplicar la migració 033) retorna [] sense petar la pàgina.
+ *
+ * @return list<array<string,mixed>>
+ */
+if (!function_exists('current_carreres')) {
+    function current_carreres(): array
+    {
+        static $cache = null;
+        if ($cache !== null) return $cache;
+        try {
+            $cache = \App\Models\Carrera::allActivas();
+        } catch (\Throwable $e) {
+            $cache = [];
+        }
+        return $cache;
+    }
+}
+
+/**
  * Formatea un precio en €: 12.50 -> "12,50 €"
  */
 if (!function_exists('format_price')) {

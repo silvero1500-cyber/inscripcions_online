@@ -73,6 +73,35 @@ $navActive = function (string $rel, bool $exact = false) use ($curPath): string 
         </div>
     </header>
 
+    <?php
+    // ── Barra de carreres (marques) ──────────────────────────────
+    // Cada pastilla obre l'edició activa d'aquella carrera. Marquem
+    // l'activa si la pàgina actual treballa amb una edició d'aquesta carrera.
+    $carreres = function_exists('current_carreres') ? current_carreres() : [];
+    if ($currentUser && ($currentUser->rol ?? '') !== 'recollida' && count($carreres) > 0):
+        // Carrera activa: a partir de ?evento_id o /admin/eventos/{id}/...
+        $activeCarreraId = null;
+        $evId = isset($_GET['evento_id']) ? (int) $_GET['evento_id'] : 0;
+        if ($evId === 0 && preg_match('#/admin/eventos/(\d+)(?:/|$)#', $curPath, $mm)) {
+            $evId = (int) $mm[1];
+        }
+        if ($evId > 0) {
+            $evRow = \App\Models\Evento::findById($evId);
+            $activeCarreraId = $evRow['carrera_id'] ?? null;
+        }
+    ?>
+    <nav class="race-bar" aria-label="Carreres">
+        <div class="race-bar-inner">
+            <?php foreach ($carreres as $c): ?>
+                <a class="race-pill<?= ($activeCarreraId !== null && (int) $activeCarreraId === (int) $c['id']) ? ' active' : '' ?>"
+                   href="<?= e(base_url('/admin/carrera/' . rawurlencode((string) $c['slug']))) ?>">
+                    <?= e($c['nombre']) ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </nav>
+    <?php endif; ?>
+
     <main class="content<?= !empty($wide) ? ' content-wide' : '' ?>">
         <?= $content ?? '' ?>
     </main>
