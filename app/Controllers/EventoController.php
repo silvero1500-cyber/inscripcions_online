@@ -362,11 +362,63 @@ final class EventoController
             [$id]
         )->fetchAll();
 
-        // ── Evolución últimos 30 días ──────────────────────────
+        // ── Evolución últimos 90 días (total) ──────────────────
         $evolucion = $db->query(
             "SELECT DATE(created_at) AS dia, COUNT(*) AS n FROM inscritos
-             WHERE evento_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+             WHERE evento_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
              GROUP BY dia ORDER BY dia ASC",
+            [$id]
+        )->fetchAll();
+
+        // ── Evolución 90 días per categoria (tarifa) ───────────
+        $evolucionCat = $db->query(
+            "SELECT DATE(i.created_at) AS dia, t.nombre AS categoria, COUNT(*) AS n
+             FROM inscritos i JOIN tarifas_evento t ON t.id = i.tarifa_id
+             WHERE i.evento_id = ? AND i.created_at >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+             GROUP BY dia, t.nombre ORDER BY dia ASC",
+            [$id]
+        )->fetchAll();
+
+        // ── Creixement diari mitjà (% sobre el total acumulat, darrers 30 dies amb activitat) ──
+        // Mitjana de (inscrits del dia / acumulat fins el dia anterior) sobre els dies amb inscrits.
+        $creixementMitja = null;
+        if (count($evolucion) > 1) {
+            $acum = 0; $ratios = [];
+            foreach ($evolucion as $row) {
+                $n = (int) $row['n'];
+                if ($acum > 0 && $n > 0) $ratios[] = $n / $acum;
+                $acum += $n;
+            }
+            if ($ratios) $creixementMitja = round(array_sum($ratios) / count($ratios) * 100, 1);
+        }
+
+        // ── Per talla × sexe (apilat unisex/dona) ──────────────
+        // Unisex = Home + No binari; Dona = M.
+        $tallaSexoRows = $db->query(
+            "SELECT COALESCE(talla_camiseta, 'Sense talla') AS talla,
+                    CASE WHEN sexo = 'M' THEN 'Dona' ELSE 'Unisex' END AS grup,
+                    COUNT(*) AS n
+             FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+             GROUP BY talla, grup",
+            [$id]
+        )->fetchAll();
+
+        // ── Top clubs (amb % sobre total) ──────────────────────
+        $topClubs = $db->query(
+            "SELECT club, COUNT(*) AS n FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+               AND club IS NOT NULL AND club <> ''
+             GROUP BY club ORDER BY n DESC LIMIT 10",
+            [$id]
+        )->fetchAll();
+
+        // ── Top poblacions (amb % sobre total) ─────────────────
+        $topPoblaciones = $db->query(
+            "SELECT poblacion, COUNT(*) AS n FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+               AND poblacion IS NOT NULL AND poblacion <> ''
+             GROUP BY poblacion ORDER BY n DESC LIMIT 10",
             [$id]
         )->fetchAll();
 
@@ -395,6 +447,11 @@ final class EventoController
             'edatCategoria'       => $edatCategoriaRows,
             'vendaTrams'          => $vendaTrams,
             'evolucion'           => $evolucion,
+            'evolucionCat'        => $evolucionCat,
+            'creixementMitja'     => $creixementMitja,
+            'tallaSexo'           => $tallaSexoRows,
+            'topClubs'            => $topClubs,
+            'topPoblaciones'      => $topPoblaciones,
             'darrers7'            => $darrers7,
             'comparativa'         => $comparativa,
             'aforoMax'            => $evento['aforo_maximo'] !== null ? (int) $evento['aforo_maximo'] : null,

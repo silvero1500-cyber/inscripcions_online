@@ -11,11 +11,17 @@
 /** @var list<array> $edatCategoria */
 /** @var list<array> $vendaTrams */
 /** @var list<array> $evolucion */
+/** @var list<array> $evolucionCat */
+/** @var float|null $creixementMitja */
+/** @var list<array> $tallaSexo */
+/** @var list<array> $topClubs */
+/** @var list<array> $topPoblaciones */
 /** @var int $darrers7 */
 /** @var array|null $comparativa */
 /** @var int|null $aforoMax */
 
 $sexoLabels = ['H' => 'Home', 'M' => 'Dona', 'NB' => 'No binari'];
+$tallaOrden = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'Sense talla'];
 
 $pctOcupacion = $aforoMax !== null && $aforoMax > 0
     ? min(100, round($totalActivas * 100 / $aforoMax))
@@ -45,6 +51,41 @@ $delta = function (int $d): array {
     return ['cls' => 'kpi-delta-flat', 'txt' => '±0'];
 };
 
+// ── Evolució 90 dies per categoria → eix de dies + una sèrie per categoria ──
+$evoDays = array_values(array_unique(array_map(fn($r) => (string) $r['dia'], $evolucionCat)));
+sort($evoDays);
+$evoCats = [];
+foreach ($evolucionCat as $r) { $evoCats[(string) $r['categoria']] = true; }
+$evoCats = array_keys($evoCats);
+$evoSeries = [];                          // [categoria] => [dia => n]
+foreach ($evolucionCat as $r) {
+    $evoSeries[(string) $r['categoria']][(string) $r['dia']] = (int) $r['n'];
+}
+$evoCatData = [];
+foreach ($evoCats as $cat) {
+    $evoCatData[] = [
+        'label' => $cat,
+        'data'  => array_map(fn($d) => (int) ($evoSeries[$cat][$d] ?? 0), $evoDays),
+    ];
+}
+
+// ── Talla × sexe (apilat): per cada talla, Unisex i Dona ──
+$tallaGrupMap = [];                        // [talla][grup] = n
+$tallaTotals  = [];
+foreach ($tallaSexo as $r) {
+    $tl = (string) $r['talla']; $g = (string) $r['grup']; $n = (int) $r['n'];
+    $tallaGrupMap[$tl][$g] = ($tallaGrupMap[$tl][$g] ?? 0) + $n;
+    $tallaTotals[$tl] = ($tallaTotals[$tl] ?? 0) + $n;
+}
+$tallaLabels = [];
+foreach ($tallaOrden as $tl) { if (isset($tallaTotals[$tl])) $tallaLabels[] = $tl; }
+foreach (array_keys($tallaTotals) as $tl) { if (!in_array($tl, $tallaLabels, true)) $tallaLabels[] = $tl; }
+$tallaUnisex = array_map(fn($tl) => (int) ($tallaGrupMap[$tl]['Unisex'] ?? 0), $tallaLabels);
+$tallaDona   = array_map(fn($tl) => (int) ($tallaGrupMap[$tl]['Dona'] ?? 0), $tallaLabels);
+
+// % sobre el total (per als tops)
+$pctTotal = fn(int $n): string => $totalActivas > 0 ? number_format($n * 100 / $totalActivas, 1, ',', '.') . '%' : '—';
+
 // Dades JSON per a JavaScript
 $jsData = [
     'tarifa'  => array_map(fn($r) => ['label' => $r['nombre'], 'value' => (int) $r['n']], $porTarifa),
@@ -56,7 +97,12 @@ $jsData = [
         'label' => $r['tarifa'] . ' · ' . number_format((float) $r['preu'], 2, ',', '.') . ' €',
         'value' => (int) $r['n'],
     ], $vendaTrams),
-    'evolucion' => array_map(fn($r) => ['label' => $r['dia'], 'value' => (int) $r['n']], $evolucion),
+    'evolucion'   => array_map(fn($r) => ['label' => $r['dia'], 'value' => (int) $r['n']], $evolucion),
+    'evoDays'     => $evoDays,
+    'evoCat'      => $evoCatData,     // [{label, data[]}]
+    'tallaLabels' => $tallaLabels,
+    'tallaUnisex' => $tallaUnisex,
+    'tallaDona'   => $tallaDona,
 ];
 ?>
 <section class="page-head with-action">
@@ -155,13 +201,90 @@ $jsData = [
 </div>
 <?php endif; ?>
 
+<?php /* ══ NIVELL 3 · evolució 90 dies + talla ════════════════ */ ?>
 <div class="kpi-panel">
-    <h2>Evolució (últims 30 dies)</h2>
+    <div class="kpi-panel-head">
+        <h2>Evolució inscrits <span class="muted" style="font-weight:400;font-size:.9rem;">(últims 90 dies)</span></h2>
+        <?php if ($creixementMitja !== null): ?>
+            <span class="kpi-growth">📈 Creixement diari mitjà: <strong><?= e(number_format($creixementMitja, 1, ',', '.')) ?>%</strong></span>
+        <?php endif; ?>
+    </div>
     <?php if (count($evolucion) === 0): ?>
         <p class="muted">Cap inscripció recent.</p>
     <?php else: ?>
         <div class="kpi-chart-wrap kpi-chart-wide"><canvas id="chartEvolucion"></canvas></div>
     <?php endif; ?>
+</div>
+
+<div class="kpi-panel">
+    <h2>Talla samarreta <span class="muted" style="font-weight:400;font-size:.9rem;">(unisex / dona)</span></h2>
+    <div class="kpi-grid kpi-grid-2">
+        <div>
+            <?php if (empty($tallaLabels)): ?>
+                <p class="muted">Cap inscrit amb talla encara.</p>
+            <?php else: ?>
+                <div class="kpi-chart-wrap"><canvas id="chartTalla"></canvas></div>
+            <?php endif; ?>
+        </div>
+        <div>
+            <h3 style="margin:0 0 .8rem;font-size:1rem;">Estimació de comanda</h3>
+            <p class="muted small" style="margin:0 0 .8rem;">
+                Quantes samarretes necessitaràs si arribes a un total objectiu, segons la distribució actual.
+            </p>
+            <div class="form-row">
+                <label for="objectiu">Inscrits objectiu</label>
+                <input type="number" id="objectiu" min="<?= max(1, $totalActivas) ?>" step="1" value="<?= max(100, $totalActivas) ?>">
+            </div>
+            <table class="data-table kpi-table-estim">
+                <thead><tr><th>Talla</th><th>Unisex</th><th>Dona</th><th>Total</th><th>Estimat</th></tr></thead>
+                <tbody id="tblEstim"></tbody>
+                <tfoot><tr><td><strong>Total amb talla</strong></td><td id="totUni">0</td><td id="totDona">0</td><td id="totalActual">0</td><td id="totalEstim">0</td></tr></tfoot>
+            </table>
+            <p class="muted small" style="margin:.8rem 0 0;">Els inscrits "sense talla" no compten per a la proporció.</p>
+        </div>
+    </div>
+</div>
+
+<?php /* ══ NIVELL 4 · tops amb % sobre total ═══════════════════ */ ?>
+<div class="kpi-grid kpi-grid-2">
+    <div class="kpi-panel">
+        <h2>Top clubs</h2>
+        <?php if (count($topClubs) === 0): ?>
+            <p class="muted">Cap inscrit ha indicat club.</p>
+        <?php else: ?>
+            <table class="data-table">
+                <thead><tr><th>Club</th><th>Inscrits</th><th>% del total</th></tr></thead>
+                <tbody>
+                    <?php foreach ($topClubs as $r): ?>
+                        <tr>
+                            <td><?= e($r['club']) ?></td>
+                            <td><?= (int) $r['n'] ?></td>
+                            <td><?= e($pctTotal((int) $r['n'])) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </div>
+    <div class="kpi-panel">
+        <h2>Top poblacions</h2>
+        <?php if (count($topPoblaciones) === 0): ?>
+            <p class="muted">Cap inscrit ha indicat població.</p>
+        <?php else: ?>
+            <table class="data-table">
+                <thead><tr><th>Població</th><th>Inscrits</th><th>% del total</th></tr></thead>
+                <tbody>
+                    <?php foreach ($topPoblaciones as $r): ?>
+                        <tr>
+                            <td><?= e($r['poblacion']) ?></td>
+                            <td><?= (int) $r['n'] ?></td>
+                            <td><?= e($pctTotal((int) $r['n'])) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </div>
 </div>
 
 <script src="<?= e(asset('js/chart.umd.min.js')) ?>"></script>
@@ -211,7 +334,84 @@ $jsData = [
     makePie('chartSexo', data.sexo);
     makePie('chartPagament', data.pagament);
     makeBarSimple('chartTrams', data.vendaTrams);
-    makeLine('chartEvolucion', data.evolucion);
+
+    // ── Evolució 90 dies: una línia per categoria ───────────
+    (function () {
+        const el = document.getElementById('chartEvolucion');
+        if (!el || !data.evoDays || data.evoDays.length === 0) return;
+        const datasets = (data.evoCat || []).map((s, idx) => {
+            const c = colors[idx % colors.length];
+            return { label: s.label, data: s.data, borderColor: c, backgroundColor: c + '22', tension: 0.3, fill: false, pointRadius: 0, borderWidth: 2 };
+        });
+        new Chart(el, {
+            type: 'line',
+            data: { labels: data.evoDays.map(d => d.slice(5)), datasets: datasets },
+            options: { ...baseOpts, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+        });
+    })();
+
+    // ── Talla samarreta apilada (Unisex / Dona) ─────────────
+    (function () {
+        const el = document.getElementById('chartTalla');
+        if (!el || !data.tallaLabels || data.tallaLabels.length === 0) return;
+        new Chart(el, {
+            type: 'bar',
+            data: {
+                labels: data.tallaLabels,
+                datasets: [
+                    { label: 'Unisex', data: data.tallaUnisex, backgroundColor: '#1e88c2' },
+                    { label: 'Dona',   data: data.tallaDona,   backgroundColor: '#ec4899' }
+                ]
+            },
+            options: {
+                ...baseOpts,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    })();
+
+    // ── Estimador de comanda (per talla, amb desglós unisex/dona) ──
+    (function () {
+        const labels = data.tallaLabels || [];
+        const uni = data.tallaUnisex || [];
+        const dona = data.tallaDona || [];
+        const tot = labels.map((_, i) => (uni[i] || 0) + (dona[i] || 0));
+        // Exclou "Sense talla" del càlcul de proporció
+        const idxValid = labels.map((l, i) => l === 'Sense talla' ? -1 : i).filter(i => i >= 0);
+        const totalConTalla = idxValid.reduce((s, i) => s + tot[i], 0);
+
+        const inputObj = document.getElementById('objectiu');
+        const tbody = document.getElementById('tblEstim');
+        const totUniEl = document.getElementById('totUni');
+        const totDonaEl = document.getElementById('totDona');
+        const totActEl = document.getElementById('totalActual');
+        const totEstEl = document.getElementById('totalEstim');
+        if (!tbody) return;
+
+        function refrescar() {
+            const objectiu = Math.max(1, parseInt((inputObj && inputObj.value) || '0', 10));
+            let tU = 0, tD = 0, tA = 0, tE = 0;
+            tbody.innerHTML = '';
+            if (totalConTalla === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;">Cap inscrit amb talla encara.</td></tr>';
+                [totUniEl, totDonaEl, totActEl, totEstEl].forEach(e => { if (e) e.textContent = '0'; });
+                return;
+            }
+            idxValid.forEach(i => {
+                const total = tot[i];
+                const estim = Math.round(total / totalConTalla * objectiu);
+                tU += uni[i] || 0; tD += dona[i] || 0; tA += total; tE += estim;
+                tbody.innerHTML += `<tr><td><strong>${labels[i]}</strong></td><td>${uni[i] || 0}</td><td>${dona[i] || 0}</td><td>${total}</td><td><strong>${estim}</strong></td></tr>`;
+            });
+            if (totUniEl) totUniEl.textContent = tU;
+            if (totDonaEl) totDonaEl.textContent = tD;
+            if (totActEl) totActEl.textContent = tA;
+            if (totEstEl) totEstEl.textContent = tE;
+        }
+        if (inputObj) { inputObj.addEventListener('input', refrescar); }
+        refrescar();
+    })();
 
     // ── Per franja d'edat amb drill-down per categoria ──────
     const edatEl = document.getElementById('chartEdat');

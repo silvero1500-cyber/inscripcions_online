@@ -795,6 +795,17 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
     gap: 1rem; flex-wrap: wrap;
 }
 .kpi-panel-head h2 { margin: 0; }
+
+/* Badge de creixement diari mitjà (evolució) */
+.kpi-growth {
+    background: #dcfce7;
+    color: #15803d;
+    font-size: .9rem;
+    padding: .35rem .8rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.kpi-growth strong { font-weight: 800; }
 .kpi-progress {
     margin-top: .7rem;
     height: 6px;
