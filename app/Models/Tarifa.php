@@ -161,6 +161,20 @@ final class Tarifa
     }
 
     /**
+     * Una modalitat és "infantil" (requereix dades del tutor) si tota la seva
+     * franja d'edat són menors: l'any de naixement més antic permès (anio_nac_min)
+     * implica menys de 18 anys el dia d'avui, és a dir min >= any actual - 17.
+     */
+    public static function esInfantil(?array $tarifa): bool
+    {
+        if ($tarifa === null) return false;
+        $min = isset($tarifa['anio_nac_min']) && $tarifa['anio_nac_min'] !== null
+            ? (int) $tarifa['anio_nac_min'] : null;
+        if ($min === null) return false;
+        return $min >= (int) date('Y') - 17;
+    }
+
+    /**
      * Trams de preu per a un conjunt de tarifes (carrega en bloc, evita N+1).
      * @param list<int> $tarifaIds
      * @return array<int, list<array<string,mixed>>>  [tarifa_id => trams]

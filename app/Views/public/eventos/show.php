@@ -196,6 +196,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                         <option value="<?= (int)$t['id'] ?>"
                                 data-nac-min="<?= $nMin !== null ? $nMin : '' ?>"
                                 data-nac-max="<?= $nMax !== null ? $nMax : '' ?>"
+                                data-infantil="<?= \App\Models\Tarifa::esInfantil($t) ? '1' : '0' ?>"
                                 data-precio="<?= (float) ($t['precio_actual'] ?? $t['precio']) ?>"
                                 <?= $ag ? 'disabled' : '' ?>
                                 <?= (!$ag && (int)$val('tarifa_id') === (int)$t['id']) ? 'selected' : '' ?>>
@@ -213,6 +214,31 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                 <?php if ($err('tarifa_id')): ?><div class="field-error"><?= e($err('tarifa_id')) ?></div><?php endif; ?>
                 <div id="tarifa-age-msg" class="field-error" style="display:none;margin-top:.4rem;"></div>
             </div>
+        </div>
+
+        <?php /* Dades del tutor — només per a modalitats infantils (toggle JS) */ ?>
+        <div class="panel tutor-fields" id="tutor-fields" data-tutor hidden>
+            <fieldset>
+                <legend><?= e(t('form.tutor.legend')) ?></legend>
+                <p class="muted" style="margin:.2rem 0 1rem;"><?= e(t('form.tutor.note')) ?></p>
+                <div class="form-grid-2">
+                    <div class="form-row">
+                        <label for="tutor_nombre"><?= e(t('form.tutor.nombre')) ?> <span class="req">*</span></label>
+                        <input type="text" id="tutor_nombre" name="tutor_nombre" maxlength="100" autocomplete="off" value="<?= e($val('tutor_nombre')) ?>">
+                        <?php if ($err('tutor_nombre')): ?><div class="field-error"><?= e($err('tutor_nombre')) ?></div><?php endif; ?>
+                    </div>
+                    <div class="form-row">
+                        <label for="tutor_apellido"><?= e(t('form.tutor.apellido')) ?> <span class="req">*</span></label>
+                        <input type="text" id="tutor_apellido" name="tutor_apellido" maxlength="150" autocomplete="off" value="<?= e($val('tutor_apellido')) ?>">
+                        <?php if ($err('tutor_apellido')): ?><div class="field-error"><?= e($err('tutor_apellido')) ?></div><?php endif; ?>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="tutor_dni"><?= e(t('form.tutor.dni')) ?> <span class="req">*</span></label>
+                    <input type="text" id="tutor_dni" name="tutor_dni" maxlength="20" autocomplete="off" value="<?= e($val('tutor_dni')) ?>">
+                    <?php if ($err('tutor_dni')): ?><div class="field-error"><?= e($err('tutor_dni')) ?></div><?php endif; ?>
+                </div>
+            </fieldset>
         </div>
 
         <div class="panel">
@@ -306,7 +332,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                         case 'codigo_postal': ?>
                             <div class="form-row">
                                 <label for="codigo_postal"><?= e(t('form.label.postal_code')) ?><?= $reqMark('codigo_postal') ?></label>
-                                <input type="text" id="codigo_postal" name="codigo_postal" <?= $reqAttr('codigo_postal') ?> maxlength="10" autocomplete="postal-code" placeholder="08001" value="<?= e($val('codigo_postal')) ?>">
+                                <input type="text" id="codigo_postal" name="codigo_postal" <?= $reqAttr('codigo_postal') ?> maxlength="10" autocomplete="postal-code" placeholder="08201" value="<?= e($val('codigo_postal')) ?>">
                                 <?php if ($err('codigo_postal')): ?><div class="field-error"><?= e($err('codigo_postal')) ?></div><?php endif; ?>
                             </div>
                         <?php break;
@@ -438,6 +464,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                                 data-precio="<?= (float) ($t['precio_actual'] ?? $t['precio']) ?>"
                                 data-nac-min="<?= $nMin !== null ? $nMin : '' ?>"
                                 data-nac-max="<?= $nMax !== null ? $nMax : '' ?>"
+                                data-infantil="<?= \App\Models\Tarifa::esInfantil($t) ? '1' : '0' ?>"
                                 <?= $ag ? 'disabled' : '' ?>
                                 <?= (!$ag && (int) $pv('tarifa_id') === (int) $t['id']) ? 'selected' : '' ?>>
                             <?= e($t['nombre']) ?> · <?= e(format_price((float) ($t['precio_actual'] ?? $t['precio']))) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
@@ -449,6 +476,28 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                 </select>
                 <?php $e = $pe('tarifa_id'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                 <div class="tarifa-age-msg field-error" style="display:none;margin-top:.4rem;"></div>
+            </div>
+
+            <?php /* Dades del tutor del participant — només modalitats infantils (toggle JS) */ ?>
+            <div class="tutor-fields" data-tutor hidden>
+                <p class="tutor-legend"><strong><?= e(t('form.tutor.legend')) ?></strong> · <span class="muted"><?= e(t('form.tutor.note')) ?></span></p>
+                <div class="form-grid-2">
+                    <div class="form-row">
+                        <label for="<?= e($idf('tutor_nombre')) ?>"><?= e(t('form.tutor.nombre')) ?> <span class="req">*</span></label>
+                        <input type="text" id="<?= e($idf('tutor_nombre')) ?>" name="<?= e($nm('tutor_nombre')) ?>" maxlength="100" value="<?= e($pv('tutor_nombre')) ?>">
+                        <?php $e = $pe('tutor_nombre'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                    </div>
+                    <div class="form-row">
+                        <label for="<?= e($idf('tutor_apellido')) ?>"><?= e(t('form.tutor.apellido')) ?> <span class="req">*</span></label>
+                        <input type="text" id="<?= e($idf('tutor_apellido')) ?>" name="<?= e($nm('tutor_apellido')) ?>" maxlength="150" value="<?= e($pv('tutor_apellido')) ?>">
+                        <?php $e = $pe('tutor_apellido'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="<?= e($idf('tutor_dni')) ?>"><?= e(t('form.tutor.dni')) ?> <span class="req">*</span></label>
+                    <input type="text" id="<?= e($idf('tutor_dni')) ?>" name="<?= e($nm('tutor_dni')) ?>" maxlength="20" value="<?= e($pv('tutor_dni')) ?>">
+                    <?php $e = $pe('tutor_dni'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                </div>
             </div>
 
             <?php
@@ -517,7 +566,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                     case 'codigo_postal': ?>
                         <div class="form-row">
                             <label for="<?= e($idf('codigo_postal')) ?>"><?= e(t('form.label.postal_code')) ?><?= $rm('codigo_postal') ?></label>
-                            <input type="text" id="<?= e($idf('codigo_postal')) ?>" name="<?= e($nm('codigo_postal')) ?>" <?= $ra('codigo_postal') ?> maxlength="10" placeholder="08001" value="<?= e($pv('codigo_postal')) ?>">
+                            <input type="text" id="<?= e($idf('codigo_postal')) ?>" name="<?= e($nm('codigo_postal')) ?>" <?= $ra('codigo_postal') ?> maxlength="10" placeholder="08201" value="<?= e($pv('codigo_postal')) ?>">
                             <?php $e = $pe('codigo_postal'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                         </div>
                     <?php break;
@@ -730,10 +779,24 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
             msg.style.display = 'none'; return true;
         }
 
+        function toggleTutor(block) {
+            var sel = block.querySelector('.p-tarifa');
+            var box = block.querySelector('[data-tutor]');
+            if (!sel || !box) return;
+            var opt = sel.options[sel.selectedIndex];
+            var infantil = opt && opt.getAttribute('data-infantil') === '1';
+            box.hidden = !infantil;
+            box.querySelectorAll('input').forEach(function (inp) {
+                if (infantil) { inp.setAttribute('required', 'required'); }
+                else { inp.removeAttribute('required'); inp.value = ''; }
+            });
+        }
+
         function bind(block) {
             var sel = block.querySelector('.p-tarifa');
             var fn  = block.querySelector('.p-fnac');
-            if (sel) sel.addEventListener('change', function () { checkAge(block, false); recalcTotal(); if (window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value); });
+            if (sel) sel.addEventListener('change', function () { checkAge(block, false); recalcTotal(); toggleTutor(block); if (window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value); });
+            if (sel) toggleTutor(block);
             if (sel && window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value);
             if (fn) { fn.addEventListener('change', function () { checkAge(block, false); }); fn.addEventListener('input', function () { checkAge(block, false); }); }
             var sx = block.querySelector('.p-sexo'), tll = block.querySelector('.p-talla');
@@ -857,6 +920,19 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
     function show(text) { msg.textContent = text; msg.style.display = ''; }
     function hide() { msg.textContent = ''; msg.style.display = 'none'; }
 
+    // Camps del tutor: visibles + obligatoris només si la modalitat és infantil
+    var tutorBox = document.getElementById('tutor-fields');
+    function toggleTutor() {
+        if (!tutorBox) return;
+        var opt = sel.options[sel.selectedIndex];
+        var infantil = opt && opt.getAttribute('data-infantil') === '1';
+        tutorBox.hidden = !infantil;
+        tutorBox.querySelectorAll('input').forEach(function (inp) {
+            if (infantil) { inp.setAttribute('required', 'required'); }
+            else { inp.removeAttribute('required'); inp.value = ''; }
+        });
+    }
+
     function check(onSubmit) {
         var r = selRange();
         if (r.min === null && r.max === null) { hide(); return true; }
@@ -874,7 +950,8 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         hide(); return true;
     }
 
-    sel.addEventListener('change', function () { check(false); });
+    sel.addEventListener('change', function () { check(false); toggleTutor(); });
+    toggleTutor(); // estat inicial (p. ex. si torna amb errors i la modalitat ja és infantil)
     if (fn) {
         fn.addEventListener('change', function () { check(false); });
         fn.addEventListener('input',  function () { check(false); });

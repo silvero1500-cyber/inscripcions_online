@@ -271,6 +271,7 @@ final class InscritosAdminController
         $headers = [
             'ID', 'Comanda', 'Data inscripció', 'Nom', 'Cognoms', 'DNI', 'Sexe', 'Data naixement',
             'Email', 'Telèfon', 'Club', 'Població', 'Codi postal', 'Talla',
+            'Tutor nom', 'Tutor cognoms', 'Tutor DNI',
             'Tarifa', 'Preu', 'Estat', 'Dorsal'
         ];
         foreach ($campos as $c) {
@@ -295,6 +296,9 @@ final class InscritosAdminController
                 // Forçar text perquè Excel no elimini el 0 inicial del codi postal (08201 → 8201)
                 ($i['codigo_postal'] ?? '') !== '' ? '="' . $i['codigo_postal'] . '"' : '',
                 $i['talla_camiseta'] ?? '',
+                $i['tutor_nombre'] ?? '',
+                $i['tutor_apellido'] ?? '',
+                $i['tutor_dni'] ?? '',
                 $i['tarifa_nombre'],
                 number_format((float) $i['tarifa_precio'], 2, ',', '.'),
                 $i['estado'],

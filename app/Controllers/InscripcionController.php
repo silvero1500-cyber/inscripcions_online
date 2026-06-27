@@ -105,8 +105,8 @@ final class InscripcionController
 
         // ── Validación campos estándar (segons config de l'esdeveniment) ──
         $camposFijos = CamposFijos::resolve($evento['campos_fijos'] ?? null);
-        $data = self::extractCorredorData($_POST, $camposFijos);
-        $v    = self::validateCorredor($data, $camposFijos);
+        $data = self::extractCorredorData($_POST, $camposFijos, $tarifaRow);
+        $v    = self::validateCorredor($data, $camposFijos, $tarifaRow);
 
         // El correu electrònic s'ha de repetir igual (confirmació)
         $emailConfirm = strtolower(trim((string) ($_POST['email_confirm'] ?? '')));
@@ -331,8 +331,8 @@ final class InscripcionController
             $pPost = $p;
             $pPost['email']    = $contactEmail;
             $pPost['telefono'] = $contactTel;
-            $data = self::extractCorredorData($pPost, $camposFijos);
-            $v    = self::validateCorredor($data, $camposFijos);
+            $data = self::extractCorredorData($pPost, $camposFijos, $tarifaRow);
+            $v    = self::validateCorredor($data, $camposFijos, $tarifaRow);
             if ($tarifaRow !== null) {
                 self::validateAnioNacimiento($v, $tarifaRow, (string) ($data['fecha_nacimiento'] ?? ''));
             }
@@ -711,7 +711,7 @@ final class InscripcionController
      * @param array<string,string> $config  [camp => 'obligatori'|'opcional'|'ocult']
      * @return array<string, mixed>
      */
-    private static function extractCorredorData(array $post, array $config): array
+    private static function extractCorredorData(array $post, array $config, ?array $tarifa = null): array
     {
         $cp = preg_replace('/\D+/', '', trim((string) ($post['codigo_postal'] ?? ''))) ?? '';
         $data = [
@@ -727,6 +727,18 @@ final class InscripcionController
             'poblacion'        => mb_substr(trim((string) ($post['poblacion'] ?? '')), 0, 120) ?: null,
             'codigo_postal'    => $cp !== '' ? mb_substr($cp, 0, 10) : null,
         ];
+
+        // Dades del tutor: només per a modalitats infantils. Si la modalitat NO és
+        // infantil, s'ignoren encara que vinguin al POST (defensa servidor).
+        if (\App\Models\Tarifa::esInfantil($tarifa)) {
+            $data['tutor_nombre']   = mb_substr(trim((string) ($post['tutor_nombre'] ?? '')), 0, 100) ?: null;
+            $data['tutor_apellido'] = mb_substr(trim((string) ($post['tutor_apellido'] ?? '')), 0, 150) ?: null;
+            $data['tutor_dni']      = strtoupper(trim((string) ($post['tutor_dni'] ?? ''))) ?: null;
+        } else {
+            $data['tutor_nombre'] = null;
+            $data['tutor_apellido'] = null;
+            $data['tutor_dni'] = null;
+        }
 
         // Camps ocults: no confiar en el POST, forçar buit/null
         foreach (CamposFijos::CAMPS as $key => $_meta) {
@@ -746,7 +758,7 @@ final class InscripcionController
     /**
      * @param array<string,string> $config  [camp => 'obligatori'|'opcional'|'ocult']
      */
-    private static function validateCorredor(array $data, array $config): Validator
+    private static function validateCorredor(array $data, array $config, ?array $tarifa = null): Validator
     {
         $v = new Validator($data);
 
@@ -814,6 +826,17 @@ final class InscripcionController
             if ($req('codigo_postal')) $v->required('codigo_postal');
             if (!empty($data['codigo_postal']) && !preg_match('/^\d{4,5}$/', (string) $data['codigo_postal'])) {
                 $v->addError('codigo_postal', 'Codi postal no vàlid.');
+            }
+        }
+
+        // Dades del tutor: obligatòries si la modalitat és infantil (menors)
+        if (\App\Models\Tarifa::esInfantil($tarifa)) {
+            if (empty($data['tutor_nombre']))   $v->addError('tutor_nombre', t('form.tutor.required'));
+            if (empty($data['tutor_apellido'])) $v->addError('tutor_apellido', t('form.tutor.required'));
+            if (empty($data['tutor_dni'])) {
+                $v->addError('tutor_dni', t('form.tutor.required'));
+            } elseif (!Inscrito::dniValido((string) $data['tutor_dni'])) {
+                $v->addError('tutor_dni', t('form.tutor.dni_invalid'));
             }
         }
 

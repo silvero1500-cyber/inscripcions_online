@@ -85,6 +85,15 @@ $row = function (string $label, $value, bool $raw = false): void {
             $row('Talla samarreta', $inscrito['talla_camiseta'] ?? null);
             ?>
         </div>
+        <?php if (!empty($inscrito['tutor_nombre']) || !empty($inscrito['tutor_apellido']) || !empty($inscrito['tutor_dni'])): ?>
+            <h3 style="margin:1.2rem 0 .4rem;font-size:1rem;">Tutor/a legal</h3>
+            <div class="detail-grid">
+                <?php
+                $row('Nom tutor/a', trim((string)($inscrito['tutor_nombre'] ?? '') . ' ' . (string)($inscrito['tutor_apellido'] ?? '')) ?: null);
+                $row('DNI tutor/a', $inscrito['tutor_dni'] ?? null);
+                ?>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- ── Inscripció ── -->
