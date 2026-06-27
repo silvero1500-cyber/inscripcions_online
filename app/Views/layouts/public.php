@@ -52,8 +52,7 @@ $tiendaActiva = \App\Models\Ajuste::tiendaActiva() && \App\Models\Producto::hayA
     <header class="site-header">
         <div class="site-header-inner">
             <a class="site-brand" href="<?= e(base_url('/')) ?>">
-                <span class="brand-mark">W</span>
-                <span class="brand-text">WeRun <strong><?= e(t('brand.suffix')) ?></strong></span>
+                <img class="site-logo" src="<?= e(asset('img/werun-logo.png')) ?>" alt="WeRun">
             </a>
             <div class="site-header-actions">
                 <?php if ($tiendaActiva): ?>

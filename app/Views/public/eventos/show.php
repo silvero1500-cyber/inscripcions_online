@@ -55,6 +55,8 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
 
 <section class="container">
 
+    <img class="evt-banner" src="<?= e(asset('img/banner-festa-major.png')) ?>" alt="Curses de Festa Major Sabadell">
+
     <nav class="breadcrumb" aria-label="Breadcrumb">
         <a href="<?= e(base_url('/')) ?>"><?= e(t('event.breadcrumb_home')) ?></a>
         <span class="sep">›</span>
@@ -64,7 +66,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
     </nav>
 
     <header class="evt-header">
-        <h1 class="evt-title"><?= e($evento['titulo']) ?></h1>
+        <h1 class="evt-title"><?= e(t('event.form_title_prefix') . $evento['titulo']) ?></h1>
         <div class="evt-meta">
             <span class="evt-meta-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -88,16 +90,6 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
 
         <div class="evt-info">
             <ul class="evt-facts">
-                <li class="evt-fact">
-                    <span class="evt-fact-ic" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    </span>
-                    <span class="evt-fact-txt">
-                        <span class="evt-fact-label"><?= current_locale() === 'es' ? 'Fecha' : 'Data' ?></span>
-                        <span class="evt-fact-val"><?= e(format_date_ca((string)$evento['fecha_evento'], true)) ?></span>
-                    </span>
-                </li>
-
                 <?php if (!empty($evento['localizacion'])): ?>
                 <li class="evt-fact">
                     <span class="evt-fact-ic" aria-hidden="true">
@@ -110,17 +102,21 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                 </li>
                 <?php endif; ?>
 
-                <?php if (!empty($evento['fecha_limite_inscripcion'])): ?>
                 <li class="evt-fact">
                     <span class="evt-fact-ic" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>
                     </span>
                     <span class="evt-fact-txt">
-                        <span class="evt-fact-label"><?= e(t('event.dates_label')) ?></span>
-                        <span class="evt-fact-val"><?= e(format_date_ca((string)$evento['fecha_limite_inscripcion'])) ?></span>
+                        <span class="evt-fact-label"><?= e(t('event.closing_label')) ?></span>
+                        <span class="evt-fact-val">
+                            <?php if (!empty($evento['fecha_limite_inscripcion'])): ?>
+                                <?= e(format_date_ca((string)$evento['fecha_limite_inscripcion']) . ' ' . t('event.closing_suffix')) ?>
+                            <?php else: ?>
+                                <?= e(t('event.closing_until_full')) ?>
+                            <?php endif; ?>
+                        </span>
                     </span>
                 </li>
-                <?php endif; ?>
 
                 <?php if ($plazasDisponibles !== null): ?>
                 <li class="evt-fact">
