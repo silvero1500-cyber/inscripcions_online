@@ -663,6 +663,20 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 /* ── Accions a la graella d'inscrits ────────────────────── */
 .cell-actions { white-space: nowrap; }
 .cell-actions .inline { display: inline; }
+
+/* ── Edició inline d'inscrits al grid ── */
+.cell-edit-input {
+    width: 100%;
+    min-width: 70px;
+    box-sizing: border-box;
+    padding: .25rem .35rem;
+    font-size: .85rem;
+    border: 1px solid var(--color-primary, #2563eb);
+    border-radius: 5px;
+}
+tr.row-editing { background: #eff6ff; }
+tr.row-editing td { vertical-align: middle; }
+.acc-edit-mode .btn-tiny { margin-left: .2rem; }
 .btn-tiny {
     display: inline-block;
     padding: .2rem .45rem;

@@ -4,6 +4,7 @@
 /** @var list<array> $inscritos */
 /** @var array $filters */
 /** @var array $counts */
+/** @var list<string> $franjas */
 /** @var int $total */
 /** @var int $page */
 /** @var int $perPage */
@@ -163,7 +164,9 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         ['key' => 'apellido',    'label' => 'Cognoms'],
         ['key' => 'dni',         'label' => 'DNI'],
         ['key' => 'sexo',        'label' => 'Sexe'],
+        ['key' => 'fnac',        'label' => 'Data naix.'],
         ['key' => 'talla',       'label' => 'Talla'],
+        ['key' => 'franja',      'label' => 'Franja'],
         ['key' => 'email',       'label' => 'Email'],
         ['key' => 'telefono',    'label' => 'Telèfon'],
         ['key' => 'club',        'label' => 'Club'],
@@ -210,7 +213,9 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                     <th data-col="apellido">Cognoms</th>
                     <th data-col="dni">DNI</th>
                     <th data-col="sexo">Sexe</th>
+                    <th data-col="fnac">Data naix.</th>
                     <th data-col="talla">Talla</th>
+                    <th data-col="franja">Franja</th>
                     <th data-col="email">Email</th>
                     <th data-col="telefono">Telèfon</th>
                     <th data-col="club">Club</th>
@@ -224,8 +229,11 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                 </tr>
             </thead>
             <tbody>
-            <?php foreach ($inscritos as $i): ?>
-                <tr>
+            <?php
+            $canEdit = in_array($user->rol ?? '', ['superadmin', 'organizador'], true);
+            foreach ($inscritos as $i):
+            ?>
+                <tr data-id="<?= (int)$i['id'] ?>" data-evento="<?= (int)$i['evento_id'] ?>">
                     <td data-col="id"><?= (int)$i['id'] ?></td>
                     <td data-col="pedido">
                         <?php if (!empty($i['pedido_id'])): $pid = (int)$i['pedido_id']; $hue = ($pid * 47) % 360; ?>
@@ -235,19 +243,21 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                         <?php endif; ?>
                     </td>
                     <td data-col="created_at"><?= e(format_datetime_local((string)$i['created_at'], 'd/m/Y H:i')) ?></td>
-                    <td data-col="nombre"><strong><?= e($i['nombre']) ?></strong></td>
-                    <td data-col="apellido"><?= e($i['apellido']) ?></td>
-                    <td data-col="dni"><?= e($i['dni']) ?></td>
-                    <td data-col="sexo"><?= e($i['sexo']) ?></td>
-                    <td data-col="talla"><?= e($i['talla_camiseta'] ?? '—') ?></td>
-                    <td data-col="email"><?= e($i['email']) ?></td>
-                    <td data-col="telefono"><?= e($i['telefono']) ?></td>
-                    <td data-col="club"><?= e($i['club'] ?? '—') ?></td>
-                    <td data-col="poblacion"><?= e($i['poblacion'] ?? '—') ?></td>
-                    <td data-col="cp"><?= e($i['codigo_postal'] ?? '—') ?></td>
+                    <td data-col="nombre" data-edit="text" data-field="nombre" data-val="<?= e($i['nombre']) ?>"><strong><?= e($i['nombre']) ?></strong></td>
+                    <td data-col="apellido" data-edit="text" data-field="apellido" data-val="<?= e($i['apellido']) ?>"><?= e($i['apellido']) ?></td>
+                    <td data-col="dni" data-edit="text" data-field="dni" data-val="<?= e($i['dni']) ?>"><?= e($i['dni']) ?></td>
+                    <td data-col="sexo" data-edit="sexo" data-field="sexo" data-val="<?= e($i['sexo']) ?>"><?= e($i['sexo']) ?></td>
+                    <td data-col="fnac" data-edit="date" data-field="fecha_nacimiento" data-val="<?= e($i['fecha_nacimiento'] ?? '') ?>"><?= !empty($i['fecha_nacimiento']) ? e(date('d/m/Y', strtotime((string)$i['fecha_nacimiento']))) : '—' ?></td>
+                    <td data-col="talla" data-edit="talla" data-field="talla_camiseta" data-val="<?= e($i['talla_camiseta'] ?? '') ?>"><?= e($i['talla_camiseta'] ?? '—') ?></td>
+                    <td data-col="franja" data-edit="franja" data-field="franja_temps" data-val="<?= e($i['franja_temps'] ?? '') ?>"><?= e($i['franja_temps'] ?? '—') ?></td>
+                    <td data-col="email" data-edit="email" data-field="email" data-val="<?= e($i['email']) ?>"><?= e($i['email']) ?></td>
+                    <td data-col="telefono" data-edit="text" data-field="telefono" data-val="<?= e($i['telefono']) ?>"><?= e($i['telefono']) ?></td>
+                    <td data-col="club" data-edit="text" data-field="club" data-val="<?= e($i['club'] ?? '') ?>"><?= e($i['club'] ?? '—') ?></td>
+                    <td data-col="poblacion" data-edit="text" data-field="poblacion" data-val="<?= e($i['poblacion'] ?? '') ?>"><?= e($i['poblacion'] ?? '—') ?></td>
+                    <td data-col="cp" data-edit="text" data-field="codigo_postal" data-val="<?= e($i['codigo_postal'] ?? '') ?>"><?= e($i['codigo_postal'] ?? '—') ?></td>
                     <td data-col="tarifa"><?= e($i['tarifa_nombre']) ?></td>
                     <td data-col="precio" class="cell-right"><?= e(format_price((float)$i['tarifa_precio'])) ?></td>
-                    <td data-col="dorsal" class="cell-right"><?= !empty($i['numero_dorsal']) ? (int)$i['numero_dorsal'] : '—' ?></td>
+                    <td data-col="dorsal" class="cell-right" data-edit="dorsal" data-field="numero_dorsal" data-val="<?= !empty($i['numero_dorsal']) ? (int)$i['numero_dorsal'] : '' ?>"><?= !empty($i['numero_dorsal']) ? (int)$i['numero_dorsal'] : '—' ?></td>
                     <td data-col="estado">
                         <?php
                         // Si ja ha recollit el dorsal, mostrem "recollit" (verd); si no, l'estat
@@ -267,16 +277,27 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                         <span class="badge <?= $badge ?>"><?= e($estLbl) ?></span>
                     </td>
                     <td data-col="accions" class="cell-actions">
-                        <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'])) ?>" title="Veure fitxa completa">👁 Fitxa</a>
-                        <?php if ($i['estado'] === 'confirmado'): ?>
-                            <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/comprovant')) ?>" target="_blank" rel="noopener" title="Comprovant imprimible">📄</a>
-                            <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/qr')) ?>" target="_blank" rel="noopener" title="Veure / descarregar QR">QR</a>
-                            <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/reenviar')) ?>" class="inline"
-                                  onsubmit="return resendPrompt(this, '<?= e($i['email']) ?>')">
-                                <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
-                                <input type="hidden" name="email_to" value="">
-                                <button type="submit" class="btn-tiny" title="Reenviar email de confirmació (pots canviar el correu)">✉ Reenviar</button>
-                            </form>
+                        <span class="acc-normal">
+                            <?php if ($canEdit): ?>
+                                <button type="button" class="btn-tiny acc-edit" title="Editar inscrit">✏️ Editar</button>
+                            <?php endif; ?>
+                            <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'])) ?>" title="Veure fitxa completa">👁 Fitxa</a>
+                            <?php if ($i['estado'] === 'confirmado'): ?>
+                                <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/comprovant')) ?>" target="_blank" rel="noopener" title="Comprovant imprimible">📄</a>
+                                <a class="btn-tiny" href="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/qr')) ?>" target="_blank" rel="noopener" title="Veure / descarregar QR">QR</a>
+                                <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/reenviar')) ?>" class="inline"
+                                      onsubmit="return resendPrompt(this, '<?= e($i['email']) ?>')">
+                                    <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+                                    <input type="hidden" name="email_to" value="">
+                                    <button type="submit" class="btn-tiny" title="Reenviar email de confirmació (pots canviar el correu)">✉ Reenviar</button>
+                                </form>
+                            <?php endif; ?>
+                        </span>
+                        <?php if ($canEdit): ?>
+                            <span class="acc-edit-mode" style="display:none;">
+                                <button type="button" class="btn-tiny btn-primary acc-save" title="Desar">💾 Desa</button>
+                                <button type="button" class="btn-tiny acc-cancel" title="Cancel·lar">✖</button>
+                            </span>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -296,6 +317,139 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         return true;
     }
     </script>
+
+    <?php $canEditJs = in_array($user->rol ?? '', ['superadmin', 'organizador'], true); ?>
+    <?php if ($canEditJs): ?>
+    <script>
+    // ── Edició inline d'inscrits al grid ──
+    (function () {
+        var CSRF = <?= json_encode(\App\Core\Csrf::token()) ?>;
+        var BASE = <?= json_encode(base_url('/admin/inscritos/')) ?>;
+        var SEXOS = [['', '—'], ['H', 'H'], ['M', 'M'], ['NB', 'NB']];
+        var TALLAS = <?= json_encode(\App\Models\Inscrito::TALLAS) ?>;
+        var FRANJAS = <?= json_encode($franjas) ?>;
+
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]); }); }
+
+        function makeInput(cell) {
+            var type = cell.getAttribute('data-edit');
+            var val = cell.getAttribute('data-val') || '';
+            var sel, i, o;
+            if (type === 'sexo' || type === 'talla' || type === 'franja') {
+                sel = document.createElement('select');
+                var opts = type === 'sexo' ? SEXOS
+                        : (type === 'talla' ? [['', '—']].concat(TALLAS.map(function (t) { return [t, t]; }))
+                        : [['', '—']].concat(FRANJAS.map(function (f) { return [f, f]; })));
+                for (i = 0; i < opts.length; i++) {
+                    o = document.createElement('option');
+                    o.value = opts[i][0]; o.textContent = opts[i][1];
+                    if (opts[i][0] === val) o.selected = true;
+                    sel.appendChild(o);
+                }
+                return sel;
+            }
+            var inp = document.createElement('input');
+            inp.value = val;
+            if (type === 'date') inp.type = 'date';
+            else if (type === 'dorsal') { inp.type = 'number'; inp.min = '1'; }
+            else if (type === 'email') inp.type = 'email';
+            else inp.type = 'text';
+            return inp;
+        }
+
+        function enterEdit(row) {
+            if (row.classList.contains('row-editing')) return;
+            row.classList.add('row-editing');
+            row.querySelectorAll('td[data-edit]').forEach(function (cell) {
+                cell.setAttribute('data-html', cell.innerHTML);
+                var inp = makeInput(cell);
+                inp.className = 'cell-edit-input';
+                inp.setAttribute('data-field', cell.getAttribute('data-field'));
+                cell.innerHTML = '';
+                cell.appendChild(inp);
+            });
+            row.querySelector('.acc-normal').style.display = 'none';
+            row.querySelector('.acc-edit-mode').style.display = '';
+        }
+
+        function exitEdit(row, restore) {
+            row.querySelectorAll('td[data-edit]').forEach(function (cell) {
+                if (restore && cell.hasAttribute('data-html')) cell.innerHTML = cell.getAttribute('data-html');
+                cell.removeAttribute('data-html');
+            });
+            row.classList.remove('row-editing');
+            row.querySelector('.acc-normal').style.display = '';
+            row.querySelector('.acc-edit-mode').style.display = 'none';
+        }
+
+        function repaint(row, ins) {
+            var map = {
+                nombre: '<strong>' + esc(ins.nombre) + '</strong>',
+                apellido: esc(ins.apellido) || '',
+                dni: esc(ins.dni) || '',
+                sexo: esc(ins.sexo) || '',
+                fecha_nacimiento: esc(ins.fnac),
+                talla_camiseta: esc(ins.talla),
+                franja_temps: esc(ins.franja),
+                email: esc(ins.email),
+                telefono: esc(ins.telefono) || '',
+                club: esc(ins.club),
+                poblacion: esc(ins.poblacion),
+                codigo_postal: esc(ins.cp),
+                numero_dorsal: esc(ins.dorsal)
+            };
+            var newVal = {
+                nombre: ins.nombre, apellido: ins.apellido, dni: ins.dni, sexo: ins.sexo,
+                fecha_nacimiento: ins.fnac_raw, talla_camiseta: ins.talla === '—' ? '' : ins.talla,
+                franja_temps: ins.franja === '—' ? '' : ins.franja, email: ins.email, telefono: ins.telefono,
+                club: ins.club === '—' ? '' : ins.club, poblacion: ins.poblacion === '—' ? '' : ins.poblacion,
+                codigo_postal: ins.cp === '—' ? '' : ins.cp, numero_dorsal: ins.dorsal === '—' ? '' : ins.dorsal
+            };
+            row.querySelectorAll('td[data-edit]').forEach(function (cell) {
+                var f = cell.getAttribute('data-field');
+                if (f in map) cell.setAttribute('data-html', map[f]);
+                if (f in newVal) cell.setAttribute('data-val', newVal[f]);
+            });
+        }
+
+        function saveEdit(row) {
+            var id = row.getAttribute('data-id');
+            var fd = new FormData();
+            fd.append('_csrf', CSRF);
+            row.querySelectorAll('.cell-edit-input').forEach(function (inp) {
+                fd.append(inp.getAttribute('data-field'), inp.value);
+            });
+            var btn = row.querySelector('.acc-save');
+            btn.disabled = true;
+            fetch(BASE + id + '/editar', { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+                .then(function (res) {
+                    btn.disabled = false;
+                    if (res.body && res.body.ok) {
+                        repaint(row, res.body.inscrito);
+                        exitEdit(row, true);
+                    } else if (res.body && res.body.errors) {
+                        var msgs = Object.keys(res.body.errors).map(function (k) { return res.body.errors[k]; });
+                        alert('No s\'ha pogut desar:\n• ' + msgs.join('\n• '));
+                    } else {
+                        alert((res.body && res.body.message) || 'Error en desar.');
+                    }
+                })
+                .catch(function () { btn.disabled = false; alert('Error de connexió.'); });
+        }
+
+        document.addEventListener('click', function (e) {
+            var t = e.target;
+            if (!t.closest) return;
+            var row = t.closest('tr[data-id]');
+            if (!row) return;
+            if (t.closest('.acc-edit')) { e.preventDefault(); enterEdit(row); }
+            else if (t.closest('.acc-cancel')) { e.preventDefault(); exitEdit(row, true); }
+            else if (t.closest('.acc-save')) { e.preventDefault(); saveEdit(row); }
+        });
+    })();
+    </script>
+    <?php endif; ?>
 
     <script>
     (function () {

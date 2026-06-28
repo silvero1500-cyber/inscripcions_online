@@ -69,6 +69,13 @@ final class InscritosAdminController
         $from = $total > 0 ? ($page - 1) * $perPage + 1 : 0;
         $to = min($total, $page * $perPage);
 
+        // Franges de l'event seleccionat (per a l'edició inline del grid)
+        $franjas = [];
+        if ($filters['evento_id']) {
+            $ev = Evento::findById((int) $filters['evento_id']);
+            if ($ev) $franjas = array_map(fn($f) => $f['label'], Evento::franjasConfig($ev));
+        }
+
         View::render('admin/inscritos/index', [
             'user'       => $user,
             'eventos'    => $eventos,
@@ -76,6 +83,7 @@ final class InscritosAdminController
             'filters'    => $filters,
             'counts'     => $counts,
             'recollits'  => $recollits,
+            'franjas'    => $franjas,
             'total'      => $total,
             'page'       => $page,
             'perPage'    => $perPage,
@@ -206,6 +214,124 @@ final class InscritosAdminController
         Session::flash('success', $val ? 'Marcat com a Early Bird.' : 'Early Bird desmarcat.');
 
         Response::redirect(base_url('/admin/inscritos/' . $id));
+    }
+
+    /**
+     * Edició inline d'un inscrit des del grid. Valida i desa els camps de dades
+     * personals + inscripció. Respon JSON (èxit amb valors formatats / errors).
+     */
+    public function updateInline(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        if (!in_array($user->rol, ['superadmin', 'organizador'], true)) {
+            Response::json(['ok' => false, 'message' => 'Sense permís.'], 403);
+        }
+        if (!Csrf::verify($req->post('_csrf'))) {
+            Response::json(['ok' => false, 'message' => 'Sessió expirada.'], 419);
+        }
+
+        $inscrito = Inscrito::findById($id);
+        if ($inscrito === null) Response::json(['ok' => false, 'message' => 'Inscrit no trobat.'], 404);
+        if (!Evento::userCanEdit($user->id, $user->rol, (int) $inscrito['evento_id'])) {
+            Response::json(['ok' => false, 'message' => 'Sense permís.'], 403);
+        }
+
+        $eventoId = (int) $inscrito['evento_id'];
+        $evento   = Evento::findById($eventoId);
+        $errors   = [];
+
+        // ── Sanejar entrada ──
+        $nombre    = trim((string) $req->post('nombre'));
+        $apellido  = trim((string) $req->post('apellido'));
+        $dni       = strtoupper(trim((string) $req->post('dni')));
+        $sexo      = strtoupper(trim((string) $req->post('sexo')));
+        $fnac      = trim((string) $req->post('fecha_nacimiento'));
+        $email     = strtolower(trim((string) $req->post('email')));
+        $telefono  = preg_replace('/\s+/', '', trim((string) $req->post('telefono'))) ?? '';
+        $club      = trim((string) $req->post('club'));
+        $poblacion = mb_substr(trim((string) $req->post('poblacion')), 0, 120);
+        $cp        = preg_replace('/\D+/', '', trim((string) $req->post('codigo_postal'))) ?? '';
+        $talla     = trim((string) $req->post('talla_camiseta'));
+        $franja    = mb_substr(trim((string) $req->post('franja_temps')), 0, 60);
+        $dorsalRaw = trim((string) $req->post('numero_dorsal'));
+
+        // ── Validar ──
+        if ($nombre === '') $errors['nombre'] = 'El nom és obligatori.';
+        if (mb_strlen($nombre) > 100) $errors['nombre'] = 'Nom massa llarg.';
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'Email no vàlid.';
+        if ($dni !== '' && !Inscrito::dniValido($dni)) $errors['dni'] = 'DNI o NIE no vàlid.';
+        if ($sexo !== '' && !in_array($sexo, Inscrito::SEXOS, true)) $errors['sexo'] = 'Sexe no vàlid.';
+        if ($talla !== '' && !in_array($talla, Inscrito::TALLAS, true)) $errors['talla_camiseta'] = 'Talla no vàlida.';
+        if ($telefono !== '' && !preg_match('/^\+?\d{9,15}$/', $telefono)) $errors['telefono'] = 'Telèfon no vàlid.';
+        if ($cp !== '' && !preg_match('/^\d{4,5}$/', $cp)) $errors['codigo_postal'] = 'CP no vàlid.';
+        if ($fnac !== '') {
+            $ts = strtotime($fnac);
+            if ($ts === false || $ts > time() || $ts < strtotime('-110 years')) $errors['fecha_nacimiento'] = 'Data no vàlida.';
+        }
+        if ($franja !== '' && $evento !== null) {
+            $labels = array_map(fn($f) => $f['label'], Evento::franjasConfig($evento));
+            if ($labels && !in_array($franja, $labels, true)) $errors['franja_temps'] = 'Franja no vàlida.';
+        }
+        $dorsal = null;
+        if ($dorsalRaw !== '') {
+            if (!ctype_digit($dorsalRaw) || (int) $dorsalRaw <= 0) {
+                $errors['numero_dorsal'] = 'Dorsal no vàlid.';
+            } else {
+                $dorsal = (int) $dorsalRaw;
+                if (Inscrito::dorsalEnUs($eventoId, $dorsal, $id)) {
+                    $errors['numero_dorsal'] = 'El dorsal ' . $dorsal . ' ja l\'usa un altre inscrit.';
+                }
+            }
+        }
+
+        if ($errors) {
+            Response::json(['ok' => false, 'errors' => $errors], 422);
+        }
+
+        // ── Desar ──
+        $data = [
+            'nombre'           => $nombre,
+            'apellido'         => $apellido !== '' ? $apellido : null,
+            'dni'              => $dni !== '' ? $dni : null,
+            'sexo'             => $sexo !== '' ? $sexo : null,
+            'fecha_nacimiento' => $fnac !== '' ? $fnac : null,
+            'email'            => $email,
+            'telefono'         => $telefono !== '' ? $telefono : null,
+            'club'             => $club !== '' ? $club : null,
+            'poblacion'        => $poblacion !== '' ? $poblacion : null,
+            'codigo_postal'    => $cp !== '' ? mb_substr($cp, 0, 10) : null,
+            'talla_camiseta'   => $talla !== '' ? $talla : null,
+            'franja_temps'     => $franja !== '' ? $franja : null,
+            'numero_dorsal'    => $dorsal,
+        ];
+        try {
+            Database::getInstance()->update('inscritos', $data, ['id' => $id]);
+        } catch (\Throwable $e) {
+            error_log('[InscritosAdmin] updateInline: ' . $e->getMessage());
+            Response::json(['ok' => false, 'message' => 'No s\'ha pogut desar.'], 500);
+        }
+
+        AuditLog::registrar('inscrit_editat', 'Edició inline inscrit #' . $id . ' (' . $nombre . ')');
+
+        // Valors formatats per repintar les cel·les del grid
+        Response::json(['ok' => true, 'inscrito' => [
+            'nombre'        => $nombre,
+            'apellido'      => (string) ($data['apellido'] ?? ''),
+            'dni'           => (string) ($data['dni'] ?? ''),
+            'sexo'          => (string) ($data['sexo'] ?? ''),
+            'fnac'          => $fnac !== '' ? date('d/m/Y', strtotime($fnac)) : '—',
+            'fnac_raw'      => (string) ($data['fecha_nacimiento'] ?? ''),
+            'email'         => $email,
+            'telefono'      => (string) ($data['telefono'] ?? ''),
+            'club'          => (string) ($data['club'] ?? '—'),
+            'poblacion'     => (string) ($data['poblacion'] ?? '—'),
+            'cp'            => (string) ($data['codigo_postal'] ?? '—'),
+            'talla'         => (string) ($data['talla_camiseta'] ?? '—'),
+            'franja'        => (string) ($data['franja_temps'] ?? '—'),
+            'dorsal'        => $dorsal !== null ? (string) $dorsal : '—',
+        ]]);
     }
 
     /**
