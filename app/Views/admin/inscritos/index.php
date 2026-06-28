@@ -331,6 +331,18 @@ $pageUrl = function (int $p) use ($filtersClean): string {
 
         function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]); }); }
 
+        // Barra flotant fixa amb Desa/Cancel·la (sempre visible, sense scroll)
+        var currentRow = null;
+        var bar = document.createElement('div');
+        bar.id = 'inline-edit-bar';
+        bar.className = 'inline-edit-bar';
+        bar.innerHTML = '<span class="ieb-info"></span>'
+            + '<button type="button" class="btn btn-primary ieb-save">💾 Desa</button>'
+            + '<button type="button" class="btn ieb-cancel">✖ Cancel·la</button>';
+        document.body.appendChild(bar);
+        bar.querySelector('.ieb-save').addEventListener('click', function () { if (currentRow) saveEdit(currentRow); });
+        bar.querySelector('.ieb-cancel').addEventListener('click', function () { if (currentRow) exitEdit(currentRow, true); });
+
         function makeInput(cell) {
             var type = cell.getAttribute('data-edit');
             var val = cell.getAttribute('data-val') || '';
@@ -359,7 +371,9 @@ $pageUrl = function (int $p) use ($filtersClean): string {
 
         function enterEdit(row) {
             if (row.classList.contains('row-editing')) return;
+            if (currentRow && currentRow !== row) exitEdit(currentRow, true); // només una fila a l'hora
             row.classList.add('row-editing');
+            var first = null;
             row.querySelectorAll('td[data-edit]').forEach(function (cell) {
                 cell.setAttribute('data-html', cell.innerHTML);
                 var inp = makeInput(cell);
@@ -367,9 +381,18 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                 inp.setAttribute('data-field', cell.getAttribute('data-field'));
                 cell.innerHTML = '';
                 cell.appendChild(inp);
+                if (!first) first = inp;
             });
             row.querySelector('.acc-normal').style.display = 'none';
             row.querySelector('.acc-edit-mode').style.display = '';
+            currentRow = row;
+            // Mostra la barra fixa amb el nom de l'inscrit
+            var nameCell = row.querySelector('td[data-field="nombre"]');
+            var ape = row.querySelector('td[data-field="apellido"]');
+            var nom = (nameCell ? (nameCell.getAttribute('data-val') || '') : '') + ' ' + (ape ? (ape.getAttribute('data-val') || '') : '');
+            bar.querySelector('.ieb-info').textContent = '✏️ Editant: ' + nom.trim();
+            bar.classList.add('show');
+            if (first) { try { first.focus(); } catch (e) {} }
         }
 
         function exitEdit(row, restore) {
@@ -380,6 +403,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
             row.classList.remove('row-editing');
             row.querySelector('.acc-normal').style.display = '';
             row.querySelector('.acc-edit-mode').style.display = 'none';
+            if (currentRow === row) { currentRow = null; bar.classList.remove('show'); }
         }
 
         function repaint(row, ins) {
@@ -420,11 +444,12 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                 fd.append(inp.getAttribute('data-field'), inp.value);
             });
             var btn = row.querySelector('.acc-save');
-            btn.disabled = true;
+            var barBtn = bar.querySelector('.ieb-save');
+            btn.disabled = true; barBtn.disabled = true;
             fetch(BASE + id + '/editar', { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
                 .then(function (res) {
-                    btn.disabled = false;
+                    btn.disabled = false; barBtn.disabled = false;
                     if (res.body && res.body.ok) {
                         repaint(row, res.body.inscrito);
                         exitEdit(row, true);
@@ -435,7 +460,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                         alert((res.body && res.body.message) || 'Error en desar.');
                     }
                 })
-                .catch(function () { btn.disabled = false; alert('Error de connexió.'); });
+                .catch(function () { btn.disabled = false; barBtn.disabled = false; alert('Error de connexió.'); });
         }
 
         document.addEventListener('click', function (e) {
@@ -446,6 +471,22 @@ $pageUrl = function (int $p) use ($filtersClean): string {
             if (t.closest('.acc-edit')) { e.preventDefault(); enterEdit(row); }
             else if (t.closest('.acc-cancel')) { e.preventDefault(); exitEdit(row, true); }
             else if (t.closest('.acc-save')) { e.preventDefault(); saveEdit(row); }
+        });
+
+        // Dreceres: Enter = desa, Esc = cancel·la (quan s'està editant)
+        document.addEventListener('keydown', function (e) {
+            if (!currentRow) return;
+            if (e.key === 'Enter' && !e.shiftKey) {
+                var tg = e.target;
+                // Enter dins d'un input/select de la fila → desa
+                if (tg && tg.classList && tg.classList.contains('cell-edit-input')) {
+                    e.preventDefault();
+                    saveEdit(currentRow);
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                exitEdit(currentRow, true);
+            }
         });
     })();
     </script>

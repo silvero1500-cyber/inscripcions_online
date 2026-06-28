@@ -677,6 +677,33 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 tr.row-editing { background: #eff6ff; }
 tr.row-editing td { vertical-align: middle; }
 .acc-edit-mode .btn-tiny { margin-left: .2rem; }
+
+/* Barra flotant fixa Desa/Cancel·la (sempre visible mentre s'edita una fila) */
+.inline-edit-bar {
+    position: fixed;
+    left: 50%;
+    bottom: -100px;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: flex; align-items: center; gap: .8rem;
+    background: #1f2937;
+    color: #fff;
+    padding: .7rem 1.1rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .3);
+    transition: bottom .2s ease;
+    max-width: 94vw;
+}
+.inline-edit-bar.show { bottom: 1.2rem; }
+.inline-edit-bar .ieb-info {
+    font-weight: 600; font-size: .95rem;
+    max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.inline-edit-bar .btn { margin: 0; }
+@media (max-width: 640px) {
+    .inline-edit-bar { width: 94vw; justify-content: space-between; }
+    .inline-edit-bar .ieb-info { max-width: 50%; }
+}
 .btn-tiny {
     display: inline-block;
     padding: .2rem .45rem;
