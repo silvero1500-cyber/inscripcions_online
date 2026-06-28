@@ -116,6 +116,8 @@ $jsData = [
     </div>
 </section>
 
+<?php $barEvento = $evento; $barActual = 'kpis'; require __DIR__ . '/../partials/cursa_bar.php'; ?>
+
 <?php /* ══ NIVELL 1 · 4 targetes ══════════════════════════════ */ ?>
 <div class="kpi-grid kpi-grid-4">
     <div class="kpi-card kpi-card-lvl1">

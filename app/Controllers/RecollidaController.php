@@ -106,6 +106,7 @@ final class RecollidaController
             'scanned'    => $scanned,
             'scanError'  => $scanError,
             'pucEditarDorsal' => self::pucEditarDorsal($user),
+            'eventoSel'  => $eventoId ? Evento::findById((int) $eventoId) : null,
             'total'      => $total,
             'page'       => $page,
             'totalPages' => $totalPages,

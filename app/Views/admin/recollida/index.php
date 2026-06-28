@@ -50,6 +50,8 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
     </div>
 </section>
 
+<?php $barEvento = $eventoSel ?? null; $barActual = 'recollida'; require __DIR__ . '/../partials/cursa_bar.php'; ?>
+
 <?php if (!empty($flash['success'])): ?>
     <div class="alert alert-success"><?= e($flash['success']) ?></div>
 <?php endif; ?>

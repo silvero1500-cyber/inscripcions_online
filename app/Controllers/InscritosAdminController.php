@@ -71,6 +71,7 @@ final class InscritosAdminController
 
         // Franges de l'event seleccionat (per a l'edició inline del grid)
         $franjas = [];
+        $ev = null;
         if ($filters['evento_id']) {
             $ev = Evento::findById((int) $filters['evento_id']);
             if ($ev) $franjas = array_map(fn($f) => $f['label'], Evento::franjasConfig($ev));
@@ -84,6 +85,7 @@ final class InscritosAdminController
             'counts'     => $counts,
             'recollits'  => $recollits,
             'franjas'    => $franjas,
+            'eventoSel'  => $ev,
             'total'      => $total,
             'page'       => $page,
             'perPage'    => $perPage,

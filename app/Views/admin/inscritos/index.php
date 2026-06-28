@@ -40,6 +40,8 @@ $pageUrl = function (int $p) use ($filtersClean): string {
     <?php endif; ?>
 </section>
 
+<?php $barEvento = $eventoSel ?? null; $barActual = 'inscrits'; require __DIR__ . '/../partials/cursa_bar.php'; ?>
+
 <?php if (!empty($flash['success'])): ?>
     <div class="alert alert-success"><?= e($flash['success']) ?></div>
 <?php endif; ?>
