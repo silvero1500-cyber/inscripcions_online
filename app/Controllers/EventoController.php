@@ -1014,12 +1014,23 @@ final class EventoController
                 }
             }
 
+            // Mapa de calaix per opció: campos[i][calaix_map][<opció>] = calaix (1..4)
+            $calaixMap = [];
+            if (!empty($c['calaix_map']) && is_array($c['calaix_map'])) {
+                foreach ($c['calaix_map'] as $opt => $cal) {
+                    $opt = trim((string) $opt);
+                    $cal = (int) $cal;
+                    if ($opt !== '' && $cal >= 1 && $cal <= 4) $calaixMap[$opt] = $cal;
+                }
+            }
+
             $out[] = [
                 'nombre_campo'    => substr($nombre, 0, 100),
                 'etiqueta'        => substr($etiqueta, 0, 255),
                 'tipo'            => $tipo,
                 'opciones'        => $opcionesJson,
                 'opciones_tarifa' => $opcTarifa,
+                'calaix_map'      => $calaixMap,
                 'antes_estandar'  => !empty($c['antes_estandar']) ? 1 : 0,
                 'requerido'       => !empty($c['requerido']) ? 1 : 0,
                 'oculto'          => !empty($c['oculto']) ? 1 : 0,

@@ -158,6 +158,7 @@ CREATE TABLE IF NOT EXISTS `campos_personalizados` (
     `tipo`         ENUM('text','textarea','select','checkbox','radio','date','number','email','tel','file')
                                  NOT NULL DEFAULT 'text',
     `opciones`     JSON          NULL COMMENT 'Array de opciones para select/radio/checkbox',
+    `calaix_map`   JSON          NULL COMMENT 'Mapa {opció => calaix 1..4} per a la sortida',
     `requerido`    TINYINT(1)    NOT NULL DEFAULT 0,
     `orden`        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     `activo`       TINYINT(1)    NOT NULL DEFAULT 1,
@@ -188,6 +189,7 @@ CREATE TABLE IF NOT EXISTS `inscritos` (
     `tutor_nombre`    VARCHAR(100)  NULL COMMENT 'Tutor legal (només inscrits infantils)',
     `tutor_apellido`  VARCHAR(150)  NULL,
     `tutor_dni`       VARCHAR(20)   NULL,
+    `early_bird`      TINYINT(1)    NOT NULL DEFAULT 0 COMMENT 'Inscripció early bird (marca manual)',
     `email`           VARCHAR(255)  NOT NULL,
     `telefono`        VARCHAR(20)   NULL,
     `club`            VARCHAR(150)  NULL,

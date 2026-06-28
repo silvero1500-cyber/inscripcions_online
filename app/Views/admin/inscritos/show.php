@@ -120,6 +120,17 @@ $row = function (string $label, $value, bool $raw = false): void {
             $row('IP registre', $inscrito['ip_registro'] ?? null);
             ?>
         </div>
+        <?php /* Early Bird: marca manual que es mostra a recollida */ ?>
+        <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int) $inscrito['id'] . '/early-bird')) ?>" class="inline" style="margin-top:1rem;">
+            <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+            <input type="hidden" name="early_bird" value="<?= !empty($inscrito['early_bird']) ? '0' : '1' ?>">
+            <?php if (!empty($inscrito['early_bird'])): ?>
+                <span class="badge badge-success">🐦 Early Bird</span>
+                <button type="submit" class="btn-link" style="margin-left:.6rem;">Desmarcar</button>
+            <?php else: ?>
+                <button type="submit" class="btn btn-secondary btn-small">🐦 Marcar Early Bird</button>
+            <?php endif; ?>
+        </form>
     </div>
 </div>
 

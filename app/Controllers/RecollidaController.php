@@ -56,6 +56,7 @@ final class RecollidaController
                     'tarifa'     => Tarifa::findById((int) $ins['tarifa_id']),
                     'recollitPor'=> !empty($ins['dorsal_recollit_por'])
                         ? Usuario::findById((int) $ins['dorsal_recollit_por']) : null,
+                    'calaix'     => self::calaixPerInscrit($ins),
                 ];
             }
         }
@@ -104,6 +105,7 @@ final class RecollidaController
             'tallas'     => $tallas,
             'scanned'    => $scanned,
             'scanError'  => $scanError,
+            'pucEditarDorsal' => self::pucEditarDorsal($user),
             'total'      => $total,
             'page'       => $page,
             'totalPages' => $totalPages,
@@ -162,8 +164,9 @@ final class RecollidaController
             $this->back($req, (int) $inscrito['evento_id']);
         }
 
-        // Dorsal opcional (ve del flux d'escaneig QR)
-        $dorsalRaw = trim((string) $req->post('dorsal'));
+        // Dorsal opcional (ve del flux d'escaneig QR). Només organitzador/superadmin
+        // poden assignar-lo; per al rol 'recollida' s'ignora encara que vingui al POST.
+        $dorsalRaw = self::pucEditarDorsal($user) ? trim((string) $req->post('dorsal')) : '';
         if ($dorsalRaw !== '') {
             if (!$this->assignDorsal($inscrito, $dorsalRaw)) {
                 $this->back($req, (int) $inscrito['evento_id']); // assignDorsal ja ha posat el flash d'error
@@ -200,6 +203,11 @@ final class RecollidaController
     public function dorsal(Request $req, array $params): void
     {
         [$user, $inscrito] = $this->guard($req, $params);
+
+        // Assignar/editar dorsal: només organitzador/superadmin
+        if (!self::pucEditarDorsal($user)) {
+            Response::forbidden();
+        }
 
         $dorsalRaw = trim((string) $req->post('dorsal'));
         if ($dorsalRaw === '') {
@@ -310,5 +318,40 @@ final class RecollidaController
              ORDER BY e.fecha_evento DESC, e.id DESC",
             [$user->id, $user->id]
         )->fetchAll();
+    }
+
+    /**
+     * Només superadmin/organitzador poden assignar o editar el dorsal. El rol
+     * 'recollida' (voluntaris) pot marcar recollit però no tocar el dorsal.
+     */
+    private static function pucEditarDorsal($user): bool
+    {
+        return in_array($user->rol ?? '', ['superadmin', 'organizador'], true);
+    }
+
+    /**
+     * Calcula el calaix de sortida d'un inscrit a partir del camp 'franja_temps'
+     * de l'esdeveniment i del valor que va triar. Retorna ['n'=>int, 'nom','color','text']
+     * o null si no hi ha franja/mapeig.
+     * @return array{n:int, nom:string, color:string, text:string}|null
+     */
+    private static function calaixPerInscrit(array $ins): ?array
+    {
+        $campos = \App\Models\CampoPersonalizado::getActivosPorEvento((int) $ins['evento_id']);
+        $campo = null;
+        foreach ($campos as $c) {
+            if (($c['nombre_campo'] ?? '') === 'franja_temps') { $campo = $c; break; }
+        }
+        if ($campo === null) return null;
+
+        $valores = \App\Models\CampoPersonalizado::valoresPorInscrito([(int) $ins['id']]);
+        $valor = $valores[(int) $ins['id']][(int) $campo['id']] ?? null;
+
+        $n = \App\Models\CampoPersonalizado::calaixDeValor($campo, $valor);
+        if ($n === null) return null;
+
+        $meta = \App\Models\CampoPersonalizado::CALAIX_COLORS[$n] ?? null;
+        if ($meta === null) return null;
+        return ['n' => $n, 'nom' => $meta['nom'], 'color' => $meta['color'], 'text' => $meta['text']];
     }
 }

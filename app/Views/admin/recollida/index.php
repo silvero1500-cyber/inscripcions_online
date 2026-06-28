@@ -61,11 +61,14 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
 <?php endif; ?>
 
 <?php /* ── Targeta del corredor escanejat (QR amb la càmera) ───────────────── */ ?>
-<?php if ($scanned): $ins = $scanned['inscrito']; $jaRecollit = !empty($ins['dorsal_recollit_at']); ?>
+<?php if ($scanned): $ins = $scanned['inscrito']; $jaRecollit = !empty($ins['dorsal_recollit_at']); $calaix = $scanned['calaix'] ?? null; ?>
     <div class="recollida-scan-card <?= $jaRecollit ? 'is-done' : '' ?>">
         <div class="rsc-head">
             <span class="rsc-tag">QR escanejat</span>
             <h2><?= e($ins['nombre'] . ' ' . ($ins['apellido'] ?? '')) ?></h2>
+            <?php if (!empty($ins['early_bird'])): ?>
+                <span class="rsc-earlybird">EARLY BIRD</span>
+            <?php endif; ?>
         </div>
         <?php /* Dorsal i Talla ben grans (el que més mira qui entrega) — dorsal primer */ ?>
         <div class="rsc-big">
@@ -79,10 +82,15 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
             </div>
         </div>
 
+        <?php if ($calaix): ?>
+            <div class="rsc-calaix" style="background:<?= e($calaix['color']) ?>;color:<?= e($calaix['text']) ?>;">
+                🏁 <?= e($calaix['nom']) ?>
+            </div>
+        <?php endif; ?>
+
         <div class="rsc-facts">
             <div><span>DNI</span><strong><?= e($ins['dni'] ?? '—') ?></strong></div>
             <div><span>Tarifa</span><strong><?= e($scanned['tarifa']['nombre'] ?? '—') ?></strong></div>
-            <div><span>Club</span><strong><?= e($ins['club'] ?? '—') ?></strong></div>
         </div>
 
         <?php if ($jaRecollit): ?>
@@ -91,14 +99,16 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
                 <?php if (!empty($scanned['recollitPor'])): ?>per <?= e($scanned['recollitPor']['nombre']) ?><?php endif; ?>
             </div>
             <div class="rsc-action-row">
-                <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/dorsal')) ?>" class="rsc-action">
-                    <?= Csrf::field() ?>
-                    <label>Editar dorsal
-                        <input type="number" name="dorsal" min="1" inputmode="numeric"
-                               value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>" placeholder="—">
-                    </label>
-                    <button type="submit" class="btn">💾 Desa dorsal</button>
-                </form>
+                <?php if (!empty($pucEditarDorsal)): ?>
+                    <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/dorsal')) ?>" class="rsc-action">
+                        <?= Csrf::field() ?>
+                        <label>Editar dorsal
+                            <input type="number" name="dorsal" min="1" inputmode="numeric"
+                                   value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>" placeholder="—">
+                        </label>
+                        <button type="submit" class="btn">💾 Desa dorsal</button>
+                    </form>
+                <?php endif; ?>
                 <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/desfer')) ?>" class="inline">
                     <?= Csrf::field() ?>
                     <button type="submit" class="btn btn-secondary">↩ Desfer recollida</button>
@@ -108,10 +118,12 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
         <?php else: ?>
             <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/marcar')) ?>" class="rsc-action" onsubmit="return confirmRecollit(this)">
                 <?= Csrf::field() ?>
-                <label>Assignar dorsal
-                    <input type="number" name="dorsal" min="1" inputmode="numeric"
-                           value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>" placeholder="—">
-                </label>
+                <?php if (!empty($pucEditarDorsal)): ?>
+                    <label>Assignar dorsal
+                        <input type="number" name="dorsal" min="1" inputmode="numeric"
+                               value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>" placeholder="—">
+                    </label>
+                <?php endif; ?>
                 <div class="rsc-btns">
                     <button type="submit" class="btn btn-primary btn-lg">✓ Marcar recollit</button>
                     <a class="btn btn-secondary btn-lg" href="<?= e(base_url('/admin/recollida/escanejar')) ?>">📷 Escanejar QR</a>
@@ -236,12 +248,16 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
                 <?php foreach ($inscritos as $i): $rec = !empty($i['dorsal_recollit_at']); ?>
                     <tr class="<?= $rec ? 'row-done' : '' ?>">
                         <td>
-                            <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $i['id'] . '/dorsal')) ?>" class="dorsal-edit">
-                                <?= $actionHidden() ?>
-                                <input type="number" name="dorsal" min="1" inputmode="numeric"
-                                       value="<?= !empty($i['numero_dorsal']) ? (int) $i['numero_dorsal'] : '' ?>" placeholder="—">
-                                <button type="submit" class="btn-tiny" title="Desar dorsal">💾</button>
-                            </form>
+                            <?php if (!empty($pucEditarDorsal)): ?>
+                                <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $i['id'] . '/dorsal')) ?>" class="dorsal-edit">
+                                    <?= $actionHidden() ?>
+                                    <input type="number" name="dorsal" min="1" inputmode="numeric"
+                                           value="<?= !empty($i['numero_dorsal']) ? (int) $i['numero_dorsal'] : '' ?>" placeholder="—">
+                                    <button type="submit" class="btn-tiny" title="Desar dorsal">💾</button>
+                                </form>
+                            <?php else: ?>
+                                <span class="dorsal-readonly"><?= !empty($i['numero_dorsal']) ? (int) $i['numero_dorsal'] : '—' ?></span>
+                            <?php endif; ?>
                         </td>
                         <td><strong><?= e($i['nombre']) ?></strong> <?= e($i['apellido'] ?? '') ?></td>
                         <td><?= e($i['dni'] ?? '—') ?></td>

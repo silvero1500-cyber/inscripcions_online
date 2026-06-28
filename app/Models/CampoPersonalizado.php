@@ -106,6 +106,16 @@ final class CampoPersonalizado
                     }
                 }
 
+                // Mapa de calaix per opció: {opció => calaix 1..4}. Només valors vàlids.
+                $calaixMap = [];
+                foreach ((array) ($c['calaix_map'] ?? []) as $opt => $cal) {
+                    $opt = trim((string) $opt);
+                    $cal = (int) $cal;
+                    if ($opt !== '' && $cal >= 1 && $cal <= 4) {
+                        $calaixMap[$opt] = $cal;
+                    }
+                }
+
                 $ids[] = $db->insert('campos_personalizados', [
                     'evento_id'       => $eventoId,
                     'tarifa_id'       => null,
@@ -115,6 +125,7 @@ final class CampoPersonalizado
                     'tipo'            => $c['tipo'],
                     'opciones'        => $c['opciones'],
                     'opciones_tarifa' => $opcTarifa ? (string) json_encode($opcTarifa, JSON_UNESCAPED_UNICODE) : null,
+                    'calaix_map'      => $calaixMap ? (string) json_encode($calaixMap, JSON_UNESCAPED_UNICODE) : null,
                     'antes_estandar'  => !empty($c['antes_estandar']) ? 1 : 0,
                     'requerido'       => $c['requerido'],
                     'orden'        => $orden,
@@ -201,5 +212,45 @@ final class CampoPersonalizado
         $map = self::opcionesPorTarifa($campo);
         if ($tarifaId !== null && isset($map[$tarifaId])) return $map[$tarifaId];
         return self::opcionesFromJson($campo['opciones'] ?? null);
+    }
+
+    /**
+     * Colors dels calaixos de sortida (calaix 1..4). Per a badges a recollida.
+     * @var array<int, array{nom:string, color:string, text:string}>
+     */
+    public const CALAIX_COLORS = [
+        1 => ['nom' => 'Calaix 1', 'color' => '#facc15', 'text' => '#1f2937'], // groc
+        2 => ['nom' => 'Calaix 2', 'color' => '#22c55e', 'text' => '#ffffff'], // verd
+        3 => ['nom' => 'Calaix 3', 'color' => '#0ea5e9', 'text' => '#ffffff'], // blau
+        4 => ['nom' => 'Calaix 4', 'color' => '#ec4899', 'text' => '#ffffff'], // rosa
+    ];
+
+    /**
+     * Mapa de calaix per opció d'aquest camp: {opció => calaix 1..4}.
+     * @return array<string, int>
+     */
+    public static function calaixMap(array $campo): array
+    {
+        $raw = $campo['calaix_map'] ?? null;
+        if (empty($raw)) return [];
+        $arr = json_decode((string) $raw, true);
+        if (!is_array($arr)) return [];
+        $out = [];
+        foreach ($arr as $opt => $cal) {
+            $opt = trim((string) $opt);
+            $cal = (int) $cal;
+            if ($opt !== '' && $cal >= 1 && $cal <= 4) $out[$opt] = $cal;
+        }
+        return $out;
+    }
+
+    /**
+     * Calaix (1..4) corresponent al valor triat per l'inscrit, o null si no mapeja.
+     */
+    public static function calaixDeValor(array $campo, ?string $valor): ?int
+    {
+        if ($valor === null || trim($valor) === '') return null;
+        $map = self::calaixMap($campo);
+        return $map[trim($valor)] ?? null;
     }
 }

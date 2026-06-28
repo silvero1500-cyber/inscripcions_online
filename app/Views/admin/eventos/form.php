@@ -334,8 +334,29 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
             }
             return $h . '</details>';
         };
+        // Mini-editor "Calaix per opció" (per a select/radio): cada opció → calaix 1..4.
+        // El contingut es regenera amb JS quan canvien les opcions; aquí es pinta l'estat desat.
+        $calaixInputs = function (array $campo, $idx): string {
+            $opts = \App\Models\CampoPersonalizado::opcionesFromJson($campo['opciones'] ?? null);
+            $map  = \App\Models\CampoPersonalizado::calaixMap($campo);
+            $colors = \App\Models\CampoPersonalizado::CALAIX_COLORS;
+            $rows = '';
+            foreach ($opts as $opt) {
+                $sel = $map[$opt] ?? 0;
+                $optsHtml = '<option value="0">— Sense calaix —</option>';
+                foreach ($colors as $n => $meta) {
+                    $optsHtml .= '<option value="' . $n . '"' . ($sel === $n ? ' selected' : '') . '>' . e($meta['nom']) . '</option>';
+                }
+                $rows .= '<div class="calaix-opt-row"><span class="calaix-opt-name">' . e($opt) . '</span>'
+                    . '<select name="campos[' . $idx . '][calaix_map][' . e($opt) . ']">' . $optsHtml . '</select></div>';
+            }
+            $h  = '<details class="campo-calaix" style="margin-top:.6rem;"><summary style="cursor:pointer;color:var(--color-primary,#1e88c2);">Calaix de sortida per opció (per a recollida)</summary>';
+            $h .= '<small class="muted" style="display:block;margin:.3rem 0 .5rem;">Assigna un calaix (1-4) a cada opció. A recollida es mostrarà el calaix del color corresponent segons l\'opció triada pel corredor.</small>';
+            $h .= '<div class="calaix-opts" data-idx="' . $idx . '">' . ($rows !== '' ? $rows : '<p class="muted" style="margin:0;">Primer escriu les opcions a dalt.</p>') . '</div>';
+            return $h . '</details>';
+        };
         // Targeta plegable d'un camp personalitzat ($c = null per a la plantilla)
-        $renderCampoCard = function ($idx, ?array $c) use ($tarifaCondChecks, $opcTarifaInputs): void {
+        $renderCampoCard = function ($idx, ?array $c) use ($tarifaCondChecks, $opcTarifaInputs, $calaixInputs): void {
             $opcArr   = CampoPersonalizado::opcionesFromJson($c['opciones'] ?? null);
             $tipo     = (string) ($c['tipo'] ?? 'text');
             $etiqueta = (string) ($c['etiqueta'] ?? '');
@@ -381,6 +402,7 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                             <div class="campo-tarifes-checks"><?= $tarifaCondChecks(CampoPersonalizado::tarifasDeCampo($c ?? []), $idx) ?></div>
                             <small class="muted">Marca una o més tarifes i el camp només apareix quan se'n tria alguna. Cap marcada = sempre.</small>
                             <?= $opcTarifaInputs($c ?? [], $idx) ?>
+                            <?= $calaixInputs($c ?? [], $idx) ?>
                         </div>
                     </div>
                 </div>
@@ -556,3 +578,58 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
 </template>
 
 <script src="<?= e(asset('js/eventos.js')) ?>?v=<?= @filemtime(BASE_PATH . '/public/assets/js/eventos.js') ?: time() ?>"></script>
+<script>
+// ── Calaix per opció: regenera els selectors quan canvien les opcions del camp ──
+(function () {
+    var CAL = [
+        { v: 1, t: 'Calaix 1' }, { v: 2, t: 'Calaix 2' }, { v: 3, t: 'Calaix 3' }, { v: 4, t: 'Calaix 4' }
+    ];
+    function escAttr(s) { return String(s).replace(/"/g, '&quot;'); }
+
+    function rebuild(optionsInput) {
+        // idx del camp a partir del name campos[IDX][opciones]
+        var m = optionsInput.name.match(/^campos\[([^\]]+)\]\[opciones\]$/);
+        if (!m) return;
+        var idx = m[1];
+        var card = optionsInput.closest('.campo-row, .field-item');
+        if (!card) return;
+        var box = card.querySelector('.calaix-opts[data-idx="' + CSS.escape(idx) + '"]') || card.querySelector('.calaix-opts');
+        if (!box) return;
+
+        // Selecció prèvia (per preservar) a partir dels selects actuals
+        var prev = {};
+        box.querySelectorAll('select').forEach(function (s) {
+            var mm = s.name.match(/\[calaix_map\]\[(.+)\]$/);
+            if (mm) prev[mm[1]] = s.value;
+        });
+
+        var opts = optionsInput.value.split('|').map(function (o) { return o.trim(); }).filter(Boolean);
+        if (opts.length === 0) { box.innerHTML = '<p class="muted" style="margin:0;">Primer escriu les opcions a dalt.</p>'; return; }
+
+        var html = '';
+        opts.forEach(function (opt) {
+            var cur = prev[opt] || '0';
+            var sel = '<select name="campos[' + idx + '][calaix_map][' + escAttr(opt) + ']"><option value="0">— Sense calaix —</option>';
+            CAL.forEach(function (c) { sel += '<option value="' + c.v + '"' + (String(c.v) === String(cur) ? ' selected' : '') + '>' + c.t + '</option>'; });
+            sel += '</select>';
+            html += '<div class="calaix-opt-row"><span class="calaix-opt-name">' + (opt.replace(/</g, '&lt;')) + '</span>' + sel + '</div>';
+        });
+        box.innerHTML = html;
+    }
+
+    document.addEventListener('input', function (e) {
+        var el = e.target;
+        if (el && el.name && /^campos\[[^\]]+\]\[opciones\]$/.test(el.name)) rebuild(el);
+    });
+    // En clonar un camp nou des de la plantilla, regenerar el seu mapa
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.id === 'add-campo') {
+            setTimeout(function () {
+                document.querySelectorAll('input[name$="[opciones]"]').forEach(function (inp) {
+                    if (inp.name.match(/^campos\[/)) rebuild(inp);
+                });
+            }, 50);
+        }
+    });
+})();
+</script>

@@ -188,6 +188,27 @@ final class InscritosAdminController
     }
 
     /**
+     * Marca/desmarca la inscripció com a "early bird" (manual). Torna a la fitxa.
+     */
+    public function toggleEarlyBird(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+
+        $inscrito = Inscrito::findById($id);
+        if ($inscrito === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, (int) $inscrito['evento_id'])) Response::forbidden();
+
+        $val = ($req->post('early_bird') === '1') ? 1 : 0;
+        Database::getInstance()->update('inscritos', ['early_bird' => $val], ['id' => $id]);
+        Session::flash('success', $val ? 'Marcat com a Early Bird.' : 'Early Bird desmarcat.');
+
+        Response::redirect(base_url('/admin/inscritos/' . $id));
+    }
+
+    /**
      * Assegura el qr_token i redirigeix al comprovant imprimible públic.
      */
     public function comprovant(Request $req, array $params): void
