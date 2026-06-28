@@ -63,16 +63,25 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
 }
 
-/* ── Editor de franges: text ample a l'esquerra, select calaix a la dreta ── */
-.franja-row { display: flex; gap: .6rem; align-items: center; margin-bottom: .5rem; }
+/* ── Editor de franges: text ample, mostra de color, select calaix ── */
+.franja-block {
+    border: 1px solid #eef2f7; border-radius: 10px;
+    padding: .6rem .7rem; margin-bottom: .6rem; background: #fafbfc;
+}
+.franja-row { display: flex; gap: .6rem; align-items: center; }
 .franja-row input[type="text"] {
     flex: 1 1 auto;
     min-width: 0;          /* permet que el flex l'encongeixi sense col·lapsar */
     width: auto;
 }
+.calaix-swatch {
+    flex: 0 0 auto;
+    width: 1.5rem; height: 1.5rem; border-radius: 6px;
+    border: 1px solid #d1d5db; display: inline-block;
+}
 .franja-row select {
-    flex: 0 0 200px;
-    width: 200px;
+    flex: 0 0 180px;
+    width: 180px;
     min-width: 0;
 }
 .franja-row .franja-remove {
@@ -81,10 +90,16 @@ input:focus, select:focus, textarea:focus {
     line-height: 1;
     padding: .2rem .4rem;
 }
-.franja-head { display: flex; gap: .6rem; }
+.franja-head { display: flex; gap: .6rem; padding: 0 .7rem; }
 .franja-head > span:first-child { flex: 1 1 auto; }
-.franja-head > span:nth-child(2) { flex: 0 0 200px; }
+.franja-head > span:nth-child(2) { flex: 0 0 calc(1.5rem + 180px + .6rem); }
 .franja-head > span:last-child { flex: 0 0 auto; width: 1.6rem; }
+/* Calaix per tarifa (details dins de cada franja) */
+.franja-tarifes { margin-top: .5rem; }
+.franja-tarifes summary { cursor: pointer; color: var(--color-primary, #2563eb); font-size: .9rem; }
+.franja-tarifa-row { display: flex; align-items: center; gap: .6rem; margin: .35rem 0; }
+.franja-tarifa-nom { flex: 1 1 auto; font-size: .9rem; font-weight: 600; }
+.franja-tarifa-row select { flex: 0 0 180px; width: 180px; }
 
 /* ── Camps de data/hora més moderns ─────────────────────── */
 input[type="date"],

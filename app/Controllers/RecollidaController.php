@@ -341,7 +341,7 @@ final class RecollidaController
         $evento = Evento::findById((int) $ins['evento_id']);
         if ($evento === null) return null;
 
-        $n = Evento::calaixDeFranja($evento, $ins['franja_temps'] ?? null);
+        $n = Evento::calaixDeFranja($evento, $ins['franja_temps'] ?? null, !empty($ins['tarifa_id']) ? (int) $ins['tarifa_id'] : null);
         if ($n === null) return null;
 
         $meta = \App\Models\CampoPersonalizado::CALAIX_COLORS[$n] ?? null;

@@ -754,13 +754,23 @@ final class EventoController
     {
         $raw = $post['franjas'] ?? null;
         if (!is_array($raw)) return null;
+        $clamp = fn($c) => (($c = (int) $c) >= 1 && $c <= 4) ? $c : 0;
         $out = [];
         foreach ($raw as $f) {
             if (!is_array($f)) continue;
             $label = mb_substr(trim((string) ($f['label'] ?? '')), 0, 60);
             if ($label === '') continue;
-            $cal = (int) ($f['calaix'] ?? 0);
-            $out[] = ['label' => $label, 'calaix' => ($cal >= 1 && $cal <= 4) ? $cal : 0];
+            // Calaix per tarifa: franjas[i][tarifes][tarifaId] = calaix (0 = no aplica)
+            $tarifes = [];
+            foreach ((array) ($f['tarifes'] ?? []) as $tid => $cal) {
+                $tid = (int) $tid; $cal = $clamp($cal);
+                if ($tid > 0 && $cal >= 1) $tarifes[$tid] = $cal;
+            }
+            $out[] = [
+                'label'   => $label,
+                'calaix'  => $clamp($f['calaix'] ?? 0),
+                'tarifes' => (object) $tarifes, // objecte JSON {tarifaId: calaix}
+            ];
         }
         return $out ? (string) json_encode($out, JSON_UNESCAPED_UNICODE) : null;
     }

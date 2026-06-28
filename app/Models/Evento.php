@@ -74,8 +74,10 @@ final class Evento
 
     /**
      * Franges de temps configurades de l'event (camp fix "franja_temps").
-     * Llegeix `eventos.franjas_config` (JSON [{label, calaix}]).
-     * @return list<array{label:string, calaix:int}>
+     * Llegeix `eventos.franjas_config` (JSON). Estructura nova per franja:
+     *   { label, calaix (per defecte), tarifes: { tarifaId: calaix } }
+     * Tolera l'estructura vella { label, calaix } (sense `tarifes`).
+     * @return list<array{label:string, calaix:int, tarifes:array<int,int>}>
      */
     public static function franjasConfig(array $evento): array
     {
@@ -83,25 +85,63 @@ final class Evento
         if (empty($raw)) return [];
         $arr = is_string($raw) ? json_decode($raw, true) : $raw;
         if (!is_array($arr)) return [];
+        $clamp = fn($c) => (($c = (int) $c) >= 1 && $c <= 4) ? $c : 0;
         $out = [];
         foreach ($arr as $f) {
             if (!is_array($f)) continue;
             $label = trim((string) ($f['label'] ?? ''));
-            $calaix = (int) ($f['calaix'] ?? 0);
-            if ($label !== '') {
-                $out[] = ['label' => $label, 'calaix' => ($calaix >= 1 && $calaix <= 4) ? $calaix : 0];
+            if ($label === '') continue;
+            $tarifes = [];
+            foreach ((array) ($f['tarifes'] ?? []) as $tid => $cal) {
+                $tid = (int) $tid; $cal = $clamp($cal);
+                if ($tid > 0 && $cal >= 1) $tarifes[$tid] = $cal;
+            }
+            $out[] = [
+                'label'   => $label,
+                'calaix'  => $clamp($f['calaix'] ?? 0),
+                'tarifes' => $tarifes,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Franges que apliquen a una tarifa concreta, amb el calaix resolt per a ella.
+     * - Franja amb `tarifes`: aplica només si la tarifa hi és (calaix = el seu).
+     * - Franja sense `tarifes` (dada vella): aplica a totes amb el calaix per defecte.
+     * @return list<array{label:string, calaix:int}>
+     */
+    public static function franjasParaTarifa(array $evento, ?int $tarifaId): array
+    {
+        $out = [];
+        foreach (self::franjasConfig($evento) as $f) {
+            if (!empty($f['tarifes'])) {
+                if ($tarifaId !== null && isset($f['tarifes'][$tarifaId])) {
+                    $out[] = ['label' => $f['label'], 'calaix' => $f['tarifes'][$tarifaId]];
+                }
+            } else {
+                // Estructura vella: aplica a totes amb el calaix per defecte
+                $out[] = ['label' => $f['label'], 'calaix' => $f['calaix']];
             }
         }
         return $out;
     }
 
-    /** Calaix (1..4) de la franja triada per l'inscrit, o null si no mapeja. */
-    public static function calaixDeFranja(array $evento, ?string $valor): ?int
+    /**
+     * Calaix (1..4) de la franja triada per l'inscrit (resolt segons la seva
+     * tarifa si la franja en defineix), o null si no mapeja.
+     */
+    public static function calaixDeFranja(array $evento, ?string $valor, ?int $tarifaId = null): ?int
     {
         if ($valor === null || trim($valor) === '') return null;
         $valor = trim($valor);
         foreach (self::franjasConfig($evento) as $f) {
-            if ($f['label'] === $valor) return $f['calaix'] > 0 ? $f['calaix'] : null;
+            if ($f['label'] !== $valor) continue;
+            if (!empty($f['tarifes'])) {
+                if ($tarifaId !== null && isset($f['tarifes'][$tarifaId])) return $f['tarifes'][$tarifaId];
+                return null; // la franja és per tarifes concretes i aquesta no hi és
+            }
+            return $f['calaix'] > 0 ? $f['calaix'] : null;
         }
         return null;
     }

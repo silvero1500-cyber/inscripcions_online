@@ -830,14 +830,16 @@ final class InscripcionController
             }
         }
 
-        // Franja de temps (camp fix, select amb opcions per event)
+        // Franja de temps (camp fix, select amb opcions per event/tarifa)
         if ($vis('franja_temps')) {
-            if ($req('franja_temps')) $v->required('franja_temps');
-            if (!empty($data['franja_temps']) && $evento !== null) {
-                $labels = array_map(fn($f) => $f['label'], \App\Models\Evento::franjasConfig($evento));
-                if ($labels && !in_array((string) $data['franja_temps'], $labels, true)) {
-                    $v->addError('franja_temps', 'Tria una franja de temps vàlida.');
-                }
+            // Només es pot exigir si la tarifa té alguna franja aplicable
+            $franjesTarifa = ($evento !== null)
+                ? \App\Models\Evento::franjasParaTarifa($evento, $tarifa !== null ? (int) $tarifa['id'] : null)
+                : [];
+            $labels = array_map(fn($f) => $f['label'], $franjesTarifa);
+            if ($req('franja_temps') && $labels) $v->required('franja_temps');
+            if (!empty($data['franja_temps']) && $labels && !in_array((string) $data['franja_temps'], $labels, true)) {
+                $v->addError('franja_temps', 'Tria una franja de temps vàlida per a aquesta modalitat.');
             }
         }
 

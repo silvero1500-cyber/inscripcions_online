@@ -346,12 +346,12 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                             $franjas = \App\Models\Evento::franjasConfig($evento);
                             if (count($franjas) === 0) break; // sense franges definides, no es mostra
                             ?>
-                            <div class="form-row">
+                            <div class="form-row" data-franja-row>
                                 <label for="franja_temps"><?= e(t('form.label.franja')) ?><?= $reqMark('franja_temps') ?></label>
-                                <select id="franja_temps" name="franja_temps" <?= $reqAttr('franja_temps') ?>>
+                                <select id="franja_temps" name="franja_temps" class="franja-select" <?= $reqAttr('franja_temps') ?>>
                                     <option value=""><?= e(t('form.label.franja.none')) ?></option>
-                                    <?php foreach ($franjas as $f): ?>
-                                        <option value="<?= e($f['label']) ?>" <?= $val('franja_temps') === $f['label'] ? 'selected' : '' ?>><?= e($f['label']) ?></option>
+                                    <?php foreach ($franjas as $f): $tIds = !empty($f['tarifes']) ? implode(',', array_keys($f['tarifes'])) : ''; ?>
+                                        <option value="<?= e($f['label']) ?>" data-tarifes="<?= e($tIds) ?>" <?= $val('franja_temps') === $f['label'] ? 'selected' : '' ?>><?= e($f['label']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                                 <?php if ($err('franja_temps')): ?><div class="field-error"><?= e($err('franja_temps')) ?></div><?php endif; ?>
@@ -595,12 +595,12 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                         $franjasG = \App\Models\Evento::franjasConfig($evento);
                         if (count($franjasG) === 0) break;
                         ?>
-                        <div class="form-row">
+                        <div class="form-row" data-franja-row>
                             <label for="<?= e($idf('franja_temps')) ?>"><?= e(t('form.label.franja')) ?><?= $rm('franja_temps') ?></label>
-                            <select id="<?= e($idf('franja_temps')) ?>" name="<?= e($nm('franja_temps')) ?>" <?= $ra('franja_temps') ?>>
+                            <select id="<?= e($idf('franja_temps')) ?>" name="<?= e($nm('franja_temps')) ?>" class="franja-select p-franja" <?= $ra('franja_temps') ?>>
                                 <option value=""><?= e(t('form.label.franja.none')) ?></option>
-                                <?php foreach ($franjasG as $f): ?>
-                                    <option value="<?= e($f['label']) ?>" <?= $pv('franja_temps') === $f['label'] ? 'selected' : '' ?>><?= e($f['label']) ?></option>
+                                <?php foreach ($franjasG as $f): $tIds = !empty($f['tarifes']) ? implode(',', array_keys($f['tarifes'])) : ''; ?>
+                                    <option value="<?= e($f['label']) ?>" data-tarifes="<?= e($tIds) ?>" <?= $pv('franja_temps') === $f['label'] ? 'selected' : '' ?>><?= e($f['label']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <?php $e = $pe('franja_temps'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
@@ -825,9 +825,10 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         function bind(block) {
             var sel = block.querySelector('.p-tarifa');
             var fn  = block.querySelector('.p-fnac');
-            if (sel) sel.addEventListener('change', function () { checkAge(block, false); recalcTotal(); toggleTutor(block); if (window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value); });
+            if (sel) sel.addEventListener('change', function () { checkAge(block, false); recalcTotal(); toggleTutor(block); if (window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value); if (window.filterFranjaByTarifa) window.filterFranjaByTarifa(block, sel.value); });
             if (sel) toggleTutor(block);
             if (sel && window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value);
+            if (sel && window.filterFranjaByTarifa) window.filterFranjaByTarifa(block, sel.value);
             if (fn) { fn.addEventListener('change', function () { checkAge(block, false); }); fn.addEventListener('input', function () { checkAge(block, false); }); }
             var sx = block.querySelector('.p-sexo'), tll = block.querySelector('.p-talla');
             if (sx && tll && window.filterTallasBySexo) { window.filterTallasBySexo(sx, tll); sx.addEventListener('change', function () { window.filterTallasBySexo(sx, tll); }); }
@@ -1159,18 +1160,52 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         if (window.applyCampOptions) window.applyCampOptions(scope, tarifaVal);
     };
 
+    // Filtra les opcions del select de franja segons la tarifa triada.
+    // Una opció apareix si data-tarifes és buit (dada vella = totes) o conté la tarifa.
+    // Si no n'hi ha cap de vàlida, amaga tota la fila de franja.
+    window.filterFranjaByTarifa = function (scope, tarifaVal) {
+        if (!scope) return;
+        var sel = scope.querySelector('.franja-select');
+        if (!sel) return;
+        var row = sel.closest('[data-franja-row]');
+        var prev = sel.value;
+        var anyValid = false, keepPrev = false;
+        Array.prototype.forEach.call(sel.options, function (op) {
+            if (op.value === '') return; // l'opció buida sempre
+            var t = op.getAttribute('data-tarifes') || '';
+            var ok = (t === '') || (String(tarifaVal) !== '' && t.split(',').indexOf(String(tarifaVal)) !== -1);
+            op.hidden = !ok;
+            op.disabled = !ok;
+            if (ok) { anyValid = true; if (op.value === prev) keepPrev = true; }
+        });
+        if (!keepPrev) sel.value = '';
+        if (row) {
+            var hideRow = !anyValid;
+            row.style.display = hideRow ? 'none' : '';
+            if (hideRow && sel.required) { sel.setAttribute('data-was-req', '1'); sel.required = false; }
+            else if (!hideRow && sel.getAttribute('data-was-req') === '1') { sel.required = true; }
+        }
+    };
+
     // Formulari individual
     var s = document.getElementById('sexo'), tl = document.getElementById('talla_camiseta');
     if (s && tl) { window.filterTallasBySexo(s, tl); s.addEventListener('change', function () { window.filterTallasBySexo(s, tl); }); }
     var fform = document.getElementById('formulari'), tsel = document.getElementById('tarifa_id');
-    if (fform && tsel) { window.filterCampsByTarifa(fform, tsel.value); tsel.addEventListener('change', function () { window.filterCampsByTarifa(fform, tsel.value); }); }
+    if (fform && tsel) {
+        window.filterCampsByTarifa(fform, tsel.value);
+        window.filterFranjaByTarifa(fform, tsel.value);
+        tsel.addEventListener('change', function () {
+            window.filterCampsByTarifa(fform, tsel.value);
+            window.filterFranjaByTarifa(fform, tsel.value);
+        });
+    }
 
     // Participants inicials del formulari de grup
     document.querySelectorAll('#participants [data-participant]').forEach(function (block) {
         var sx = block.querySelector('.p-sexo'), tll = block.querySelector('.p-talla');
         if (sx && tll) { window.filterTallasBySexo(sx, tll); sx.addEventListener('change', function () { window.filterTallasBySexo(sx, tll); }); }
         var pt = block.querySelector('.p-tarifa');
-        if (pt) window.filterCampsByTarifa(block, pt.value);
+        if (pt) { window.filterCampsByTarifa(block, pt.value); window.filterFranjaByTarifa(block, pt.value); }
     });
 })();
 </script>

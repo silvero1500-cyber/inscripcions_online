@@ -477,9 +477,14 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
         foreach ($old['franjas'] as $f) {
             if (!is_array($f)) continue;
             $lab = trim((string) ($f['label'] ?? ''));
-            if ($lab !== '') $franjasEd[] = ['label' => $lab, 'calaix' => (int) ($f['calaix'] ?? 0)];
+            if ($lab === '') continue;
+            $tf = [];
+            foreach ((array) ($f['tarifes'] ?? []) as $tid => $cal) { $tf[(int) $tid] = (int) $cal; }
+            $franjasEd[] = ['label' => $lab, 'calaix' => (int) ($f['calaix'] ?? 0), 'tarifes' => $tf];
         }
     }
+    // Tarifes de l'event amb id real (per al calaix per tarifa)
+    $tarifesAmbId = array_values(array_filter($tarifas, fn($t) => !empty($t['id'])));
     $calaixOptions = function (int $sel): string {
         $h = '<option value="0">— Sense calaix —</option>';
         foreach (\App\Models\CampoPersonalizado::CALAIX_COLORS as $n => $meta) {
@@ -487,36 +492,61 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
         }
         return $h;
     };
+    // Color hex d'un calaix (per a la mostra)
+    $calaixColor = function (int $n): string {
+        return \App\Models\CampoPersonalizado::CALAIX_COLORS[$n]['color'] ?? 'transparent';
+    };
+    // Bloc "Calaix per tarifa" per a una franja (idx pot ser un nombre o __IDX__)
+    $calaixPerTarifa = function ($idx, array $tarifes) use ($tarifesAmbId, $calaixOptions): string {
+        if (count($tarifesAmbId) === 0) return '<p class="muted" style="margin:.4rem 0 0;">Desa primer les tarifes per assignar calaix per tarifa.</p>';
+        $h = '<details class="franja-tarifes"><summary>Calaix per tarifa (a quines distàncies apareix aquesta franja)</summary>';
+        $h .= '<small class="muted" style="display:block;margin:.3rem 0 .5rem;">Tria el calaix per a cada tarifa on apareix aquesta franja. Si no en tries cap, la franja <strong>no apareixerà</strong> a cap tarifa.</small>';
+        foreach ($tarifesAmbId as $t) {
+            $tid = (int) $t['id'];
+            $sel = (int) ($tarifes[$tid] ?? 0);
+            $h .= '<div class="franja-tarifa-row"><span class="franja-tarifa-nom">' . e((string) $t['nombre']) . '</span>';
+            $h .= '<select name="franjas[' . $idx . '][tarifes][' . $tid . ']">' . $calaixOptions($sel) . '</select></div>';
+        }
+        return $h . '</details>';
+    };
     ?>
     <fieldset>
         <legend>Franges de temps i calaixos de sortida</legend>
         <p class="muted" style="margin:0 0 1rem;">
             Defineix les franges de temps previst que el corredor triarà al formulari i, per a cada una,
-            el <strong>calaix de sortida</strong> (color). A <strong>recollida</strong>, en escanejar el QR,
-            es mostrarà el calaix del color corresponent a la franja que va triar el corredor.
-            Si no defineixes cap franja, el camp no apareixerà al formulari.
+            el <strong>calaix de sortida</strong> (color). Si un event té diverses distàncies (5K, 10K…),
+            obre <strong>«Calaix per tarifa»</strong> per indicar a quines tarifes apareix cada franja i amb
+            quin calaix. A <strong>recollida</strong> es mostrarà el calaix segons la franja i la tarifa del corredor.
         </p>
         <div class="cf-franjes" id="franjes-wrap">
             <div class="franja-head" style="font-weight:700;font-size:.85rem;color:#6b7280;margin-bottom:.4rem;">
                 <span>Franja (text que veu el corredor)</span>
-                <span>Calaix de sortida</span>
+                <span>Calaix per defecte</span>
                 <span></span>
             </div>
             <div id="franjes-list">
                 <?php foreach ($franjasEd as $i => $f): ?>
-                    <div class="franja-row">
-                        <input type="text" name="franjas[<?= $i ?>][label]" value="<?= e($f['label']) ?>" placeholder="Ex: Menys de 40 min" maxlength="60">
-                        <select name="franjas[<?= $i ?>][calaix]"><?= $calaixOptions((int) $f['calaix']) ?></select>
-                        <button type="button" class="btn-link btn-danger franja-remove" title="Eliminar franja" aria-label="Eliminar">✕</button>
+                    <div class="franja-block">
+                        <div class="franja-row">
+                            <input type="text" name="franjas[<?= $i ?>][label]" value="<?= e($f['label']) ?>" placeholder="Ex: Menys de 40 min" maxlength="60">
+                            <span class="calaix-swatch" data-swatch style="background:<?= e($calaixColor((int) $f['calaix'])) ?>;"></span>
+                            <select name="franjas[<?= $i ?>][calaix]" class="franja-calaix"><?= $calaixOptions((int) $f['calaix']) ?></select>
+                            <button type="button" class="btn-link btn-danger franja-remove" title="Eliminar franja" aria-label="Eliminar">✕</button>
+                        </div>
+                        <?= $calaixPerTarifa($i, $f['tarifes'] ?? []) ?>
                     </div>
                 <?php endforeach; ?>
             </div>
             <button type="button" id="add-franja" class="btn btn-secondary" style="margin-top:.4rem;">+ Afegir franja</button>
             <template id="franja-template">
-                <div class="franja-row">
-                    <input type="text" name="franjas[__IDX__][label]" value="" placeholder="Ex: Menys de 40 min" maxlength="60">
-                    <select name="franjas[__IDX__][calaix]"><?= $calaixOptions(0) ?></select>
-                    <button type="button" class="btn-link btn-danger franja-remove" title="Eliminar franja" aria-label="Eliminar">✕</button>
+                <div class="franja-block">
+                    <div class="franja-row">
+                        <input type="text" name="franjas[__IDX__][label]" value="" placeholder="Ex: Menys de 40 min" maxlength="60">
+                        <span class="calaix-swatch" data-swatch style="background:transparent;"></span>
+                        <select name="franjas[__IDX__][calaix]" class="franja-calaix"><?= $calaixOptions(0) ?></select>
+                        <button type="button" class="btn-link btn-danger franja-remove" title="Eliminar franja" aria-label="Eliminar">✕</button>
+                    </div>
+                    <?= $calaixPerTarifa('__IDX__', []) ?>
                 </div>
             </template>
         </div>
@@ -677,13 +707,21 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
         if (el && el.name && /^campos\[[^\]]+\]\[opciones\]$/.test(el.name)) rebuild(el);
     });
 
-    // ── Franges de temps: afegir / eliminar files ──
+    // ── Franges de temps: afegir / eliminar + mostra de color del calaix ──
     (function () {
         var list = document.getElementById('franjes-list');
         var add = document.getElementById('add-franja');
         var tpl = document.getElementById('franja-template');
         if (!list || !add || !tpl) return;
-        var seq = list.querySelectorAll('.franja-row').length;
+        var COLORS = <?= json_encode(array_map(fn($m) => $m['color'], \App\Models\CampoPersonalizado::CALAIX_COLORS)) ?>;
+        var seq = list.querySelectorAll('.franja-block').length;
+
+        function updateSwatch(sel) {
+            var row = sel.closest('.franja-row');
+            if (!row) return;
+            var sw = row.querySelector('[data-swatch]');
+            if (sw) sw.style.background = COLORS[sel.value] || 'transparent';
+        }
         add.addEventListener('click', function () {
             var html = tpl.innerHTML.replace(/__IDX__/g, String(seq++));
             var wrap = document.createElement('div');
@@ -692,7 +730,10 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
         });
         list.addEventListener('click', function (e) {
             var b = e.target.closest ? e.target.closest('.franja-remove') : null;
-            if (b) { var row = b.closest('.franja-row'); if (row) row.remove(); }
+            if (b) { var block = b.closest('.franja-block'); if (block) block.remove(); }
+        });
+        list.addEventListener('change', function (e) {
+            if (e.target && e.target.classList.contains('franja-calaix')) updateSwatch(e.target);
         });
     })();
     // En clonar un camp nou des de la plantilla, regenerar el seu mapa
