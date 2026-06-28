@@ -497,25 +497,25 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
             Si no defineixes cap franja, el camp no apareixerà al formulari.
         </p>
         <div class="cf-franjes" id="franjes-wrap">
-            <div class="franja-head" style="display:flex;gap:.5rem;font-weight:700;font-size:.85rem;color:#6b7280;margin-bottom:.4rem;">
-                <span style="flex:1;">Franja (text que veu el corredor)</span>
-                <span style="flex:0 0 auto;min-width:150px;">Calaix de sortida</span>
-                <span style="width:2rem;"></span>
+            <div class="franja-head" style="font-weight:700;font-size:.85rem;color:#6b7280;margin-bottom:.4rem;">
+                <span>Franja (text que veu el corredor)</span>
+                <span>Calaix de sortida</span>
+                <span></span>
             </div>
             <div id="franjes-list">
                 <?php foreach ($franjasEd as $i => $f): ?>
-                    <div class="franja-row" style="display:flex;gap:.5rem;align-items:center;margin-bottom:.4rem;">
-                        <input type="text" name="franjas[<?= $i ?>][label]" value="<?= e($f['label']) ?>" placeholder="Ex: Menys de 40 min" maxlength="60" style="flex:1;">
-                        <select name="franjas[<?= $i ?>][calaix]" style="flex:0 0 auto;min-width:150px;"><?= $calaixOptions((int) $f['calaix']) ?></select>
+                    <div class="franja-row">
+                        <input type="text" name="franjas[<?= $i ?>][label]" value="<?= e($f['label']) ?>" placeholder="Ex: Menys de 40 min" maxlength="60">
+                        <select name="franjas[<?= $i ?>][calaix]"><?= $calaixOptions((int) $f['calaix']) ?></select>
                         <button type="button" class="btn-link btn-danger franja-remove" title="Eliminar franja" aria-label="Eliminar">✕</button>
                     </div>
                 <?php endforeach; ?>
             </div>
             <button type="button" id="add-franja" class="btn btn-secondary" style="margin-top:.4rem;">+ Afegir franja</button>
             <template id="franja-template">
-                <div class="franja-row" style="display:flex;gap:.5rem;align-items:center;margin-bottom:.4rem;">
-                    <input type="text" name="franjas[__IDX__][label]" value="" placeholder="Ex: Menys de 40 min" maxlength="60" style="flex:1;">
-                    <select name="franjas[__IDX__][calaix]" style="flex:0 0 auto;min-width:150px;"><?= $calaixOptions(0) ?></select>
+                <div class="franja-row">
+                    <input type="text" name="franjas[__IDX__][label]" value="" placeholder="Ex: Menys de 40 min" maxlength="60">
+                    <select name="franjas[__IDX__][calaix]"><?= $calaixOptions(0) ?></select>
                     <button type="button" class="btn-link btn-danger franja-remove" title="Eliminar franja" aria-label="Eliminar">✕</button>
                 </div>
             </template>

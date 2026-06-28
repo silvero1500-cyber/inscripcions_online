@@ -63,6 +63,29 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
 }
 
+/* ── Editor de franges: text ample a l'esquerra, select calaix a la dreta ── */
+.franja-row { display: flex; gap: .6rem; align-items: center; margin-bottom: .5rem; }
+.franja-row input[type="text"] {
+    flex: 1 1 auto;
+    min-width: 0;          /* permet que el flex l'encongeixi sense col·lapsar */
+    width: auto;
+}
+.franja-row select {
+    flex: 0 0 200px;
+    width: 200px;
+    min-width: 0;
+}
+.franja-row .franja-remove {
+    flex: 0 0 auto;
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: .2rem .4rem;
+}
+.franja-head { display: flex; gap: .6rem; }
+.franja-head > span:first-child { flex: 1 1 auto; }
+.franja-head > span:nth-child(2) { flex: 0 0 200px; }
+.franja-head > span:last-child { flex: 0 0 auto; width: 1.6rem; }
+
 /* ── Camps de data/hora més moderns ─────────────────────── */
 input[type="date"],
 input[type="datetime-local"],
