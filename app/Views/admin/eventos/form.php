@@ -41,6 +41,8 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
     </div>
 </section>
 
+<?php if ($isEdit): $barEvento = $evento; $barActual = 'editar'; require __DIR__ . '/../partials/cursa_bar.php'; endif; ?>
+
 <form id="evento-form" method="post" action="<?= e($action) ?>" enctype="multipart/form-data" novalidate class="form-stacked">
     <?= Csrf::field() ?>
 

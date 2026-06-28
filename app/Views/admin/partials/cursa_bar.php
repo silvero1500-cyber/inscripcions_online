@@ -36,7 +36,8 @@ if (is_array($barEvento) && !empty($barEvento['carrera_id'])):
             <a class="cursa-bar-link" href="<?= e(base_url('/eventos/' . $bSlug)) ?>" target="_blank" rel="noopener">👁️ Veure pública</a>
         <?php endif; ?>
         <?php if ($isSuperBar): ?>
-            <a class="cursa-bar-link" href="<?= e(base_url('/admin/eventos/' . $bEv . '/editar')) ?>">✏️ Editar</a>
+            <a class="cursa-bar-link<?= $barActual === 'editar' ? ' active' : '' ?>"
+               href="<?= e(base_url('/admin/eventos/' . $bEv . '/editar')) ?>">✏️ Editar</a>
         <?php endif; ?>
     </div>
 </nav>
