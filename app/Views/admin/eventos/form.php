@@ -467,29 +467,41 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                 </div>
             <?php endforeach; ?>
         </div>
+    </fieldset>
 
-        <?php
-        // ── Franges de temps + calaix de sortida (camp fix "franja_temps") ──
-        $franjasEd = \App\Models\Evento::franjasConfig($evento ?? []);
-        if (isset($old['franjas']) && is_array($old['franjas'])) {
-            $franjasEd = [];
-            foreach ($old['franjas'] as $f) {
-                if (!is_array($f)) continue;
-                $lab = trim((string) ($f['label'] ?? ''));
-                if ($lab !== '') $franjasEd[] = ['label' => $lab, 'calaix' => (int) ($f['calaix'] ?? 0)];
-            }
+    <?php
+    // ── Franges de temps + calaix de sortida (camp fix "franja_temps") ──
+    $franjasEd = \App\Models\Evento::franjasConfig($evento ?? []);
+    if (isset($old['franjas']) && is_array($old['franjas'])) {
+        $franjasEd = [];
+        foreach ($old['franjas'] as $f) {
+            if (!is_array($f)) continue;
+            $lab = trim((string) ($f['label'] ?? ''));
+            if ($lab !== '') $franjasEd[] = ['label' => $lab, 'calaix' => (int) ($f['calaix'] ?? 0)];
         }
-        $calaixOptions = function (int $sel): string {
-            $h = '<option value="0">— Sense calaix —</option>';
-            foreach (\App\Models\CampoPersonalizado::CALAIX_COLORS as $n => $meta) {
-                $h .= '<option value="' . $n . '"' . ($sel === $n ? ' selected' : '') . '>' . e($meta['nom']) . '</option>';
-            }
-            return $h;
-        };
-        ?>
-        <div class="cf-franjes" id="franjes-wrap" style="margin-top:1.4rem;">
-            <label style="font-weight:600;">Franges de temps <span class="muted">(calaix de sortida)</span></label>
-            <small class="muted" style="display:block;margin:.2rem 0 .6rem;">Defineix les franges de temps que el corredor podrà triar i el calaix de sortida (color) de cada una. A recollida es mostrarà el calaix segons la franja triada.</small>
+    }
+    $calaixOptions = function (int $sel): string {
+        $h = '<option value="0">— Sense calaix —</option>';
+        foreach (\App\Models\CampoPersonalizado::CALAIX_COLORS as $n => $meta) {
+            $h .= '<option value="' . $n . '"' . ($sel === $n ? ' selected' : '') . '>' . e($meta['nom']) . '</option>';
+        }
+        return $h;
+    };
+    ?>
+    <fieldset>
+        <legend>Franges de temps i calaixos de sortida</legend>
+        <p class="muted" style="margin:0 0 1rem;">
+            Defineix les franges de temps previst que el corredor triarà al formulari i, per a cada una,
+            el <strong>calaix de sortida</strong> (color). A <strong>recollida</strong>, en escanejar el QR,
+            es mostrarà el calaix del color corresponent a la franja que va triar el corredor.
+            Si no defineixes cap franja, el camp no apareixerà al formulari.
+        </p>
+        <div class="cf-franjes" id="franjes-wrap">
+            <div class="franja-head" style="display:flex;gap:.5rem;font-weight:700;font-size:.85rem;color:#6b7280;margin-bottom:.4rem;">
+                <span style="flex:1;">Franja (text que veu el corredor)</span>
+                <span style="flex:0 0 auto;min-width:150px;">Calaix de sortida</span>
+                <span style="width:2rem;"></span>
+            </div>
             <div id="franjes-list">
                 <?php foreach ($franjasEd as $i => $f): ?>
                     <div class="franja-row" style="display:flex;gap:.5rem;align-items:center;margin-bottom:.4rem;">
