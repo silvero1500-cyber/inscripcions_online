@@ -106,7 +106,7 @@ final class InscripcionController
         // ── Validación campos estándar (segons config de l'esdeveniment) ──
         $camposFijos = CamposFijos::resolve($evento['campos_fijos'] ?? null);
         $data = self::extractCorredorData($_POST, $camposFijos, $tarifaRow);
-        $v    = self::validateCorredor($data, $camposFijos, $tarifaRow);
+        $v    = self::validateCorredor($data, $camposFijos, $tarifaRow, $evento);
 
         // El correu electrònic s'ha de repetir igual (confirmació)
         $emailConfirm = strtolower(trim((string) ($_POST['email_confirm'] ?? '')));
@@ -332,7 +332,7 @@ final class InscripcionController
             $pPost['email']    = $contactEmail;
             $pPost['telefono'] = $contactTel;
             $data = self::extractCorredorData($pPost, $camposFijos, $tarifaRow);
-            $v    = self::validateCorredor($data, $camposFijos, $tarifaRow);
+            $v    = self::validateCorredor($data, $camposFijos, $tarifaRow, $evento);
             if ($tarifaRow !== null) {
                 self::validateAnioNacimiento($v, $tarifaRow, (string) ($data['fecha_nacimiento'] ?? ''));
             }
@@ -726,6 +726,7 @@ final class InscripcionController
             'talla_camiseta'   => trim((string) ($post['talla_camiseta'] ?? '')) ?: null,
             'poblacion'        => mb_substr(trim((string) ($post['poblacion'] ?? '')), 0, 120) ?: null,
             'codigo_postal'    => $cp !== '' ? mb_substr($cp, 0, 10) : null,
+            'franja_temps'     => mb_substr(trim((string) ($post['franja_temps'] ?? '')), 0, 60) ?: null,
         ];
 
         // Dades del tutor: només per a modalitats infantils. Si la modalitat NO és
@@ -758,7 +759,7 @@ final class InscripcionController
     /**
      * @param array<string,string> $config  [camp => 'obligatori'|'opcional'|'ocult']
      */
-    private static function validateCorredor(array $data, array $config, ?array $tarifa = null): Validator
+    private static function validateCorredor(array $data, array $config, ?array $tarifa = null, ?array $evento = null): Validator
     {
         $v = new Validator($data);
 
@@ -826,6 +827,17 @@ final class InscripcionController
             if ($req('codigo_postal')) $v->required('codigo_postal');
             if (!empty($data['codigo_postal']) && !preg_match('/^\d{4,5}$/', (string) $data['codigo_postal'])) {
                 $v->addError('codigo_postal', 'Codi postal no vàlid.');
+            }
+        }
+
+        // Franja de temps (camp fix, select amb opcions per event)
+        if ($vis('franja_temps')) {
+            if ($req('franja_temps')) $v->required('franja_temps');
+            if (!empty($data['franja_temps']) && $evento !== null) {
+                $labels = array_map(fn($f) => $f['label'], \App\Models\Evento::franjasConfig($evento));
+                if ($labels && !in_array((string) $data['franja_temps'], $labels, true)) {
+                    $v->addError('franja_temps', 'Tria una franja de temps vàlida.');
+                }
             }
         }
 

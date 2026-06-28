@@ -465,6 +465,47 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                 </div>
             <?php endforeach; ?>
         </div>
+
+        <?php
+        // ── Franges de temps + calaix de sortida (camp fix "franja_temps") ──
+        $franjasEd = \App\Models\Evento::franjasConfig($evento ?? []);
+        if (isset($old['franjas']) && is_array($old['franjas'])) {
+            $franjasEd = [];
+            foreach ($old['franjas'] as $f) {
+                if (!is_array($f)) continue;
+                $lab = trim((string) ($f['label'] ?? ''));
+                if ($lab !== '') $franjasEd[] = ['label' => $lab, 'calaix' => (int) ($f['calaix'] ?? 0)];
+            }
+        }
+        $calaixOptions = function (int $sel): string {
+            $h = '<option value="0">— Sense calaix —</option>';
+            foreach (\App\Models\CampoPersonalizado::CALAIX_COLORS as $n => $meta) {
+                $h .= '<option value="' . $n . '"' . ($sel === $n ? ' selected' : '') . '>' . e($meta['nom']) . '</option>';
+            }
+            return $h;
+        };
+        ?>
+        <div class="cf-franjes" id="franjes-wrap" style="margin-top:1.4rem;">
+            <label style="font-weight:600;">Franges de temps <span class="muted">(calaix de sortida)</span></label>
+            <small class="muted" style="display:block;margin:.2rem 0 .6rem;">Defineix les franges de temps que el corredor podrà triar i el calaix de sortida (color) de cada una. A recollida es mostrarà el calaix segons la franja triada.</small>
+            <div id="franjes-list">
+                <?php foreach ($franjasEd as $i => $f): ?>
+                    <div class="franja-row" style="display:flex;gap:.5rem;align-items:center;margin-bottom:.4rem;">
+                        <input type="text" name="franjas[<?= $i ?>][label]" value="<?= e($f['label']) ?>" placeholder="Ex: Menys de 40 min" maxlength="60" style="flex:1;">
+                        <select name="franjas[<?= $i ?>][calaix]" style="flex:0 0 auto;min-width:150px;"><?= $calaixOptions((int) $f['calaix']) ?></select>
+                        <button type="button" class="btn-link btn-danger franja-remove" title="Eliminar franja" aria-label="Eliminar">✕</button>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-franja" class="btn btn-secondary" style="margin-top:.4rem;">+ Afegir franja</button>
+            <template id="franja-template">
+                <div class="franja-row" style="display:flex;gap:.5rem;align-items:center;margin-bottom:.4rem;">
+                    <input type="text" name="franjas[__IDX__][label]" value="" placeholder="Ex: Menys de 40 min" maxlength="60" style="flex:1;">
+                    <select name="franjas[__IDX__][calaix]" style="flex:0 0 auto;min-width:150px;"><?= $calaixOptions(0) ?></select>
+                    <button type="button" class="btn-link btn-danger franja-remove" title="Eliminar franja" aria-label="Eliminar">✕</button>
+                </div>
+            </template>
+        </div>
     </fieldset>
 
     <div class="form-actions">
@@ -621,6 +662,25 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
         var el = e.target;
         if (el && el.name && /^campos\[[^\]]+\]\[opciones\]$/.test(el.name)) rebuild(el);
     });
+
+    // ── Franges de temps: afegir / eliminar files ──
+    (function () {
+        var list = document.getElementById('franjes-list');
+        var add = document.getElementById('add-franja');
+        var tpl = document.getElementById('franja-template');
+        if (!list || !add || !tpl) return;
+        var seq = list.querySelectorAll('.franja-row').length;
+        add.addEventListener('click', function () {
+            var html = tpl.innerHTML.replace(/__IDX__/g, String(seq++));
+            var wrap = document.createElement('div');
+            wrap.innerHTML = html.trim();
+            list.appendChild(wrap.firstElementChild);
+        });
+        list.addEventListener('click', function (e) {
+            var b = e.target.closest ? e.target.closest('.franja-remove') : null;
+            if (b) { var row = b.closest('.franja-row'); if (row) row.remove(); }
+        });
+    })();
     // En clonar un camp nou des de la plantilla, regenerar el seu mapa
     document.addEventListener('click', function (e) {
         if (e.target && e.target.id === 'add-campo') {

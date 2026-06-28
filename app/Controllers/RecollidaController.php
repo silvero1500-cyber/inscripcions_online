@@ -337,17 +337,10 @@ final class RecollidaController
      */
     private static function calaixPerInscrit(array $ins): ?array
     {
-        $campos = \App\Models\CampoPersonalizado::getActivosPorEvento((int) $ins['evento_id']);
-        $campo = null;
-        foreach ($campos as $c) {
-            if (($c['nombre_campo'] ?? '') === 'franja_temps') { $campo = $c; break; }
-        }
-        if ($campo === null) return null;
+        $evento = Evento::findById((int) $ins['evento_id']);
+        if ($evento === null) return null;
 
-        $valores = \App\Models\CampoPersonalizado::valoresPorInscrito([(int) $ins['id']]);
-        $valor = $valores[(int) $ins['id']][(int) $campo['id']] ?? null;
-
-        $n = \App\Models\CampoPersonalizado::calaixDeValor($campo, $valor);
+        $n = Evento::calaixDeFranja($evento, $ins['franja_temps'] ?? null);
         if ($n === null) return null;
 
         $meta = \App\Models\CampoPersonalizado::CALAIX_COLORS[$n] ?? null;

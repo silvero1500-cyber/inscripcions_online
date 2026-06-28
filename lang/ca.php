@@ -82,6 +82,8 @@ return [
     'form.label.sex.nonbinary'         => 'No binari',
     'form.label.shirt'                 => 'Talla samarreta',
     'form.label.shirt.none'            => '— Sense —',
+    'form.label.franja'                => 'Franja de temps prevista',
+    'form.label.franja.none'           => '— Tria una franja —',
     'form.label.city'                  => 'Població',
     'form.label.postal_code'           => 'Codi postal',
     'form.label.club'                  => 'Club',

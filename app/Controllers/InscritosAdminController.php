@@ -291,7 +291,7 @@ final class InscritosAdminController
         // Capçaleres (fixes + una per cada camp personalitzat)
         $headers = [
             'ID', 'Comanda', 'Data inscripció', 'Nom', 'Cognoms', 'DNI', 'Sexe', 'Data naixement',
-            'Email', 'Telèfon', 'Club', 'Població', 'Codi postal', 'Talla',
+            'Email', 'Telèfon', 'Club', 'Població', 'Codi postal', 'Talla', 'Franja temps',
             'Tutor nom', 'Tutor cognoms', 'Tutor DNI',
             'Tarifa', 'Preu', 'Estat', 'Dorsal'
         ];
@@ -317,6 +317,7 @@ final class InscritosAdminController
                 // Forçar text perquè Excel no elimini el 0 inicial del codi postal (08201 → 8201)
                 ($i['codigo_postal'] ?? '') !== '' ? '="' . $i['codigo_postal'] . '"' : '',
                 $i['talla_camiseta'] ?? '',
+                $i['franja_temps'] ?? '',
                 $i['tutor_nombre'] ?? '',
                 $i['tutor_apellido'] ?? '',
                 $i['tutor_dni'] ?? '',

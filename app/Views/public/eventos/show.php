@@ -247,7 +247,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
 
                 <?php
                 // Camps estàndard en l'ordre configurat ($orden). Email + repetir van junts.
-                $field = function (string $key) use ($val, $err, $cfVis, $reqMark, $reqAttr, $cfReq): void {
+                $field = function (string $key) use ($val, $err, $cfVis, $reqMark, $reqAttr, $cfReq, $evento): void {
                     if (!in_array($key, CamposFijos::FIXOS, true) && !$cfVis($key)) return;
                     switch ($key):
                         case 'nombre': ?>
@@ -342,6 +342,21 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                                 <input type="text" id="club" name="club" <?= $reqAttr('club') ?> maxlength="150" value="<?= e($val('club')) ?>">
                             </div>
                         <?php break;
+                        case 'franja_temps':
+                            $franjas = \App\Models\Evento::franjasConfig($evento);
+                            if (count($franjas) === 0) break; // sense franges definides, no es mostra
+                            ?>
+                            <div class="form-row">
+                                <label for="franja_temps"><?= e(t('form.label.franja')) ?><?= $reqMark('franja_temps') ?></label>
+                                <select id="franja_temps" name="franja_temps" <?= $reqAttr('franja_temps') ?>>
+                                    <option value=""><?= e(t('form.label.franja.none')) ?></option>
+                                    <?php foreach ($franjas as $f): ?>
+                                        <option value="<?= e($f['label']) ?>" <?= $val('franja_temps') === $f['label'] ? 'selected' : '' ?>><?= e($f['label']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <?php if ($err('franja_temps')): ?><div class="field-error"><?= e($err('franja_temps')) ?></div><?php endif; ?>
+                            </div>
+                        <?php break;
                     endswitch;
                 };
                 ?>
@@ -433,7 +448,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
     $cerr = fn(string $k): ?string => $errors["contacto.$k"][0] ?? null;
 
     // Renderitza UN participant. $i és int per als reals, '__I__' per a la plantilla.
-    $renderParticipant = function ($i, array $pd = []) use ($cf, $cfVis, $campos, $tarifas, $errors, $ordenFull, $camposById): void {
+    $renderParticipant = function ($i, array $pd = []) use ($cf, $cfVis, $campos, $tarifas, $errors, $ordenFull, $camposById, $evento): void {
         $isTpl = !is_int($i);
         $nm  = fn(string $f): string => 'participants[' . $i . '][' . $f . ']';
         $idf = fn(string $f): string => 'p_' . $i . '_' . $f;
@@ -502,7 +517,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
 
             <?php
             // Camps estàndard del participant en l'ordre configurat (email/telèfon són del contacte → fora)
-            $pfield = function (string $key) use ($nm, $idf, $pv, $pe, $ra, $rm, $cfVis): void {
+            $pfield = function (string $key) use ($nm, $idf, $pv, $pe, $ra, $rm, $cfVis, $evento): void {
                 if ($key === 'email' || $key === 'telefono') return;
                 if ($key !== 'nombre' && !$cfVis($key)) return;
                 switch ($key):
@@ -574,6 +589,21 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                         <div class="form-row">
                             <label for="<?= e($idf('club')) ?>"><?= e(t('form.label.club')) ?></label>
                             <input type="text" id="<?= e($idf('club')) ?>" name="<?= e($nm('club')) ?>" <?= $ra('club') ?> maxlength="150" value="<?= e($pv('club')) ?>">
+                        </div>
+                    <?php break;
+                    case 'franja_temps':
+                        $franjasG = \App\Models\Evento::franjasConfig($evento);
+                        if (count($franjasG) === 0) break;
+                        ?>
+                        <div class="form-row">
+                            <label for="<?= e($idf('franja_temps')) ?>"><?= e(t('form.label.franja')) ?><?= $rm('franja_temps') ?></label>
+                            <select id="<?= e($idf('franja_temps')) ?>" name="<?= e($nm('franja_temps')) ?>" <?= $ra('franja_temps') ?>>
+                                <option value=""><?= e(t('form.label.franja.none')) ?></option>
+                                <?php foreach ($franjasG as $f): ?>
+                                    <option value="<?= e($f['label']) ?>" <?= $pv('franja_temps') === $f['label'] ? 'selected' : '' ?>><?= e($f['label']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <?php $e = $pe('franja_temps'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                         </div>
                     <?php break;
                 endswitch;

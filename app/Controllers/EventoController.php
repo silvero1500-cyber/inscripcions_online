@@ -108,6 +108,7 @@ final class EventoController
                     'aforo_maximo'             => $data['aforo_maximo'],
                     'max_participantes'        => $data['max_participantes'],
                     'tallas_sexo'              => $data['tallas_sexo'],
+                    'franjas_config'           => $data['franjas_config'],
                     'imagen_portada'           => $imagePath,
                     'activo'                   => $data['activo'],
                     'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
@@ -190,6 +191,7 @@ final class EventoController
             'aforo_maximo'             => $data['aforo_maximo'],
             'max_participantes'        => $data['max_participantes'],
             'tallas_sexo'              => $data['tallas_sexo'],
+            'franjas_config'           => $data['franjas_config'],
             'activo'                   => $data['activo'],
             'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
             'campos_fijos'             => $data['campos_fijos'],
@@ -641,6 +643,7 @@ final class EventoController
                     'aforo_maximo'             => $evento['aforo_maximo'],
                     'max_participantes'        => $evento['max_participantes'] ?? null,
                     'tallas_sexo'              => $evento['tallas_sexo'] ?? null,
+                    'franjas_config'           => $evento['franjas_config'] ?? null,
                     'imagen_portada'           => ImageUploader::copyEventImage($evento['imagen_portada'] ?? null),
                     'activo'                   => 0, // la còpia comença inactiva
                     'inscripciones_abiertas'   => (int) $evento['inscripciones_abiertas'],
@@ -735,10 +738,31 @@ final class EventoController
             'aforo_maximo'             => $aforo === '' ? null : (int)$aforo,
             'max_participantes'        => $maxPart === '' ? null : max(1, (int)$maxPart),
             'tallas_sexo'              => self::extractTallasSexo($post),
+            'franjas_config'           => self::extractFranjasConfig($post),
             'activo'                   => isset($post['activo']) ? 1 : 0,
             'inscripciones_abiertas'   => isset($post['inscripciones_abiertas']) ? 1 : 0,
             'campos_fijos'             => CamposFijos::fromPost($post),
         ];
+    }
+
+    /**
+     * Franges de temps (camp fix franja_temps) des del POST:
+     * franjas[i][label] + franjas[i][calaix] → JSON [{label, calaix}].
+     * Descarta files sense label. Retorna null si no n'hi ha cap.
+     */
+    private static function extractFranjasConfig(array $post): ?string
+    {
+        $raw = $post['franjas'] ?? null;
+        if (!is_array($raw)) return null;
+        $out = [];
+        foreach ($raw as $f) {
+            if (!is_array($f)) continue;
+            $label = mb_substr(trim((string) ($f['label'] ?? '')), 0, 60);
+            if ($label === '') continue;
+            $cal = (int) ($f['calaix'] ?? 0);
+            $out[] = ['label' => $label, 'calaix' => ($cal >= 1 && $cal <= 4) ? $cal : 0];
+        }
+        return $out ? (string) json_encode($out, JSON_UNESCAPED_UNICODE) : null;
     }
 
     /**
