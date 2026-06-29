@@ -755,21 +755,32 @@ final class EventoController
         $raw = $post['franjas'] ?? null;
         if (!is_array($raw)) return null;
         $clamp = fn($c) => (($c = (int) $c) >= 1 && $c <= 4) ? $c : 0;
-        $out = [];
+
+        // Files planes: franjas[i] = {label, tarifa, calaix}. S'agrupen per label en
+        // {label, calaix (per defecte = 1r), tarifes:{tarifaId: calaix}}.
+        $byLabel = [];   // label => ['calaix'=>int, 'tarifes'=>[tid=>cal]]
+        $order   = [];   // per preservar l'ordre d'aparició dels labels
         foreach ($raw as $f) {
             if (!is_array($f)) continue;
             $label = mb_substr(trim((string) ($f['label'] ?? '')), 0, 60);
             if ($label === '') continue;
-            // Calaix per tarifa: franjas[i][tarifes][tarifaId] = calaix (0 = no aplica)
-            $tarifes = [];
-            foreach ((array) ($f['tarifes'] ?? []) as $tid => $cal) {
-                $tid = (int) $tid; $cal = $clamp($cal);
-                if ($tid > 0 && $cal >= 1) $tarifes[$tid] = $cal;
+            $tid = (int) ($f['tarifa'] ?? 0);
+            $cal = $clamp($f['calaix'] ?? 0);
+            if ($tid <= 0 || $cal < 1) continue; // cada línia necessita tarifa + calaix
+
+            if (!isset($byLabel[$label])) {
+                $byLabel[$label] = ['calaix' => $cal, 'tarifes' => []];
+                $order[] = $label;
             }
+            $byLabel[$label]['tarifes'][$tid] = $cal;
+        }
+
+        $out = [];
+        foreach ($order as $label) {
             $out[] = [
                 'label'   => $label,
-                'calaix'  => $clamp($f['calaix'] ?? 0),
-                'tarifes' => (object) $tarifes, // objecte JSON {tarifaId: calaix}
+                'calaix'  => $byLabel[$label]['calaix'],
+                'tarifes' => (object) $byLabel[$label]['tarifes'],
             ];
         }
         return $out ? (string) json_encode($out, JSON_UNESCAPED_UNICODE) : null;
