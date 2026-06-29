@@ -236,8 +236,8 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                                     <input type="text" name="tarifas[<?= (int)$idx ?>][nombre]" value="<?= e((string)$t['nombre']) ?>" required maxlength="100">
                                 </div>
                                 <div>
-                                    <label>Preu (€) *</label>
-                                    <input type="text" name="tarifas[<?= (int)$idx ?>][precio]" value="<?= e(number_format((float)$t['precio'], 2, '.', '')) ?>" required inputmode="decimal" placeholder="0.00">
+                                    <label>Preu (€)</label>
+                                    <input type="text" name="tarifas[<?= (int)$idx ?>][precio]" value="<?= e(number_format((float)$t['precio'], 2, '.', '')) ?>" inputmode="decimal" placeholder="0.00 (gratis)">
                                 </div>
                                 <div>
                                     <label>Aforament</label>
@@ -587,8 +587,8 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                 <input type="text" name="tarifas[__IDX__][nombre]" required maxlength="100">
             </div>
             <div>
-                <label>Preu (€) *</label>
-                <input type="text" name="tarifas[__IDX__][precio]" required inputmode="decimal" placeholder="0.00">
+                <label>Preu (€)</label>
+                <input type="text" name="tarifas[__IDX__][precio]" inputmode="decimal" placeholder="0.00 (gratis)">
             </div>
             <div>
                 <label>Aforament</label>

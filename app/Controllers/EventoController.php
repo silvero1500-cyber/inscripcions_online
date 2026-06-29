@@ -902,9 +902,11 @@ final class EventoController
         foreach ($raw as $t) {
             $nombre = trim((string)($t['nombre'] ?? ''));
             $precioRaw = trim((string)($t['precio'] ?? ''));
-            if ($nombre === '' || $precioRaw === '') continue;
+            // Només descartem files realment buides (sense nom). Una tarifa amb nom
+            // però sense preu es considera GRATUÏTA (preu 0) — p. ex. infantils.
+            if ($nombre === '') continue;
 
-            $precio = (float) str_replace(',', '.', $precioRaw);
+            $precio = $precioRaw === '' ? 0.0 : (float) str_replace(',', '.', $precioRaw);
             if ($precio < 0) $precio = 0;
 
             $aforo = trim((string)($t['aforo_maximo'] ?? ''));
