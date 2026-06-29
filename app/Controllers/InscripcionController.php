@@ -714,6 +714,8 @@ final class InscripcionController
     private static function extractCorredorData(array $post, array $config, ?array $tarifa = null): array
     {
         $cp = preg_replace('/\D+/', '', trim((string) ($post['codigo_postal'] ?? ''))) ?? '';
+        $cg = strtolower(trim((string) ($post['chip_groc'] ?? '')));
+        $cg = in_array($cg, ['si', 'no'], true) ? $cg : null;
         $data = [
             'nombre'           => trim((string) ($post['nombre'] ?? '')),
             'apellido'         => trim((string) ($post['apellido'] ?? '')),
@@ -727,6 +729,9 @@ final class InscripcionController
             'poblacion'        => mb_substr(trim((string) ($post['poblacion'] ?? '')), 0, 120) ?: null,
             'codigo_postal'    => $cp !== '' ? mb_substr($cp, 0, 10) : null,
             'franja_temps'     => mb_substr(trim((string) ($post['franja_temps'] ?? '')), 0, 60) ?: null,
+            'chip_groc'        => $cg,
+            // El número només es desa si la resposta és "si" (defensa servidor)
+            'chip_groc_num'    => $cg === 'si' ? (mb_substr(trim((string) ($post['chip_groc_num'] ?? '')), 0, 10) ?: null) : null,
         ];
 
         // Dades del tutor: només per a modalitats infantils. Si la modalitat NO és
@@ -746,6 +751,10 @@ final class InscripcionController
             if (($config[$key] ?? '') === 'ocult') {
                 $data[$key] = null;
             }
+        }
+        // Si el xip groc està ocult, el número també queda null
+        if (($config['chip_groc'] ?? '') === 'ocult') {
+            $data['chip_groc_num'] = null;
         }
 
         // Columnes que ara són nullables: '' → null (només nom i email queden NOT NULL)
@@ -840,6 +849,20 @@ final class InscripcionController
             if ($req('franja_temps') && $labels) $v->required('franja_temps');
             if (!empty($data['franja_temps']) && $labels && !in_array((string) $data['franja_temps'], $labels, true)) {
                 $v->addError('franja_temps', 'Tria una franja de temps vàlida per a aquesta modalitat.');
+            }
+        }
+
+        // Xip groc (camp fix SÍ/NO + número condicional)
+        if ($vis('chip_groc')) {
+            if ($req('chip_groc') && empty($data['chip_groc'])) {
+                $v->addError('chip_groc', 'Indica si portes xip groc propi.');
+            }
+            if (($data['chip_groc'] ?? '') === 'si') {
+                if (empty($data['chip_groc_num'])) {
+                    $v->addError('chip_groc_num', t('form.chip.num_required'));
+                } elseif (!preg_match('/^[A-Za-z0-9]{1,10}$/', (string) $data['chip_groc_num'])) {
+                    $v->addError('chip_groc_num', t('form.chip.num_invalid'));
+                }
             }
         }
 

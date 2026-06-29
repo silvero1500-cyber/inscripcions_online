@@ -84,6 +84,10 @@ $row = function (string $label, $value, bool $raw = false): void {
             $row('Club', $inscrito['club'] ?? null);
             $row('Talla samarreta', $inscrito['talla_camiseta'] ?? null);
             $row('Franja de temps', $inscrito['franja_temps'] ?? null);
+            if (!empty($inscrito['chip_groc'])) {
+                $row('Xip groc', $inscrito['chip_groc'] === 'si' ? 'Sí' : 'No');
+                if ($inscrito['chip_groc'] === 'si') $row('Núm. xip groc', $inscrito['chip_groc_num'] ?? null);
+            }
             ?>
         </div>
         <?php if (!empty($inscrito['tutor_nombre']) || !empty($inscrito['tutor_apellido']) || !empty($inscrito['tutor_dni'])): ?>

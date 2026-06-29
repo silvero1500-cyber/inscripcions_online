@@ -192,6 +192,8 @@ CREATE TABLE IF NOT EXISTS `inscritos` (
     `tutor_dni`       VARCHAR(20)   NULL,
     `early_bird`      TINYINT(1)    NOT NULL DEFAULT 0 COMMENT 'Inscripció early bird (marca manual)',
     `franja_temps`    VARCHAR(60)   NULL COMMENT 'Franja de temps prevista (camp fix)',
+    `chip_groc`       ENUM('si','no') NULL COMMENT 'Porta xip groc propi (si/no)',
+    `chip_groc_num`   VARCHAR(10)   NULL COMMENT 'Número del xip groc (si chip_groc=si)',
     `email`           VARCHAR(255)  NOT NULL,
     `telefono`        VARCHAR(20)   NULL,
     `club`            VARCHAR(150)  NULL,

@@ -357,6 +357,22 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                                 <?php if ($err('franja_temps')): ?><div class="field-error"><?= e($err('franja_temps')) ?></div><?php endif; ?>
                             </div>
                         <?php break;
+                        case 'chip_groc': ?>
+                            <div class="form-row" data-chip>
+                                <label for="chip_groc"><?= e(t('form.label.chip')) ?><?= $reqMark('chip_groc') ?></label>
+                                <select id="chip_groc" name="chip_groc" class="chip-sel" <?= $reqAttr('chip_groc') ?>>
+                                    <option value=""><?= e(t('form.label.chip.none')) ?></option>
+                                    <option value="si" <?= $val('chip_groc') === 'si' ? 'selected' : '' ?>><?= e(t('form.chip.yes')) ?></option>
+                                    <option value="no" <?= $val('chip_groc') === 'no' ? 'selected' : '' ?>><?= e(t('form.chip.no')) ?></option>
+                                </select>
+                                <?php if ($err('chip_groc')): ?><div class="field-error"><?= e($err('chip_groc')) ?></div><?php endif; ?>
+                                <div class="chip-num" data-chip-num <?= $val('chip_groc') === 'si' ? '' : 'hidden' ?> style="margin-top:.6rem;">
+                                    <label for="chip_groc_num"><?= e(t('form.label.chip_num')) ?> <span class="req">*</span></label>
+                                    <input type="text" id="chip_groc_num" name="chip_groc_num" maxlength="10" autocomplete="off" value="<?= e($val('chip_groc_num')) ?>">
+                                    <?php if ($err('chip_groc_num')): ?><div class="field-error"><?= e($err('chip_groc_num')) ?></div><?php endif; ?>
+                                </div>
+                            </div>
+                        <?php break;
                     endswitch;
                 };
                 ?>
@@ -606,6 +622,22 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                             <?php $e = $pe('franja_temps'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                         </div>
                     <?php break;
+                    case 'chip_groc': ?>
+                        <div class="form-row" data-chip>
+                            <label for="<?= e($idf('chip_groc')) ?>"><?= e(t('form.label.chip')) ?><?= $rm('chip_groc') ?></label>
+                            <select id="<?= e($idf('chip_groc')) ?>" name="<?= e($nm('chip_groc')) ?>" class="chip-sel" <?= $ra('chip_groc') ?>>
+                                <option value=""><?= e(t('form.label.chip.none')) ?></option>
+                                <option value="si" <?= $pv('chip_groc') === 'si' ? 'selected' : '' ?>><?= e(t('form.chip.yes')) ?></option>
+                                <option value="no" <?= $pv('chip_groc') === 'no' ? 'selected' : '' ?>><?= e(t('form.chip.no')) ?></option>
+                            </select>
+                            <?php $e = $pe('chip_groc'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                            <div class="chip-num" data-chip-num <?= $pv('chip_groc') === 'si' ? '' : 'hidden' ?> style="margin-top:.6rem;">
+                                <label for="<?= e($idf('chip_groc_num')) ?>"><?= e(t('form.label.chip_num')) ?> <span class="req">*</span></label>
+                                <input type="text" id="<?= e($idf('chip_groc_num')) ?>" name="<?= e($nm('chip_groc_num')) ?>" maxlength="10" value="<?= e($pv('chip_groc_num')) ?>">
+                                <?php $e = $pe('chip_groc_num'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
+                            </div>
+                        </div>
+                    <?php break;
                 endswitch;
             };
             // Camp personalitzat del participant (pot anar ABANS o DESPRÉS dels estàndard)
@@ -829,6 +861,8 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
             if (sel) toggleTutor(block);
             if (sel && window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value);
             if (sel && window.filterFranjaByTarifa) window.filterFranjaByTarifa(block, sel.value);
+            var chipSel = block.querySelector('.chip-sel');
+            if (chipSel) { if (window.toggleChip) window.toggleChip(block); chipSel.addEventListener('change', function () { if (window.toggleChip) window.toggleChip(block); }); }
             if (fn) { fn.addEventListener('change', function () { checkAge(block, false); }); fn.addEventListener('input', function () { checkAge(block, false); }); }
             var sx = block.querySelector('.p-sexo'), tll = block.querySelector('.p-talla');
             if (sx && tll && window.filterTallasBySexo) { window.filterTallasBySexo(sx, tll); sx.addEventListener('change', function () { window.filterTallasBySexo(sx, tll); }); }
@@ -1160,6 +1194,22 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         if (window.applyCampOptions) window.applyCampOptions(scope, tarifaVal);
     };
 
+    // Mostra/amaga el número de xip groc segons la resposta SÍ/NO.
+    window.toggleChip = function (scope) {
+        if (!scope) return;
+        var sel = scope.querySelector('.chip-sel');
+        if (!sel) return;
+        var box = sel.closest('[data-chip]') ? sel.closest('[data-chip]').querySelector('[data-chip-num]') : null;
+        if (!box) return;
+        var input = box.querySelector('input');
+        var yes = sel.value === 'si';
+        box.hidden = !yes;
+        if (input) {
+            if (yes) { if (sel.required || sel.hasAttribute('required')) input.required = true; }
+            else { input.required = false; input.value = ''; }
+        }
+    };
+
     // Filtra les opcions del select de franja segons la tarifa triada.
     // Una opció apareix si data-tarifes és buit (dada vella = totes) o conté la tarifa.
     // Si no n'hi ha cap de vàlida, amaga tota la fila de franja.
@@ -1198,6 +1248,11 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
             window.filterCampsByTarifa(fform, tsel.value);
             window.filterFranjaByTarifa(fform, tsel.value);
         });
+    }
+    // Xip groc (individual): mostra/amaga el número segons SÍ/NO
+    if (fform) {
+        var chipSel = fform.querySelector('.chip-sel');
+        if (chipSel) { window.toggleChip(fform); chipSel.addEventListener('change', function () { window.toggleChip(fform); }); }
     }
 
     // Participants inicials del formulari de grup

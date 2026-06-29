@@ -420,6 +420,7 @@ final class InscritosAdminController
         $headers = [
             'ID', 'Comanda', 'Data inscripció', 'Nom', 'Cognoms', 'DNI', 'Sexe', 'Data naixement',
             'Email', 'Telèfon', 'Club', 'Població', 'Codi postal', 'Talla', 'Franja temps',
+            'Xip groc', 'Núm xip groc',
             'Tutor nom', 'Tutor cognoms', 'Tutor DNI',
             'Tarifa', 'Preu', 'Estat', 'Dorsal'
         ];
@@ -446,6 +447,8 @@ final class InscritosAdminController
                 ($i['codigo_postal'] ?? '') !== '' ? '="' . $i['codigo_postal'] . '"' : '',
                 $i['talla_camiseta'] ?? '',
                 $i['franja_temps'] ?? '',
+                !empty($i['chip_groc']) ? ($i['chip_groc'] === 'si' ? 'Sí' : 'No') : '',
+                $i['chip_groc_num'] ?? '',
                 $i['tutor_nombre'] ?? '',
                 $i['tutor_apellido'] ?? '',
                 $i['tutor_dni'] ?? '',

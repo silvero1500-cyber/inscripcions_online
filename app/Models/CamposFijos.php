@@ -33,6 +33,7 @@ final class CamposFijos
         'poblacion'        => ['label' => 'Població',           'default' => 'opcional'],
         'codigo_postal'    => ['label' => 'Codi postal',        'default' => 'opcional'],
         'franja_temps'     => ['label' => 'Franja de temps',    'default' => 'obligatori'],
+        'chip_groc'        => ['label' => 'Xip groc',           'default' => 'opcional'],
     ];
 
     /**
@@ -97,7 +98,7 @@ final class CamposFijos
      */
     public const ORDEN_DEFAULT = [
         'nombre', 'apellido', 'email', 'telefono', 'dni',
-        'fecha_nacimiento', 'sexo', 'talla_camiseta', 'poblacion', 'codigo_postal', 'club', 'franja_temps',
+        'fecha_nacimiento', 'sexo', 'talla_camiseta', 'poblacion', 'codigo_postal', 'club', 'franja_temps', 'chip_groc',
     ];
 
     public static function labelOf(string $key): string
