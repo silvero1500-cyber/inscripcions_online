@@ -433,6 +433,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         </div>
 
         <!-- ── Codi de descompte (opcional) ── -->
+        <?php if (!empty($evento['descuentos_activos'])): ?>
         <div class="panel descompte-panel">
             <details>
                 <summary><strong><?= e(t('form.label.discount_question')) ?></strong></summary>
@@ -451,6 +452,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                 </div>
             </details>
         </div>
+        <?php endif; ?>
 
         <?php $consentField(); ?>
         <button type="submit" class="btn btn-primary btn-block btn-large"><?= e(t('form.submit')) ?></button>
@@ -692,6 +694,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                 endforeach; ?>
             </div>
 
+            <?php if (!empty($evento['descuentos_activos'])): ?>
             <details class="participant-discount">
                 <summary><?= e(t('form.label.discount_question')) ?></summary>
                 <div class="form-row" style="margin-top:.6rem;margin-bottom:0;">
@@ -703,6 +706,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                     <?php $e = $pe('descuento_codigo'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                 </div>
             </details>
+            <?php endif; ?>
         </div>
         <?php
     };

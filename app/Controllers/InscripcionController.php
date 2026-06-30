@@ -159,7 +159,10 @@ final class InscripcionController
         }
 
         // ── Codi de descompte (opcional) ─────────────────────
-        $descuentoCodigo = strtoupper(trim((string) $req->post('descuento_codigo', '')));
+        // Si l'esdeveniment té els descomptes desactivats, s'ignora el codi rebut.
+        $descuentoCodigo = empty($evento['descuentos_activos'])
+            ? ''
+            : strtoupper(trim((string) $req->post('descuento_codigo', '')));
 
         // ── Sección crítica: bloqueo de fila + comprobaciones + inserción ──
         $datosCorredor = array_merge($data, [
@@ -364,7 +367,9 @@ final class InscripcionController
                 'data'      => $data,
                 'tarifaId'  => $tarifaId,
                 'valores'   => $valores,
-                'descuento' => strtoupper(trim((string) ($p['descuento_codigo'] ?? ''))),
+                'descuento' => empty($evento['descuentos_activos'])
+                    ? ''
+                    : strtoupper(trim((string) ($p['descuento_codigo'] ?? ''))),
             ];
         }
 

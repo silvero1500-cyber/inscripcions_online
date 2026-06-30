@@ -112,6 +112,7 @@ final class EventoController
                     'imagen_portada'           => $imagePath,
                     'activo'                   => $data['activo'],
                     'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
+                    'descuentos_activos'       => $data['descuentos_activos'],
                     'campos_fijos'             => $data['campos_fijos'],
                     'campos_orden'             => null,
                 ]);
@@ -194,6 +195,7 @@ final class EventoController
             'franjas_config'           => $data['franjas_config'],
             'activo'                   => $data['activo'],
             'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
+            'descuentos_activos'       => $data['descuentos_activos'],
             'campos_fijos'             => $data['campos_fijos'],
         ];
 
@@ -647,6 +649,7 @@ final class EventoController
                     'imagen_portada'           => ImageUploader::copyEventImage($evento['imagen_portada'] ?? null),
                     'activo'                   => 0, // la còpia comença inactiva
                     'inscripciones_abiertas'   => (int) $evento['inscripciones_abiertas'],
+                    'descuentos_activos'       => (int) ($evento['descuentos_activos'] ?? 1),
                     'campos_fijos'             => $evento['campos_fijos'] ?? null,
                     'campos_orden'             => $evento['campos_orden'] ?? null,
                 ]);
@@ -741,6 +744,7 @@ final class EventoController
             'franjas_config'           => self::extractFranjasConfig($post),
             'activo'                   => isset($post['activo']) ? 1 : 0,
             'inscripciones_abiertas'   => isset($post['inscripciones_abiertas']) ? 1 : 0,
+            'descuentos_activos'       => isset($post['descuentos_activos']) ? 1 : 0,
             'campos_fijos'             => CamposFijos::fromPost($post),
         ];
     }

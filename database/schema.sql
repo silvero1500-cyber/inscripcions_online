@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS `eventos` (
     `imagen_portada`            VARCHAR(500)    NULL,
     `activo`                    TINYINT(1)      NOT NULL DEFAULT 1,
     `inscripciones_abiertas`    TINYINT(1)      NOT NULL DEFAULT 1,
+    `descuentos_activos`        TINYINT(1)      NOT NULL DEFAULT 1,
     `campos_fijos`              JSON            NULL COMMENT 'Config per camp fix: obligatori/opcional/ocult',
     `franjas_config`            JSON            NULL COMMENT 'Franges de temps + calaix: [{label, calaix}]',
     `archivado_at`              DATETIME        NULL COMMENT 'Si té data, esdeveniment arxivat',
