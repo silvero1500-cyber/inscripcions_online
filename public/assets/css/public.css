@@ -405,7 +405,7 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
 }
-.form-row { margin-bottom: 1.1rem; }
+.form-row { margin-bottom: 1.1rem; min-width: 0; }
 .form-row:last-child { margin-bottom: 0; }
 
 /* Camps estàndard en l'ordre configurat (2 columnes auto) */
@@ -418,6 +418,12 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 .form-fields-grid > .form-row,
 .form-row-pair > .form-row { margin-bottom: 0; }
 .form-fields-grid > .form-row-wide { grid-column: 1 / -1; }
+/* Els items del grid han de poder encongir-se per sota del contingut mínim;
+   sense això, un input ample rebassa la columna i desborda en mòbil. */
+.form-fields-grid > *, .form-row-pair > * { min-width: 0; }
+/* Dins d'una targeta de participant l'espai és menor: sempre 1 columna. */
+.participant .form-fields-grid,
+.participant .form-row-pair { grid-template-columns: 1fr; }
 /* Llista d'espera (apareix quan no queden places) */
 .waitlist-panel { border-left: 4px solid #f59e0b; }
 .waitlist-panel .panel-title { color: #b45309; }
@@ -510,6 +516,8 @@ input[type="text"], input[type="email"], input[type="tel"],
 input[type="date"], input[type="number"], input[type="password"],
 select, textarea {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     padding: .75rem .9rem;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
