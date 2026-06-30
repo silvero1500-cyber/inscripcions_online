@@ -18,6 +18,13 @@ $val = fn(string $k, string $d = ''): string => (string)($old[$k] ?? $d);
 $err = fn(string $k): ?string => $errors[$k][0] ?? null;
 $img = ImageUploader::publicUrl($evento['imagen_portada']);
 
+// Esdeveniment sense cost: cap tarifa amb preu > 0. Llavors el botó diu només
+// "Inscriure'm" i no es mostra la nota de pagament segur.
+$eventoSenseCost = true;
+foreach ($tarifas as $_t) {
+    if ((float)($_t['precio_actual'] ?? $_t['precio'] ?? 0) > 0) { $eventoSenseCost = false; break; }
+}
+
 // Consentiment RGPD obligatori (mateix per a individual i grup)
 $privacidadUrl = \App\Models\Ajuste::get(\App\Models\Ajuste::PRIVACIDAD_URL);
 $privacidadErr = $errors['acepta_privacidad'][0] ?? null;
@@ -200,7 +207,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                                 data-precio="<?= (float) ($t['precio_actual'] ?? $t['precio']) ?>"
                                 <?= $ag ? 'disabled' : '' ?>
                                 <?= (!$ag && (int)$val('tarifa_id') === (int)$t['id']) ? 'selected' : '' ?>>
-                            <?= e($t['nombre']) ?> · <?= e(format_price((float)($t['precio_actual'] ?? $t['precio']))) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
+                            <?= e($t['nombre']) ?><?php $pTar = (float)($t['precio_actual'] ?? $t['precio']); if ($pTar > 0): ?> · <?= e(format_price($pTar)) ?><?php endif; ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
                                 if ($nacHint !== '') echo ' · ' . e($nacHint);
                                 if ($ag) {
                                     echo ' — ' . e(t('form.tarifa.soldout'));
@@ -455,8 +462,8 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         <?php endif; ?>
 
         <?php $consentField(); ?>
-        <button type="submit" class="btn btn-primary btn-block btn-large"><?= e(t('form.submit')) ?></button>
-        <p class="form-note"><?= e(t('form.submit.note')) ?></p>
+        <button type="submit" class="btn btn-primary btn-block btn-large"><?= e(t($eventoSenseCost ? 'form.submit.free' : 'form.submit')) ?></button>
+        <?php if (!$eventoSenseCost): ?><p class="form-note"><?= e(t('form.submit.note')) ?></p><?php endif; ?>
     </form>
 
     <?php else: /* ───────── Formulari de GRUP (max_participantes >= 2) ───────── */ ?>
@@ -500,7 +507,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                                 data-infantil="<?= \App\Models\Tarifa::esInfantil($t) ? '1' : '0' ?>"
                                 <?= $ag ? 'disabled' : '' ?>
                                 <?= (!$ag && (int) $pv('tarifa_id') === (int) $t['id']) ? 'selected' : '' ?>>
-                            <?= e($t['nombre']) ?> · <?= e(format_price((float) ($t['precio_actual'] ?? $t['precio']))) ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
+                            <?= e($t['nombre']) ?><?php $pTar = (float)($t['precio_actual'] ?? $t['precio']); if ($pTar > 0): ?> · <?= e(format_price($pTar)) ?><?php endif; ?><?php if (!empty($t['descripcion'])): ?> — <?= e($t['descripcion']) ?><?php endif; ?><?php
                                 if ($nacHint !== '') echo ' · ' . e($nacHint);
                                 if ($ag) echo ' — ' . e(t('form.tarifa.soldout'));
                             ?>
@@ -764,8 +771,8 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         </div>
 
         <?php $consentField(); ?>
-        <button type="submit" class="btn btn-primary btn-block btn-large"><?= e(t('form.submit')) ?></button>
-        <p class="form-note"><?= e(t('form.submit.note')) ?></p>
+        <button type="submit" class="btn btn-primary btn-block btn-large"><?= e(t($eventoSenseCost ? 'form.submit.free' : 'form.submit')) ?></button>
+        <?php if (!$eventoSenseCost): ?><p class="form-note"><?= e(t('form.submit.note')) ?></p><?php endif; ?>
     </form>
 
     <template id="participant-tpl"><?php $renderParticipant('__I__'); ?></template>
@@ -861,10 +868,12 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         function bind(block) {
             var sel = block.querySelector('.p-tarifa');
             var fn  = block.querySelector('.p-fnac');
-            if (sel) sel.addEventListener('change', function () { checkAge(block, false); recalcTotal(); toggleTutor(block); if (window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value); if (window.filterFranjaByTarifa) window.filterFranjaByTarifa(block, sel.value); });
+            function pInfantil() { var o = sel && sel.options[sel.selectedIndex]; return !!(o && o.getAttribute('data-infantil') === '1'); }
+            if (sel) sel.addEventListener('change', function () { checkAge(block, false); recalcTotal(); toggleTutor(block); if (window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value); if (window.filterFranjaByTarifa) window.filterFranjaByTarifa(block, sel.value); if (window.toggleChipByTarifa) window.toggleChipByTarifa(block, pInfantil()); });
             if (sel) toggleTutor(block);
             if (sel && window.filterCampsByTarifa) window.filterCampsByTarifa(block, sel.value);
             if (sel && window.filterFranjaByTarifa) window.filterFranjaByTarifa(block, sel.value);
+            if (sel && window.toggleChipByTarifa) window.toggleChipByTarifa(block, pInfantil());
             var chipSel = block.querySelector('.chip-sel');
             if (chipSel) { if (window.toggleChip) window.toggleChip(block); chipSel.addEventListener('change', function () { if (window.toggleChip) window.toggleChip(block); }); }
             if (fn) { fn.addEventListener('change', function () { checkAge(block, false); }); fn.addEventListener('input', function () { checkAge(block, false); }); }
@@ -1214,6 +1223,28 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         }
     };
 
+    // Amaga tot el bloc del xip groc quan la modalitat triada és infantil.
+    // (els infants no porten xip groc). Guarda l'estat required per restaurar-lo.
+    window.toggleChipByTarifa = function (scope, infantil) {
+        if (!scope) return;
+        var chipSel = scope.querySelector('.chip-sel');
+        if (!chipSel) return;
+        var box = chipSel.closest('[data-chip]');
+        if (!box) return;
+        if (infantil) {
+            box.hidden = true;
+            if (chipSel.required || chipSel.hasAttribute('required')) {
+                chipSel.setAttribute('data-was-req', '1');
+            }
+            chipSel.required = false;
+            chipSel.value = '';
+            window.toggleChip(scope); // amaga/neteja el número
+        } else {
+            box.hidden = false;
+            if (chipSel.getAttribute('data-was-req') === '1') chipSel.required = true;
+        }
+    };
+
     // Filtra les opcions del select de franja segons la tarifa triada.
     // Una opció apareix si data-tarifes és buit (dada vella = totes) o conté la tarifa.
     // Si no n'hi ha cap de vàlida, amaga tota la fila de franja.
@@ -1245,12 +1276,18 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
     var s = document.getElementById('sexo'), tl = document.getElementById('talla_camiseta');
     if (s && tl) { window.filterTallasBySexo(s, tl); s.addEventListener('change', function () { window.filterTallasBySexo(s, tl); }); }
     var fform = document.getElementById('formulari'), tsel = document.getElementById('tarifa_id');
+    function tarifaInfantil(sel) {
+        var o = sel.options[sel.selectedIndex];
+        return !!(o && o.getAttribute('data-infantil') === '1');
+    }
     if (fform && tsel) {
         window.filterCampsByTarifa(fform, tsel.value);
         window.filterFranjaByTarifa(fform, tsel.value);
+        window.toggleChipByTarifa(fform, tarifaInfantil(tsel));
         tsel.addEventListener('change', function () {
             window.filterCampsByTarifa(fform, tsel.value);
             window.filterFranjaByTarifa(fform, tsel.value);
+            window.toggleChipByTarifa(fform, tarifaInfantil(tsel));
         });
     }
     // Xip groc (individual): mostra/amaga el número segons SÍ/NO
@@ -1264,7 +1301,12 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         var sx = block.querySelector('.p-sexo'), tll = block.querySelector('.p-talla');
         if (sx && tll) { window.filterTallasBySexo(sx, tll); sx.addEventListener('change', function () { window.filterTallasBySexo(sx, tll); }); }
         var pt = block.querySelector('.p-tarifa');
-        if (pt) { window.filterCampsByTarifa(block, pt.value); window.filterFranjaByTarifa(block, pt.value); }
+        if (pt) {
+            window.filterCampsByTarifa(block, pt.value);
+            window.filterFranjaByTarifa(block, pt.value);
+            var po = pt.options[pt.selectedIndex];
+            window.toggleChipByTarifa(block, !!(po && po.getAttribute('data-infantil') === '1'));
+        }
     });
 })();
 </script>
