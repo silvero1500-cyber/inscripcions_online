@@ -29,7 +29,7 @@ $flash = $flash ?? [];
             <?php endif; ?>
 
             <!-- Anti-bot honeypot: ha de quedar buit -->
-            <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">
+            <div aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;">
                 <label for="website">No omplir aquest camp</label>
                 <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" value="">
             </div>

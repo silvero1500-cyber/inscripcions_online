@@ -28,6 +28,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+body { overflow-x: hidden; }
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: var(--text-body);
@@ -52,7 +53,7 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 .site-header {
     background: #fff;
     border-bottom: 1px solid var(--border);
-    padding: 1rem 0;
+    padding: .35rem 0;
 }
 .site-header-inner {
     max-width: 1180px;
@@ -74,8 +75,8 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 .site-brand:hover { color: var(--text-strong); text-decoration: none; }
 .site-logo {
     display: block;
-    height: 40px; width: auto;
-    max-width: 200px;
+    height: 80px; width: auto;
+    max-width: 320px;
 }
 
 .site-main { padding: 2rem 0 4rem; min-height: calc(100vh - 200px); }
@@ -410,7 +411,7 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 /* Camps estàndard en l'ordre configurat (2 columnes auto) */
 .form-fields-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 1.1rem 1rem;
     margin-bottom: 1.1rem;
 }
@@ -489,10 +490,10 @@ a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 .form-row-pair {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 1.1rem 1rem;
 }
-@media (max-width: 600px) {
+@media (max-width: 640px) {
     .form-fields-grid, .form-row-pair { grid-template-columns: 1fr; }
 }
 
@@ -782,11 +783,14 @@ small.muted { display: block; margin-top: .35rem; font-size: .8rem; }
     .hero { padding: 2rem 0 1.8rem; margin: -2rem 0 1.8rem; }
     .hero h1, .evt-title { font-size: 1.6rem; }
     .evt-meta { gap: .8rem 1.2rem; font-size: .9rem; }
-    .panel { padding: 1.4rem 1.2rem; }
     .exito-box, .pago-card { margin: 1rem auto; padding: 2rem 1.4rem; }
     .exito-resum dl { grid-template-columns: 1fr; gap: .2rem .5rem; }
     .exito-resum dt { margin-top: .5rem; }
     .metodo-grid { grid-template-columns: 1fr; }
+    .site-header { padding: .15rem 0; }
+    .site-logo { height: 56px; max-width: 220px; }
+    .container { padding: 0 1rem; }
+    .panel { padding: 1.2rem 1rem; }
 }
 
 /* ── Language switcher ──────────────────────────────────── */

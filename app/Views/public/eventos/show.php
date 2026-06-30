@@ -181,7 +181,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         <?= Csrf::field() ?>
 
         <!-- Anti-bot honeypot: ha de quedar buit; els humans no el veuen -->
-        <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">
+        <div aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;">
             <label for="website">No omplir aquest camp</label>
             <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" value="">
         </div>
@@ -725,7 +725,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         <?= Csrf::field() ?>
         <input type="hidden" name="grupo" value="1">
 
-        <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">
+        <div aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;">
             <label for="website">No omplir aquest camp</label>
             <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" value="">
         </div>
@@ -937,7 +937,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
 
         <form method="post" action="<?= e(base_url('/eventos/' . $evento['slug'] . '/llista-espera')) ?>" class="form-publico waitlist-form">
             <?= Csrf::field() ?>
-            <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">
+            <div aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;">
                 <label for="le_website">No omplir</label>
                 <input type="text" id="le_website" name="website" tabindex="-1" autocomplete="off" value="">
             </div>
