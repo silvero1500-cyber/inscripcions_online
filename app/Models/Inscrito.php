@@ -495,4 +495,16 @@ final class Inscrito
         }
         return false;
     }
+
+    /**
+     * Validador laxe de document d'identitat: no comprova el contingut ni la
+     * lletra de control (perquè accepta DNI espanyol, NIE, passaport andorrà,
+     * documents estrangers…). Només exigeix llargada estàndard: 4-20 caràcters
+     * alfanumèrics.
+     */
+    public static function documentoValido(string $doc): bool
+    {
+        $doc = strtoupper(trim($doc));
+        return (bool) preg_match('/^[A-Z0-9]{4,20}$/', $doc);
+    }
 }

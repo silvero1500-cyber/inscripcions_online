@@ -263,7 +263,7 @@ final class InscritosAdminController
         if ($nombre === '') $errors['nombre'] = 'El nom és obligatori.';
         if (mb_strlen($nombre) > 100) $errors['nombre'] = 'Nom massa llarg.';
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'Email no vàlid.';
-        if ($dni !== '' && !Inscrito::dniValido($dni)) $errors['dni'] = 'DNI o NIE no vàlid.';
+        if ($dni !== '' && !Inscrito::documentoValido($dni)) $errors['dni'] = 'El document ha de tenir entre 4 i 20 caràcters (lletres i números).';
         if ($sexo !== '' && !in_array($sexo, Inscrito::SEXOS, true)) $errors['sexo'] = 'Sexe no vàlid.';
         if ($talla !== '' && !in_array($talla, Inscrito::TALLAS, true)) $errors['talla_camiseta'] = 'Talla no vàlida.';
         if ($telefono !== '' && !preg_match('/^\+?\d{9,15}$/', $telefono)) $errors['telefono'] = 'Telèfon no vàlid.';

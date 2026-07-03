@@ -242,7 +242,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                 </div>
                 <div class="form-row">
                     <label for="tutor_dni"><?= e(t('form.tutor.dni')) ?> <span class="req">*</span></label>
-                    <input type="text" id="tutor_dni" name="tutor_dni" maxlength="20" autocomplete="off" value="<?= e($val('tutor_dni')) ?>">
+                    <input type="text" id="tutor_dni" name="tutor_dni" minlength="4" maxlength="20" autocomplete="off" value="<?= e($val('tutor_dni')) ?>">
                     <?php if ($err('tutor_dni')): ?><div class="field-error"><?= e($err('tutor_dni')) ?></div><?php endif; ?>
                 </div>
             </fieldset>
@@ -288,7 +288,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                         case 'dni': ?>
                             <div class="form-row">
                                 <label for="dni"><?= e(t('form.label.dni')) ?><?= $reqMark('dni') ?></label>
-                                <input type="text" id="dni" name="dni" <?= $reqAttr('dni') ?> maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($val('dni'))) ?>">
+                                <input type="text" id="dni" name="dni" <?= $reqAttr('dni') ?> minlength="4" maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($val('dni'))) ?>">
                                 <?php if ($err('dni')): ?><div class="field-error"><?= e($err('dni')) ?></div><?php endif; ?>
                             </div>
                         <?php break;
@@ -535,7 +535,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                 </div>
                 <div class="form-row">
                     <label for="<?= e($idf('tutor_dni')) ?>"><?= e(t('form.tutor.dni')) ?> <span class="req">*</span></label>
-                    <input type="text" id="<?= e($idf('tutor_dni')) ?>" name="<?= e($nm('tutor_dni')) ?>" maxlength="20" value="<?= e($pv('tutor_dni')) ?>">
+                    <input type="text" id="<?= e($idf('tutor_dni')) ?>" name="<?= e($nm('tutor_dni')) ?>" minlength="4" maxlength="20" value="<?= e($pv('tutor_dni')) ?>">
                     <?php $e = $pe('tutor_dni'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                 </div>
             </div>
@@ -563,7 +563,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                     case 'dni': ?>
                         <div class="form-row">
                             <label for="<?= e($idf('dni')) ?>"><?= e(t('form.label.dni')) ?><?= $rm('dni') ?></label>
-                            <input type="text" id="<?= e($idf('dni')) ?>" name="<?= e($nm('dni')) ?>" <?= $ra('dni') ?> maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($pv('dni'))) ?>">
+                            <input type="text" id="<?= e($idf('dni')) ?>" name="<?= e($nm('dni')) ?>" <?= $ra('dni') ?> minlength="4" maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($pv('dni'))) ?>">
                             <?php $e = $pe('dni'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                         </div>
                     <?php break;

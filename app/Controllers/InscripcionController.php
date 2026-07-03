@@ -808,11 +808,12 @@ final class InscripcionController
             }
         }
 
-        // DNI / NIE
+        // DNI / NIE / passaport (espanyol, andorrà, estranger…): no es verifica el
+        // contingut ni la lletra de control; només es limita la llargada estàndard.
         if ($vis('dni')) {
             if ($req('dni')) $v->required('dni');
-            if (!empty($data['dni']) && !Inscrito::dniValido((string) $data['dni'])) {
-                $v->addError('dni', 'DNI o NIE no vàlid.');
+            if (!empty($data['dni']) && !Inscrito::documentoValido((string) $data['dni'])) {
+                $v->addError('dni', 'El document ha de tenir entre 4 i 20 caràcters (lletres i números).');
             }
         }
 
@@ -877,7 +878,7 @@ final class InscripcionController
             if (empty($data['tutor_apellido'])) $v->addError('tutor_apellido', t('form.tutor.required'));
             if (empty($data['tutor_dni'])) {
                 $v->addError('tutor_dni', t('form.tutor.required'));
-            } elseif (!Inscrito::dniValido((string) $data['tutor_dni'])) {
+            } elseif (!Inscrito::documentoValido((string) $data['tutor_dni'])) {
                 $v->addError('tutor_dni', t('form.tutor.dni_invalid'));
             }
         }
