@@ -202,6 +202,8 @@ CREATE TABLE IF NOT EXISTS `inscritos` (
     -- Estado de inscripción/pago
     `estado`          ENUM('pendiente','confirmado','cancelado','reembolsado')
                                     NOT NULL DEFAULT 'pendiente',
+    `origen`          ENUM('formulario','importacion') NOT NULL DEFAULT 'formulario'
+                                    COMMENT 'formulario = alta pel formulari public; importacion = alta manual per CSV',
     `numero_dorsal`   INT UNSIGNED  NULL,
     -- Metadatos de seguridad/auditoría
     `ip_registro`     VARCHAR(45)   NULL COMMENT 'IPv4 o IPv6',

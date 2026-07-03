@@ -110,6 +110,7 @@ $row = function (string $label, $value, bool $raw = false): void {
             $row('Tarifa', $tarifa['nombre'] ?? '—');
             $row('Preu', isset($tarifa['precio']) ? format_price((float) $tarifa['precio']) : null);
             $row('Estat', '<span class="badge ' . $estadoBadge . '">' . e($estado) . '</span>', true);
+            $row('Origen', ($inscrito['origen'] ?? 'formulario') === 'importacion' ? 'Importació' : 'Formulari públic');
             $row('Dorsal', !empty($inscrito['numero_dorsal']) ? (int) $inscrito['numero_dorsal'] : null);
             $row('Check-in', !empty($inscrito['check_in_at']) ? format_datetime_local((string) $inscrito['check_in_at'], 'd/m/Y H:i') : null);
             $row('Recollida dorsal', !empty($inscrito['dorsal_recollit_at']) ? format_datetime_local((string) $inscrito['dorsal_recollit_at'], 'd/m/Y H:i') : null);

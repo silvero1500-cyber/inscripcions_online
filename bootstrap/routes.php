@@ -16,6 +16,7 @@ use App\Controllers\DescuentosController;
 use App\Controllers\EventoController;
 use App\Controllers\InscritosAdminController;
 use App\Controllers\InscritosImportController;
+use App\Controllers\InscritosAltaImportController;
 use App\Controllers\UsuariosAdminController;
 use App\Controllers\PagoController;
 use App\Controllers\PublicController;
@@ -112,6 +113,11 @@ $router->post('/admin/inscritos/{id}/editar',                  [InscritosAdminCo
 $router->get ('/admin/eventos/{id}/inscritos/import',          [InscritosImportController::class, 'form'],    $auth);
 $router->post('/admin/eventos/{id}/inscritos/import/preview',  [InscritosImportController::class, 'preview'], $auth);
 $router->post('/admin/eventos/{id}/inscritos/import/apply',    [InscritosImportController::class, 'apply'],   $auth);
+
+// Inscrits: alta de nous inscrits per importació CSV (diferent de l'anterior, que només actualitza)
+$router->get ('/admin/eventos/{id}/inscritos/importar-altas',         [InscritosAltaImportController::class, 'form'],    $auth);
+$router->post('/admin/eventos/{id}/inscritos/importar-altas/preview', [InscritosAltaImportController::class, 'preview'], $auth);
+$router->post('/admin/eventos/{id}/inscritos/importar-altas/apply',   [InscritosAltaImportController::class, 'apply'],   $auth);
 
 // Llista d'espera
 $router->get ('/admin/eventos/{id}/llista-espera',          [WaitingListController::class, 'index'],  $auth);

@@ -422,7 +422,7 @@ final class InscritosAdminController
             'Email', 'Telèfon', 'Club', 'Població', 'Codi postal', 'Talla', 'Franja temps',
             'Xip groc', 'Núm xip groc',
             'Tutor nom', 'Tutor cognoms', 'Tutor DNI',
-            'Tarifa', 'Preu', 'Estat', 'Dorsal'
+            'Tarifa', 'Preu', 'Estat', 'Origen', 'Dorsal'
         ];
         foreach ($campos as $c) {
             $headers[] = (string) $c['etiqueta'] . (!empty($c['oculto']) ? ' (ocult)' : '');
@@ -455,6 +455,7 @@ final class InscritosAdminController
                 $i['tarifa_nombre'],
                 number_format((float) $i['tarifa_precio'], 2, ',', '.'),
                 $i['estado'],
+                ($i['origen'] ?? 'formulario') === 'importacion' ? 'Importació' : 'Formulari',
                 $i['numero_dorsal'] ?? '',
             ];
             $vals = $valores[(int) $i['id']] ?? [];

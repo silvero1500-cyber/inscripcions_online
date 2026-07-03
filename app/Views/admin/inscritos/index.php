@@ -33,6 +33,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
     <?php if ($selEvento): ?>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
             <a class="btn" href="<?= e(base_url('/admin/eventos/' . $selEvento . '/inscritos/import')) ?>">⬆ Importar CSV</a>
+            <a class="btn" href="<?= e(base_url('/admin/eventos/' . $selEvento . '/inscritos/importar-altas')) ?>">➕ Donar d'alta per importació</a>
             <?php if ($total > 0): ?>
                 <a class="btn btn-primary" href="<?= e($exportUrl) ?>">⬇ Exportar CSV</a>
             <?php endif; ?>
