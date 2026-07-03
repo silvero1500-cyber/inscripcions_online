@@ -306,7 +306,6 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                                     <option value=""><?= e(t('form.label.sex.choose')) ?></option>
                                     <option value="H" <?= $val('sexo') === 'H' ? 'selected' : '' ?>><?= e(t('form.label.sex.male')) ?></option>
                                     <option value="M" <?= $val('sexo') === 'M' ? 'selected' : '' ?>><?= e(t('form.label.sex.female')) ?></option>
-                                    <option value="NB" <?= $val('sexo') === 'NB' ? 'selected' : '' ?>><?= e(t('form.label.sex.nonbinary')) ?></option>
                                 </select>
                                 <?php if ($err('sexo')): ?><div class="field-error"><?= e($err('sexo')) ?></div><?php endif; ?>
                             </div>
@@ -581,7 +580,6 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                                 <option value=""><?= e(t('form.label.sex.choose')) ?></option>
                                 <option value="H" <?= $pv('sexo') === 'H' ? 'selected' : '' ?>><?= e(t('form.label.sex.male')) ?></option>
                                 <option value="M" <?= $pv('sexo') === 'M' ? 'selected' : '' ?>><?= e(t('form.label.sex.female')) ?></option>
-                                <option value="NB" <?= $pv('sexo') === 'NB' ? 'selected' : '' ?>><?= e(t('form.label.sex.nonbinary')) ?></option>
                             </select>
                         </div>
                     <?php break;
@@ -1108,7 +1106,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         setVal(q(scope, 'dni'), dniAleatori());
         setVal(q(scope, 'fecha_nacimiento'), randDate());
         var sx = q(scope, 'sexo');
-        if (sx) { setSelVal(sx, pick(['H', 'M', 'NB'])); fire(sx, 'change'); }
+        if (sx) { setSelVal(sx, pick(['H', 'M'])); fire(sx, 'change'); }
         setSelAny(q(scope, 'talla_camiseta')); // després de sexo (opcions ja filtrades)
         setVal(q(scope, 'poblacion'), pick(ciutats));
         setVal(q(scope, 'codigo_postal'), '0' + Math.floor(8000 + Math.random() * 1000));
