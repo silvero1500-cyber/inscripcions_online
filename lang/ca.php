@@ -100,6 +100,7 @@ return [
     'form.label.discount.hint'         => "S'aplicarà el descompte al pagament.",
     'form.submit'                      => "Inscriure'm i pagar",
     'form.submit.free'                 => "Inscriure'm",
+    'form.rate_limited'                => "S'han fet massa inscripcions seguides des d'aquesta connexió. Espera uns minuts i torna-ho a provar.",
     'form.submit.note'                 => 'Pagament segur amb targeta o Bizum via Redsys.',
     'form.privacy.accept'              => "He llegit i accepto la",
     'form.privacy.link'                => 'política de privacitat',

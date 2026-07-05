@@ -78,6 +78,17 @@ final class InscripcionController
             Response::redirect(base_url('/'));
         }
 
+        // Límit de freqüència per IP: evita que un bot infli la taula amb
+        // inscripcions pendents. Màx 10 enviaments / 10 min per IP (cobreix
+        // individual i grup, que entren pel mateix punt).
+        $rlKey = 'inscribir:' . $req->ip;
+        if (RateLimit::tooMany($rlKey, 10, 600)) {
+            error_log('[Inscripcio] Rate limit assolit IP=' . $req->ip);
+            Session::flash('error', t('form.rate_limited'));
+            Response::redirect(base_url('/eventos/' . $slug) . '#formulari');
+        }
+        RateLimit::hit($rlKey);
+
         // Caduca pendents abandonats: allibera places abans de comprovar l'aforament.
         // (Cobreix també la inscripció de grup, que es despatxa més avall.)
         Inscrito::expirarPendientes((int) $evento['id']);
