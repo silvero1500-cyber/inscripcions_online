@@ -59,6 +59,7 @@ return [
     'form.tutor.dni_invalid'           => 'El DNI o NIE del tutor/a no és vàlid.',
     'form.tarifa.left'                 => 'queden {n}',
     'form.tarifa.nac_hint_between'     => 'nascuts {min}–{max}',
+    'form.tarifa.nac_hint_years'       => 'nascuts {years}',
     'form.tarifa.nac_hint_from'        => 'nascuts des de {min}',
     'form.tarifa.nac_hint_until'       => 'nascuts fins a {max}',
     'form.tarifa.nac_msg_between'      => 'Aquesta tarifa és només per a nascuts entre {min} i {max}.',

@@ -196,7 +196,13 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                         $nMin = isset($t['anio_nac_min']) && $t['anio_nac_min'] !== null ? (int)$t['anio_nac_min'] : null;
                         $nMax = isset($t['anio_nac_max']) && $t['anio_nac_max'] !== null ? (int)$t['anio_nac_max'] : null;
                         $nacHint = '';
-                        if ($nMin !== null && $nMax !== null)      $nacHint = t('form.tarifa.nac_hint_between', ['min' => $nMin, 'max' => $nMax]);
+                        if ($nMin !== null && $nMax !== null) {
+                            // Rangs curts (modalitats infantils): enumerar tots els anys
+                            // "2014-2015-2016"; rangs llargs: mantenir "min–max".
+                            $nacHint = ($nMax - $nMin) < 8
+                                ? t('form.tarifa.nac_hint_years', ['years' => implode('-', range($nMin, $nMax))])
+                                : t('form.tarifa.nac_hint_between', ['min' => $nMin, 'max' => $nMax]);
+                        }
                         elseif ($nMin !== null)                    $nacHint = t('form.tarifa.nac_hint_from',  ['min' => $nMin]);
                         elseif ($nMax !== null)                    $nacHint = t('form.tarifa.nac_hint_until', ['max' => $nMax]);
                     ?>
@@ -495,7 +501,13 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                         $nMin = isset($t['anio_nac_min']) && $t['anio_nac_min'] !== null ? (int) $t['anio_nac_min'] : null;
                         $nMax = isset($t['anio_nac_max']) && $t['anio_nac_max'] !== null ? (int) $t['anio_nac_max'] : null;
                         $nacHint = '';
-                        if ($nMin !== null && $nMax !== null)      $nacHint = t('form.tarifa.nac_hint_between', ['min' => $nMin, 'max' => $nMax]);
+                        if ($nMin !== null && $nMax !== null) {
+                            // Rangs curts (modalitats infantils): enumerar tots els anys
+                            // "2014-2015-2016"; rangs llargs: mantenir "min–max".
+                            $nacHint = ($nMax - $nMin) < 8
+                                ? t('form.tarifa.nac_hint_years', ['years' => implode('-', range($nMin, $nMax))])
+                                : t('form.tarifa.nac_hint_between', ['min' => $nMin, 'max' => $nMax]);
+                        }
                         elseif ($nMin !== null)                    $nacHint = t('form.tarifa.nac_hint_from',  ['min' => $nMin]);
                         elseif ($nMax !== null)                    $nacHint = t('form.tarifa.nac_hint_until', ['max' => $nMax]);
                     ?>

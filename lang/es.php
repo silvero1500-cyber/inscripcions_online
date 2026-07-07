@@ -59,6 +59,7 @@ return [
     'form.tutor.dni_invalid'           => 'El DNI o NIE del tutor/a no es válido.',
     'form.tarifa.left'                 => 'quedan {n}',
     'form.tarifa.nac_hint_between'     => 'nacidos {min}–{max}',
+    'form.tarifa.nac_hint_years'       => 'nacidos {years}',
     'form.tarifa.nac_hint_from'        => 'nacidos desde {min}',
     'form.tarifa.nac_hint_until'       => 'nacidos hasta {max}',
     'form.tarifa.nac_msg_between'      => 'Esta tarifa es solo para nacidos entre {min} y {max}.',
