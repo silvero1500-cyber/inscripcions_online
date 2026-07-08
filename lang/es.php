@@ -102,6 +102,14 @@ return [
     'form.submit'                      => 'Inscribirme y pagar',
     'form.submit.free'                 => 'Inscribirme',
     'form.rate_limited'                => 'Se han hecho demasiadas inscripciones seguidas desde esta conexión. Espera unos minutos y vuelve a intentarlo.',
+
+    // Traducciones de campos personalizados (etiquetas/opciones guardadas en BD en catalán).
+    // Clave = 'custom.' + texto original exacto. Solo se traduce lo visible.
+    'custom.Capacitat diverses'         => 'Capacidades diversas',
+    'custom.Capacitats diverses'        => 'Capacidades diversas',
+    'custom.Discapacitat visual'        => 'Discapacidad visual',
+    'custom.Altres capacitats diverses' => 'Otras capacidades diversas',
+    'custom.Accepto el reglament'       => 'Acepto el reglamento',
     'form.submit.note'                 => 'Pago seguro con tarjeta o Bizum vía Redsys.',
     'form.privacy.accept'              => 'He leído y acepto la',
     'form.privacy.link'                => 'política de privacidad',

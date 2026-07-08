@@ -53,7 +53,8 @@ if (!function_exists('asset')) {
 }
 
 /**
- * Formatea una fecha (YYYY-MM-DD o datetime) en català: "12 de juny de 2026".
+ * Formatea una fecha (YYYY-MM-DD o datetime) en l'idioma actual:
+ * "12 de juny de 2026" (ca) / "12 de junio de 2026" (es).
  */
 if (!function_exists('format_date_ca')) {
     function format_date_ca(string $isoDate, bool $withWeekday = false): string
@@ -61,9 +62,15 @@ if (!function_exists('format_date_ca')) {
         $t = strtotime($isoDate);
         if ($t === false) return $isoDate;
 
-        $meses = ['gener', 'febrer', 'març', 'abril', 'maig', 'juny',
-                  'juliol', 'agost', 'setembre', 'octubre', 'novembre', 'desembre'];
-        $dies  = ['diumenge', 'dilluns', 'dimarts', 'dimecres', 'dijous', 'divendres', 'dissabte'];
+        if (current_locale() === 'es') {
+            $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+            $dies  = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        } else {
+            $meses = ['gener', 'febrer', 'març', 'abril', 'maig', 'juny',
+                      'juliol', 'agost', 'setembre', 'octubre', 'novembre', 'desembre'];
+            $dies  = ['diumenge', 'dilluns', 'dimarts', 'dimecres', 'dijous', 'divendres', 'dissabte'];
+        }
 
         $d = (int) date('j', $t);
         $m = (int) date('n', $t) - 1;
@@ -94,6 +101,22 @@ if (!function_exists('current_locale')) {
     function current_locale(): string
     {
         return \App\Core\Lang::current();
+    }
+}
+
+/**
+ * Tradueix textos de camps personalitzats (etiquetes, opcions, ajudes), que
+ * viuen a la BD en català. Busca la clau 'custom.<text>' al fitxer d'idioma
+ * actual; si no hi ha traducció, retorna el text original tal qual.
+ * Només tradueix el que ES MOSTRA — els values dels inputs mantenen l'original
+ * perquè les dades desades i les validacions no canviïn.
+ */
+if (!function_exists('tc')) {
+    function tc(string $text): string
+    {
+        $key = 'custom.' . $text;
+        $val = \App\Core\Lang::t($key);
+        return $val === $key ? $text : $val;
     }
 }
 

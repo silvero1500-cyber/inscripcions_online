@@ -398,34 +398,34 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                     $req  = (int) $c['requerido'] === 1;
                     ?>
                     <div class="form-row<?= $c['tipo'] === 'textarea' ? ' form-row-wide' : '' ?>" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
-                        <label><?= e($c['etiqueta']) ?><?= $req ? ' <span class="req">*</span>' : '' ?></label>
+                        <label><?= e(tc($c['etiqueta'])) ?><?= $req ? ' <span class="req">*</span>' : '' ?></label>
                         <?php if ($c['tipo'] === 'textarea'): ?>
                             <textarea name="<?= e($key) ?>" rows="3" <?= $req ? 'required' : '' ?>><?= e($valC) ?></textarea>
                         <?php elseif ($c['tipo'] === 'select'): ?>
                             <select name="<?= e($key) ?>" data-camp-id="<?= (int)$c['id'] ?>" <?= $req ? 'required' : '' ?>>
                                 <option value="">— Tria —</option>
                                 <?php foreach ($opts as $o): ?>
-                                    <option value="<?= e($o) ?>" <?= $valC === $o ? 'selected' : '' ?>><?= e($o) ?></option>
+                                    <option value="<?= e($o) ?>" <?= $valC === $o ? 'selected' : '' ?>><?= e(tc($o)) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         <?php elseif ($c['tipo'] === 'radio'): ?>
                             <div class="radio-group">
                                 <?php foreach ($opts as $o): ?>
-                                    <label class="inline-check"><input type="radio" name="<?= e($key) ?>" value="<?= e($o) ?>" <?= $valC === $o ? 'checked' : '' ?> <?= $req ? 'required' : '' ?>> <?= e($o) ?></label>
+                                    <label class="inline-check"><input type="radio" name="<?= e($key) ?>" value="<?= e($o) ?>" <?= $valC === $o ? 'checked' : '' ?> <?= $req ? 'required' : '' ?>> <?= e(tc($o)) ?></label>
                                 <?php endforeach; ?>
                             </div>
                         <?php elseif ($c['tipo'] === 'checkbox' && count($opts) > 0): ?>
                             <div class="radio-group">
                                 <?php foreach ($opts as $o): ?>
-                                    <label class="inline-check"><input type="checkbox" name="<?= e($key) ?>[]" value="<?= e($o) ?>"> <?= e($o) ?></label>
+                                    <label class="inline-check"><input type="checkbox" name="<?= e($key) ?>[]" value="<?= e($o) ?>"> <?= e(tc($o)) ?></label>
                                 <?php endforeach; ?>
                             </div>
                         <?php elseif ($c['tipo'] === 'checkbox'): ?>
-                            <label class="inline-check"><input type="checkbox" name="<?= e($key) ?>" value="1" <?= $valC === '1' ? 'checked' : '' ?> <?= $req ? 'required' : '' ?>> <?= e($c['etiqueta']) ?></label>
+                            <label class="inline-check"><input type="checkbox" name="<?= e($key) ?>" value="1" <?= $valC === '1' ? 'checked' : '' ?> <?= $req ? 'required' : '' ?>> <?= e(tc($c['etiqueta'])) ?></label>
                         <?php else: ?>
                             <input type="<?= e($c['tipo']) ?>" name="<?= e($key) ?>" value="<?= e($valC) ?>" <?= $req ? 'required' : '' ?> <?= !empty($c['placeholder']) ? 'placeholder="' . e($c['placeholder']) . '"' : '' ?>>
                         <?php endif; ?>
-                        <?php if (!empty($c['ayuda'])): ?><small class="muted"><?= e($c['ayuda']) ?></small><?php endif; ?>
+                        <?php if (!empty($c['ayuda'])): ?><small class="muted"><?= e(tc($c['ayuda'])) ?></small><?php endif; ?>
                         <?php if ($errC): ?><div class="field-error"><?= e($errC) ?></div><?php endif; ?>
                     </div>
                     <?php
@@ -667,34 +667,34 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                 $cvalC = $pv($ckey);
                 ?>
                 <div class="form-row<?= $c['tipo'] === 'textarea' ? ' form-row-wide' : '' ?>" data-camp-tarifes="<?= e(implode(',', CampoPersonalizado::tarifasDeCampo($c))) ?>">
-                    <label><?= e($c['etiqueta']) ?><?= $creq ? ' <span class="req">*</span>' : '' ?></label>
+                    <label><?= e(tc($c['etiqueta'])) ?><?= $creq ? ' <span class="req">*</span>' : '' ?></label>
                     <?php if ($c['tipo'] === 'textarea'): ?>
                         <textarea name="<?= e($nm($ckey)) ?>" rows="3" <?= $creq ? 'required' : '' ?>><?= e($cvalC) ?></textarea>
                     <?php elseif ($c['tipo'] === 'select'): ?>
                         <select name="<?= e($nm($ckey)) ?>" data-camp-id="<?= (int)$c['id'] ?>" <?= $creq ? 'required' : '' ?>>
                             <option value="">— Tria —</option>
                             <?php foreach ($copts as $o): ?>
-                                <option value="<?= e($o) ?>" <?= $cvalC === $o ? 'selected' : '' ?>><?= e($o) ?></option>
+                                <option value="<?= e($o) ?>" <?= $cvalC === $o ? 'selected' : '' ?>><?= e(tc($o)) ?></option>
                             <?php endforeach; ?>
                         </select>
                     <?php elseif ($c['tipo'] === 'radio'): ?>
                         <div class="radio-group">
                             <?php foreach ($copts as $o): ?>
-                                <label class="inline-check"><input type="radio" name="<?= e($nm($ckey)) ?>" value="<?= e($o) ?>" <?= $cvalC === $o ? 'checked' : '' ?> <?= $creq ? 'required' : '' ?>> <?= e($o) ?></label>
+                                <label class="inline-check"><input type="radio" name="<?= e($nm($ckey)) ?>" value="<?= e($o) ?>" <?= $cvalC === $o ? 'checked' : '' ?> <?= $creq ? 'required' : '' ?>> <?= e(tc($o)) ?></label>
                             <?php endforeach; ?>
                         </div>
                     <?php elseif ($c['tipo'] === 'checkbox' && count($copts) > 0): ?>
                         <div class="radio-group">
                             <?php foreach ($copts as $o): ?>
-                                <label class="inline-check"><input type="checkbox" name="<?= e($nm($ckey)) ?>[]" value="<?= e($o) ?>"> <?= e($o) ?></label>
+                                <label class="inline-check"><input type="checkbox" name="<?= e($nm($ckey)) ?>[]" value="<?= e($o) ?>"> <?= e(tc($o)) ?></label>
                             <?php endforeach; ?>
                         </div>
                     <?php elseif ($c['tipo'] === 'checkbox'): ?>
-                        <label class="inline-check"><input type="checkbox" name="<?= e($nm($ckey)) ?>" value="1" <?= $cvalC === '1' ? 'checked' : '' ?> <?= $creq ? 'required' : '' ?>> <?= e($c['etiqueta']) ?></label>
+                        <label class="inline-check"><input type="checkbox" name="<?= e($nm($ckey)) ?>" value="1" <?= $cvalC === '1' ? 'checked' : '' ?> <?= $creq ? 'required' : '' ?>> <?= e(tc($c['etiqueta'])) ?></label>
                     <?php else: ?>
                         <input type="<?= e($c['tipo']) ?>" name="<?= e($nm($ckey)) ?>" value="<?= e($cvalC) ?>" <?= $creq ? 'required' : '' ?> <?= !empty($c['placeholder']) ? 'placeholder="' . e($c['placeholder']) . '"' : '' ?>>
                     <?php endif; ?>
-                    <?php if (!empty($c['ayuda'])): ?><small class="muted"><?= e($c['ayuda']) ?></small><?php endif; ?>
+                    <?php if (!empty($c['ayuda'])): ?><small class="muted"><?= e(tc($c['ayuda'])) ?></small><?php endif; ?>
                     <?php $e = $pe($ckey); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                 </div>
                 <?php
