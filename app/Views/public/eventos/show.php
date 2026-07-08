@@ -363,7 +363,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                                 <select id="franja_temps" name="franja_temps" class="franja-select" <?= $reqAttr('franja_temps') ?>>
                                     <option value=""><?= e(t('form.label.franja.none')) ?></option>
                                     <?php foreach ($franjas as $f): $tIds = !empty($f['tarifes']) ? implode(',', array_keys($f['tarifes'])) : ''; ?>
-                                        <option value="<?= e($f['label']) ?>" data-tarifes="<?= e($tIds) ?>" <?= $val('franja_temps') === $f['label'] ? 'selected' : '' ?>><?= e($f['label']) ?></option>
+                                        <option value="<?= e($f['label']) ?>" data-tarifes="<?= e($tIds) ?>" <?= $val('franja_temps') === $f['label'] ? 'selected' : '' ?>><?= e(tc($f['label'])) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                                 <?php if ($err('franja_temps')): ?><div class="field-error"><?= e($err('franja_temps')) ?></div><?php endif; ?>
@@ -403,7 +403,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                             <textarea name="<?= e($key) ?>" rows="3" <?= $req ? 'required' : '' ?>><?= e($valC) ?></textarea>
                         <?php elseif ($c['tipo'] === 'select'): ?>
                             <select name="<?= e($key) ?>" data-camp-id="<?= (int)$c['id'] ?>" <?= $req ? 'required' : '' ?>>
-                                <option value="">— Tria —</option>
+                                <option value=""><?= e(t('form.label.chip.none')) ?></option>
                                 <?php foreach ($opts as $o): ?>
                                     <option value="<?= e($o) ?>" <?= $valC === $o ? 'selected' : '' ?>><?= e(tc($o)) ?></option>
                                 <?php endforeach; ?>
@@ -635,7 +635,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                             <select id="<?= e($idf('franja_temps')) ?>" name="<?= e($nm('franja_temps')) ?>" class="franja-select p-franja" <?= $ra('franja_temps') ?>>
                                 <option value=""><?= e(t('form.label.franja.none')) ?></option>
                                 <?php foreach ($franjasG as $f): $tIds = !empty($f['tarifes']) ? implode(',', array_keys($f['tarifes'])) : ''; ?>
-                                    <option value="<?= e($f['label']) ?>" data-tarifes="<?= e($tIds) ?>" <?= $pv('franja_temps') === $f['label'] ? 'selected' : '' ?>><?= e($f['label']) ?></option>
+                                    <option value="<?= e($f['label']) ?>" data-tarifes="<?= e($tIds) ?>" <?= $pv('franja_temps') === $f['label'] ? 'selected' : '' ?>><?= e(tc($f['label'])) ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <?php $e = $pe('franja_temps'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
@@ -672,7 +672,7 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                         <textarea name="<?= e($nm($ckey)) ?>" rows="3" <?= $creq ? 'required' : '' ?>><?= e($cvalC) ?></textarea>
                     <?php elseif ($c['tipo'] === 'select'): ?>
                         <select name="<?= e($nm($ckey)) ?>" data-camp-id="<?= (int)$c['id'] ?>" <?= $creq ? 'required' : '' ?>>
-                            <option value="">— Tria —</option>
+                            <option value=""><?= e(t('form.label.chip.none')) ?></option>
                             <?php foreach ($copts as $o): ?>
                                 <option value="<?= e($o) ?>" <?= $cvalC === $o ? 'selected' : '' ?>><?= e(tc($o)) ?></option>
                             <?php endforeach; ?>
