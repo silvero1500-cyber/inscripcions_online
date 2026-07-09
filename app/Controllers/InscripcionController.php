@@ -78,6 +78,14 @@ final class InscripcionController
             Response::redirect(base_url('/'));
         }
 
+        // Contrasenya d'accés al formulari (si l'event en té): re-verificació al
+        // servidor perquè no es pugui saltar la pantalla d'accés enviant el POST
+        // directament. Cobreix individual i grup.
+        if (!PublicController::formDesbloquejat($evento)) {
+            Session::flash('acces_error', t('event.access.required'));
+            Response::redirect(base_url('/eventos/' . $slug));
+        }
+
         // Límit de freqüència per IP: evita que un bot infli la taula amb
         // inscripcions pendents. Màx 10 enviaments / 10 min per IP (cobreix
         // individual i grup, que entren pel mateix punt).

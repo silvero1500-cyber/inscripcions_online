@@ -102,6 +102,13 @@ return [
     'form.submit'                      => 'Inscribirme y pagar',
     'form.submit.free'                 => 'Inscribirme',
     'form.rate_limited'                => 'Se han hecho demasiadas inscripciones seguidas desde esta conexión. Espera unos minutos y vuelve a intentarlo.',
+    'event.access.intro'               => 'El acceso a este formulario está restringido. Introduce la contraseña que te ha facilitado la organización.',
+    'event.access.label'               => 'Contraseña de acceso',
+    'event.access.submit'              => 'Acceder',
+    'event.access.wrong'               => 'Contraseña incorrecta.',
+    'event.access.expired'             => 'La sesión ha expirado. Vuelve a intentarlo.',
+    'event.access.rate_limited'        => 'Demasiados intentos. Espera unos minutos y vuelve a intentarlo.',
+    'event.access.required'            => 'Hay que introducir la contraseña de acceso antes de inscribirse.',
 
     // Traducciones de campos personalizados (etiquetas/opciones guardadas en BD en catalán).
     // Clave = 'custom.' + texto original exacto. Solo se traduce lo visible.

@@ -40,6 +40,52 @@ final class PublicController
         ], layout: 'public');
     }
 
+    /**
+     * El formulari està desbloquejat per a aquest visitant? (true si l'event no
+     * té contrasenya, si ja l'ha encertada aquesta sessió, o si és un admin logat)
+     */
+    public static function formDesbloquejat(array $evento): bool
+    {
+        $pass = trim((string) ($evento['form_password'] ?? ''));
+        if ($pass === '') return true;
+        if (Auth::check()) return true;
+        return Session::get('evt_acces_' . (int) $evento['id']) === true;
+    }
+
+    /** POST /eventos/{slug}/acces — valida la contrasenya d'accés al formulari. */
+    public function acces(Request $req, array $params): void
+    {
+        $slug = (string) ($params['slug'] ?? '');
+        $evento = Evento::findBySlug($slug);
+        if ($evento === null || (int) $evento['activo'] !== 1 || !empty($evento['archivado_at'])) {
+            Response::notFound();
+        }
+        $back = base_url('/eventos/' . $slug);
+
+        if (!\App\Core\Csrf::verify($req->post('_csrf'))) {
+            Session::flash('acces_error', t('event.access.expired'));
+            Response::redirect($back);
+        }
+
+        // Límit per IP contra força bruta de la contrasenya
+        $rlKey = 'evtacces:' . $req->ip;
+        if (\App\Models\RateLimit::tooMany($rlKey, 10, 600)) {
+            Session::flash('acces_error', t('event.access.rate_limited'));
+            Response::redirect($back);
+        }
+        \App\Models\RateLimit::hit($rlKey);
+
+        $pass = trim((string) ($evento['form_password'] ?? ''));
+        $introduida = trim((string) $req->post('acces_password', ''));
+        if ($pass !== '' && $introduida !== '' && hash_equals($pass, $introduida)) {
+            Session::set('evt_acces_' . (int) $evento['id'], true);
+            Response::redirect($back . '#formulari');
+        }
+
+        Session::flash('acces_error', t('event.access.wrong'));
+        Response::redirect($back);
+    }
+
     public function show(Request $req, array $params): void
     {
         $slug = (string) ($params['slug'] ?? '');
@@ -47,6 +93,17 @@ final class PublicController
 
         if ($evento === null || (int) $evento['activo'] !== 1 || !empty($evento['archivado_at'])) {
             Response::notFound();
+        }
+
+        // Contrasenya d'accés al formulari (opcional per event): si no s'ha
+        // desbloquejat encara, es mostra la pantalla d'accés en lloc del formulari.
+        if (!self::formDesbloquejat($evento)) {
+            View::render('public/eventos/acces', [
+                'evento'     => $evento,
+                'accesError' => Session::pullFlash('acces_error'),
+                'pageTitle'  => e($evento['titulo']) . ' · WeRun',
+            ], layout: 'public');
+            return;
         }
 
         $campos = Database::getInstance()->query(

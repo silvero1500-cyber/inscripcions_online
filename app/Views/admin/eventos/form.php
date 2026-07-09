@@ -172,6 +172,13 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                 Codis de descompte actius
             </label>
         </div>
+
+        <div class="form-row" style="max-width:420px;">
+            <label for="form_password">Contrasenya d'accés al formulari</label>
+            <input type="text" id="form_password" name="form_password" maxlength="100" autocomplete="off"
+                   value="<?= e((string)($isEdit ? ($evento['form_password'] ?? '') : '')) ?>">
+            <small class="muted">Opcional. Si hi poses una contrasenya, el formulari públic la demanarà abans de mostrar-se (útil per evitar inscripcions abans de l'obertura oficial). Deixa-ho buit per a accés lliure.</small>
+        </div>
     </fieldset>
 
     <fieldset>
