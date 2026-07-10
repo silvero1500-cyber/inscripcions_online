@@ -170,15 +170,20 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         ['key' => 'fnac',        'label' => 'Data naix.'],
         ['key' => 'talla',       'label' => 'Talla'],
         ['key' => 'franja',      'label' => 'Franja'],
+        ['key' => 'chip',        'label' => 'Xip'],
+        ['key' => 'chipnum',     'label' => 'Núm xip'],
         ['key' => 'email',       'label' => 'Email'],
         ['key' => 'telefono',    'label' => 'Telèfon'],
         ['key' => 'club',        'label' => 'Club'],
         ['key' => 'poblacion',   'label' => 'Població'],
         ['key' => 'cp',          'label' => 'CP'],
+        ['key' => 'tutor',       'label' => 'Tutor'],
         ['key' => 'tarifa',      'label' => 'Tarifa'],
         ['key' => 'precio',      'label' => 'Preu'],
         ['key' => 'dorsal',      'label' => 'Dorsal'],
         ['key' => 'estado',      'label' => 'Estat'],
+        ['key' => 'eb',          'label' => 'Early bird'],
+        ['key' => 'origen',      'label' => 'Origen'],
         ['key' => 'accions',     'label' => 'Accions'],
     ];
     ?>
@@ -515,7 +520,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
 
     <script>
     (function () {
-        const STORAGE_KEY = 'inscritos_cols_v1';
+        const STORAGE_KEY = 'inscritos_cols_v2';
         const defaultOrder = <?= json_encode(array_column($colDefs, 'key')) ?>;
 
         function loadPrefs() {
