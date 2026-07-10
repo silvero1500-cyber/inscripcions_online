@@ -184,8 +184,12 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         ['key' => 'estado',      'label' => 'Estat'],
         ['key' => 'eb',          'label' => 'Early bird'],
         ['key' => 'origen',      'label' => 'Origen'],
-        ['key' => 'accions',     'label' => 'Accions'],
     ];
+    // Camps personalitzats visibles de l'event, com a columnes pròpies
+    foreach (($camposGrid ?? []) as $cg) {
+        $colDefs[] = ['key' => 'campo_' . (int) $cg['id'], 'label' => (string) $cg['etiqueta']];
+    }
+    $colDefs[] = ['key' => 'accions', 'label' => 'Accions'];
     ?>
     <div class="col-manager-bar">
         <button type="button" class="col-manager-toggle" onclick="document.getElementById('colMgr').classList.toggle('open')">
@@ -238,6 +242,9 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                     <th data-col="estado">Estat</th>
                     <th data-col="eb" title="Early bird">EB</th>
                     <th data-col="origen">Origen</th>
+                    <?php foreach (($camposGrid ?? []) as $cg): ?>
+                        <th data-col="campo_<?= (int)$cg['id'] ?>"><?= e($cg['etiqueta']) ?></th>
+                    <?php endforeach; ?>
                     <th data-col="accions">Accions</th>
                 </tr>
             </thead>
@@ -298,6 +305,9 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                     </td>
                     <td data-col="eb" class="cell-center" title="Early bird"><?= !empty($i['early_bird']) ? '⚡' : '—' ?></td>
                     <td data-col="origen"><?= ($i['origen'] ?? 'formulario') === 'importacion' ? 'Import.' : 'Form.' ?></td>
+                    <?php foreach (($camposGrid ?? []) as $cg): $vc = $valoresCampos[(int)$i['id']][(int)$cg['id']] ?? ''; ?>
+                        <td data-col="campo_<?= (int)$cg['id'] ?>"><?= $vc !== '' ? e(mb_substr((string)$vc, 0, 80)) : '—' ?></td>
+                    <?php endforeach; ?>
                     <td data-col="accions" class="cell-actions">
                         <span class="acc-normal">
                             <?php if ($canEdit): ?>

@@ -81,6 +81,21 @@ final class InscritosAdminController
         $colPrefsKey = 'inscritos_cols_evt_' . (int) ($filters['evento_id'] ?? 0);
         $colPrefs = \App\Models\UserPref::get($user->id, $colPrefsKey);
 
+        // Camps personalitzats visibles de l'event: columnes extra del grid
+        $camposGrid = [];
+        $valoresCampos = [];
+        if ($filters['evento_id']) {
+            $camposGrid = array_values(array_filter(
+                CampoPersonalizado::listByEvento((int) $filters['evento_id']),
+                fn($c) => (int) $c['activo'] === 1 && (int) $c['oculto'] === 0
+            ));
+            if ($camposGrid && $inscritos) {
+                $valoresCampos = CampoPersonalizado::valoresPorInscrito(
+                    array_map(fn($i) => (int) $i['id'], $inscritos)
+                );
+            }
+        }
+
         View::render('admin/inscritos/index', [
             'user'       => $user,
             'eventos'    => $eventos,
@@ -92,6 +107,8 @@ final class InscritosAdminController
             'eventoSel'  => $ev,
             'colPrefs'    => $colPrefs,
             'colPrefsKey' => $colPrefsKey,
+            'camposGrid'    => $camposGrid,
+            'valoresCampos' => $valoresCampos,
             'total'      => $total,
             'page'       => $page,
             'perPage'    => $perPage,
