@@ -520,14 +520,18 @@ $pageUrl = function (int $p) use ($filtersClean): string {
 
     <script>
     (function () {
-        const STORAGE_KEY = 'inscritos_cols_v2';
+        // Preferència per USUARI + EVENTO, desada al servidor (taula user_prefs):
+        // es conserva per sempre i des de qualsevol navegador/ordinador.
+        const PREF_KEY = <?= json_encode($colPrefsKey ?? 'inscritos_cols_evt_0') ?>;
+        const SERVER_PREFS = <?php $cpDec = ($colPrefs ?? null) !== null ? json_decode((string)$colPrefs, true) : null; echo $cpDec !== null ? json_encode($cpDec) : 'null'; ?>;
+        const PREFS_URL = <?= json_encode(base_url('/admin/prefs')) ?>;
+        const PREFS_CSRF = <?= json_encode(\App\Core\Csrf::token()) ?>;
         const defaultOrder = <?= json_encode(array_column($colDefs, 'key')) ?>;
 
         function loadPrefs() {
             try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (!raw) return { order: defaultOrder.slice(), hidden: [] };
-                const p = JSON.parse(raw);
+                if (!SERVER_PREFS) return { order: defaultOrder.slice(), hidden: [] };
+                const p = SERVER_PREFS;
                 // Filtrar columnes obsoletes i afegir noves
                 const known = new Set(defaultOrder);
                 const order = (p.order || []).filter(k => known.has(k));
@@ -539,7 +543,12 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         }
 
         function savePrefs(prefs) {
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs)); } catch (e) {}
+            const fd = new FormData();
+            fd.append('_csrf', PREFS_CSRF);
+            fd.append('pref_key', PREF_KEY);
+            fd.append('valor', JSON.stringify(prefs));
+            fetch(PREFS_URL, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .catch(function () {});
         }
 
         function applyPrefs(prefs) {
@@ -644,8 +653,9 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         }
 
         window.resetCols = function () {
-            localStorage.removeItem(STORAGE_KEY);
-            applyPrefs({ order: defaultOrder.slice(), hidden: [] });
+            const def = { order: defaultOrder.slice(), hidden: [] };
+            savePrefs(def);
+            applyPrefs(def);
         };
 
         // Init

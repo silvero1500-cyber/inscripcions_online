@@ -77,6 +77,10 @@ final class InscritosAdminController
             if ($ev) $franjas = array_map(fn($f) => $f['label'], Evento::franjasConfig($ev));
         }
 
+        // Preferència de columnes del grid: per usuari + evento, desada al servidor
+        $colPrefsKey = 'inscritos_cols_evt_' . (int) ($filters['evento_id'] ?? 0);
+        $colPrefs = \App\Models\UserPref::get($user->id, $colPrefsKey);
+
         View::render('admin/inscritos/index', [
             'user'       => $user,
             'eventos'    => $eventos,
@@ -86,6 +90,8 @@ final class InscritosAdminController
             'recollits'  => $recollits,
             'franjas'    => $franjas,
             'eventoSel'  => $ev,
+            'colPrefs'    => $colPrefs,
+            'colPrefsKey' => $colPrefsKey,
             'total'      => $total,
             'page'       => $page,
             'perPage'    => $perPage,
@@ -342,6 +348,30 @@ final class InscritosAdminController
             'chip_num'      => (string) ($data['chip_groc_num'] ?? ''),
             'dorsal'        => $dorsal !== null ? (string) $dorsal : '—',
         ]]);
+    }
+
+    /**
+     * POST /admin/prefs — desa una preferència d'interfície de l'usuari actual
+     * (ara mateix, la configuració de columnes del grid per evento).
+     */
+    public function savePrefs(Request $req): void
+    {
+        $user = Auth::user();
+        if (!Csrf::verify($req->post('_csrf'))) {
+            Response::json(['ok' => false, 'message' => 'Sessió expirada.'], 419);
+        }
+        $key   = trim((string) $req->post('pref_key'));
+        $valor = (string) $req->post('valor');
+
+        // Només claus conegudes, per evitar que s'hi desi qualsevol cosa
+        if (!preg_match('/^inscritos_cols_evt_\d+$/', $key)) {
+            Response::json(['ok' => false, 'message' => 'Clau no vàlida.'], 422);
+        }
+        if (mb_strlen($valor) > 4000 || json_decode($valor) === null) {
+            Response::json(['ok' => false, 'message' => 'Valor no vàlid.'], 422);
+        }
+        \App\Models\UserPref::set($user->id, $key, $valor);
+        Response::json(['ok' => true]);
     }
 
     /**
