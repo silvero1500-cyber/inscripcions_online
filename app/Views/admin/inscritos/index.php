@@ -197,7 +197,7 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         </button>
     </div>
     <div id="colMgr" class="col-manager-panel">
-        <h4>Reordena o amaga columnes (canvis es guarden al navegador)</h4>
+        <h4>Reordena o amaga columnes (es guarda per al teu usuari i aquest esdeveniment)</h4>
         <ul class="col-manager-list" id="colMgrList">
             <?php foreach ($colDefs as $c): ?>
                 <li class="col-manager-item" draggable="true" data-col="<?= e($c['key']) ?>">
