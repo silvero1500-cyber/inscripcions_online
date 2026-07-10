@@ -219,15 +219,20 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                     <th data-col="fnac">Data naix.</th>
                     <th data-col="talla">Talla</th>
                     <th data-col="franja">Franja</th>
+                    <th data-col="chip">Xip</th>
+                    <th data-col="chipnum">Núm xip</th>
                     <th data-col="email">Email</th>
                     <th data-col="telefono">Telèfon</th>
                     <th data-col="club">Club</th>
                     <th data-col="poblacion">Població</th>
                     <th data-col="cp">CP</th>
+                    <th data-col="tutor">Tutor</th>
                     <th data-col="tarifa">Tarifa</th>
                     <th data-col="precio">Preu</th>
                     <th data-col="dorsal">Dorsal</th>
                     <th data-col="estado">Estat</th>
+                    <th data-col="eb" title="Early bird">EB</th>
+                    <th data-col="origen">Origen</th>
                     <th data-col="accions">Accions</th>
                 </tr>
             </thead>
@@ -253,11 +258,18 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                     <td data-col="fnac" data-edit="date" data-field="fecha_nacimiento" data-val="<?= e($i['fecha_nacimiento'] ?? '') ?>"><?= !empty($i['fecha_nacimiento']) ? e(date('d/m/Y', strtotime((string)$i['fecha_nacimiento']))) : '—' ?></td>
                     <td data-col="talla" data-edit="talla" data-field="talla_camiseta" data-val="<?= e($i['talla_camiseta'] ?? '') ?>"><?= e($i['talla_camiseta'] ?? '—') ?></td>
                     <td data-col="franja" data-edit="franja" data-field="franja_temps" data-val="<?= e($i['franja_temps'] ?? '') ?>"><?= e($i['franja_temps'] ?? '—') ?></td>
+                    <td data-col="chip" data-edit="chip" data-field="chip_groc" data-val="<?= e($i['chip_groc'] ?? '') ?>"><?= ($i['chip_groc'] ?? '') === 'si' ? 'Sí' : (($i['chip_groc'] ?? '') === 'no' ? 'No' : '—') ?></td>
+                    <td data-col="chipnum" data-edit="text" data-field="chip_groc_num" data-val="<?= e($i['chip_groc_num'] ?? '') ?>"><?= e($i['chip_groc_num'] ?? '—') ?></td>
                     <td data-col="email" data-edit="email" data-field="email" data-val="<?= e($i['email']) ?>"><?= e($i['email']) ?></td>
                     <td data-col="telefono" data-edit="text" data-field="telefono" data-val="<?= e($i['telefono']) ?>"><?= e($i['telefono']) ?></td>
                     <td data-col="club" data-edit="text" data-field="club" data-val="<?= e($i['club'] ?? '') ?>"><?= e($i['club'] ?? '—') ?></td>
                     <td data-col="poblacion" data-edit="text" data-field="poblacion" data-val="<?= e($i['poblacion'] ?? '') ?>"><?= e($i['poblacion'] ?? '—') ?></td>
                     <td data-col="cp" data-edit="text" data-field="codigo_postal" data-val="<?= e($i['codigo_postal'] ?? '') ?>"><?= e($i['codigo_postal'] ?? '—') ?></td>
+                    <td data-col="tutor"><?php
+                        $tutorTxt = trim((string)($i['tutor_nombre'] ?? '') . ' ' . (string)($i['tutor_apellido'] ?? ''));
+                        if (!empty($i['tutor_dni'])) $tutorTxt .= ($tutorTxt !== '' ? ' · ' : '') . $i['tutor_dni'];
+                        echo $tutorTxt !== '' ? e($tutorTxt) : '—';
+                    ?></td>
                     <td data-col="tarifa"><?= e($i['tarifa_nombre']) ?></td>
                     <td data-col="precio" class="cell-right"><?= e(format_price((float)$i['tarifa_precio'])) ?></td>
                     <td data-col="dorsal" class="cell-right" data-edit="dorsal" data-field="numero_dorsal" data-val="<?= !empty($i['numero_dorsal']) ? (int)$i['numero_dorsal'] : '' ?>"><?= !empty($i['numero_dorsal']) ? (int)$i['numero_dorsal'] : '—' ?></td>
@@ -279,6 +291,8 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                         ?>
                         <span class="badge <?= $badge ?>"><?= e($estLbl) ?></span>
                     </td>
+                    <td data-col="eb" class="cell-center" title="Early bird"><?= !empty($i['early_bird']) ? '⚡' : '—' ?></td>
+                    <td data-col="origen"><?= ($i['origen'] ?? 'formulario') === 'importacion' ? 'Import.' : 'Form.' ?></td>
                     <td data-col="accions" class="cell-actions">
                         <span class="acc-normal">
                             <?php if ($canEdit): ?>
@@ -350,9 +364,10 @@ $pageUrl = function (int $p) use ($filtersClean): string {
             var type = cell.getAttribute('data-edit');
             var val = cell.getAttribute('data-val') || '';
             var sel, i, o;
-            if (type === 'sexo' || type === 'talla' || type === 'franja') {
+            if (type === 'sexo' || type === 'talla' || type === 'franja' || type === 'chip') {
                 sel = document.createElement('select');
                 var opts = type === 'sexo' ? SEXOS
+                        : type === 'chip' ? [['', '—'], ['si', 'Sí'], ['no', 'No']]
                         : (type === 'talla' ? [['', '—']].concat(TALLAS.map(function (t) { return [t, t]; }))
                         : [['', '—']].concat(FRANJAS.map(function (f) { return [f, f]; })));
                 for (i = 0; i < opts.length; i++) {
@@ -423,14 +438,17 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                 club: esc(ins.club),
                 poblacion: esc(ins.poblacion),
                 codigo_postal: esc(ins.cp),
-                numero_dorsal: esc(ins.dorsal)
+                numero_dorsal: esc(ins.dorsal),
+                chip_groc: ins.chip === 'si' ? 'Sí' : (ins.chip === 'no' ? 'No' : '—'),
+                chip_groc_num: esc(ins.chip_num) || '—'
             };
             var newVal = {
                 nombre: ins.nombre, apellido: ins.apellido, dni: ins.dni, sexo: ins.sexo,
                 fecha_nacimiento: ins.fnac_raw, talla_camiseta: ins.talla === '—' ? '' : ins.talla,
                 franja_temps: ins.franja === '—' ? '' : ins.franja, email: ins.email, telefono: ins.telefono,
                 club: ins.club === '—' ? '' : ins.club, poblacion: ins.poblacion === '—' ? '' : ins.poblacion,
-                codigo_postal: ins.cp === '—' ? '' : ins.cp, numero_dorsal: ins.dorsal === '—' ? '' : ins.dorsal
+                codigo_postal: ins.cp === '—' ? '' : ins.cp, numero_dorsal: ins.dorsal === '—' ? '' : ins.dorsal,
+                chip_groc: ins.chip || '', chip_groc_num: ins.chip_num || ''
             };
             row.querySelectorAll('td[data-edit]').forEach(function (cell) {
                 var f = cell.getAttribute('data-field');

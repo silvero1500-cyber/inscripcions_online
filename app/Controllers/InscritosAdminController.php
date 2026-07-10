@@ -257,6 +257,8 @@ final class InscritosAdminController
         $cp        = preg_replace('/\D+/', '', trim((string) $req->post('codigo_postal'))) ?? '';
         $talla     = trim((string) $req->post('talla_camiseta'));
         $franja    = mb_substr(trim((string) $req->post('franja_temps')), 0, 60);
+        $chip      = strtolower(trim((string) $req->post('chip_groc')));
+        $chipNum   = strtoupper(trim((string) $req->post('chip_groc_num')));
         $dorsalRaw = trim((string) $req->post('numero_dorsal'));
 
         // ── Validar ──
@@ -276,6 +278,8 @@ final class InscritosAdminController
             $labels = array_map(fn($f) => $f['label'], Evento::franjasConfig($evento));
             if ($labels && !in_array($franja, $labels, true)) $errors['franja_temps'] = 'Franja no vàlida.';
         }
+        if ($chip !== '' && !in_array($chip, ['si', 'no'], true)) $errors['chip_groc'] = 'Xip groc ha de ser Sí o No.';
+        if ($chipNum !== '' && !preg_match('/^[A-Z0-9]{1,10}$/', $chipNum)) $errors['chip_groc_num'] = 'Núm. de xip: màx 10 lletres/números.';
         $dorsal = null;
         if ($dorsalRaw !== '') {
             if (!ctype_digit($dorsalRaw) || (int) $dorsalRaw <= 0) {
@@ -306,6 +310,8 @@ final class InscritosAdminController
             'codigo_postal'    => $cp !== '' ? mb_substr($cp, 0, 10) : null,
             'talla_camiseta'   => $talla !== '' ? $talla : null,
             'franja_temps'     => $franja !== '' ? $franja : null,
+            'chip_groc'        => $chip !== '' ? $chip : null,
+            'chip_groc_num'    => ($chip === 'si' && $chipNum !== '') ? $chipNum : null,
             'numero_dorsal'    => $dorsal,
         ];
         try {
@@ -332,6 +338,8 @@ final class InscritosAdminController
             'cp'            => (string) ($data['codigo_postal'] ?? '—'),
             'talla'         => (string) ($data['talla_camiseta'] ?? '—'),
             'franja'        => (string) ($data['franja_temps'] ?? '—'),
+            'chip'          => (string) ($data['chip_groc'] ?? ''),
+            'chip_num'      => (string) ($data['chip_groc_num'] ?? ''),
             'dorsal'        => $dorsal !== null ? (string) $dorsal : '—',
         ]]);
     }
