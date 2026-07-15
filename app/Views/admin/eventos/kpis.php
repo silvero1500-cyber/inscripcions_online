@@ -5,6 +5,7 @@
 /** @var float $ingresosConfirmados */
 /** @var float $ingresosPotenciales */
 /** @var array $porSexo */
+/** @var array $porChip */
 /** @var list<array> $porTarifa */
 /** @var array $rangos */
 /** @var array $porPagament */
@@ -86,11 +87,23 @@ $tallaDona   = array_map(fn($tl) => (int) ($tallaGrupMap[$tl]['Dona'] ?? 0), $ta
 // % sobre el total (per als tops)
 $pctTotal = fn(int $n): string => $totalActivas > 0 ? number_format($n * 100 / $totalActivas, 1, ',', '.') . '%' : '—';
 
+// ── Xip groc: valor absolut + (%) al mateix label, per veure's sense hover ──
+$chipLabels = ['si' => 'Xip propi', 'no' => 'Xip de cessió', 'sense_resposta' => 'Sense resposta'];
+$chipTotal = array_sum($porChip);
+$pctChip = fn(int $n): string => $chipTotal > 0 ? number_format($n * 100 / $chipTotal, 0) : '0';
+$chipData = [];
+foreach (['si', 'no', 'sense_resposta'] as $k) {
+    if (empty($porChip[$k])) continue;
+    $n = (int) $porChip[$k];
+    $chipData[] = ['label' => $chipLabels[$k] . ' — ' . $n . ' (' . $pctChip($n) . '%)', 'value' => $n];
+}
+
 // Dades JSON per a JavaScript
 $jsData = [
     'tarifa'  => array_map(fn($r) => ['label' => $r['nombre'], 'value' => (int) $r['n']], $porTarifa),
     'sexo'    => array_map(fn($k) => ['label' => $sexoLabels[$k] ?? $k, 'value' => (int) $porSexo[$k]], array_keys($porSexo)),
     'pagament'=> array_map(fn($k) => ['label' => $k, 'value' => (int) $porPagament[$k]], array_keys($porPagament)),
+    'chip'    => $chipData,
     'edat'    => array_map(fn($f) => ['label' => $f, 'value' => (int) $edatTotals[$f]], $franjaOrden),
     'edatCat' => $edatCatMap,        // [franja][categoria] = n
     'vendaTrams' => array_map(fn($r) => [
@@ -171,7 +184,7 @@ $jsData = [
 </div>
 
 <?php /* ══ NIVELL 2 · desglossos ══════════════════════════════ */ ?>
-<div class="kpi-grid kpi-grid-3">
+<div class="kpi-grid kpi-grid-4">
     <div class="kpi-panel">
         <h2>Per categoria</h2>
         <div class="kpi-chart-wrap"><canvas id="chartCategoria"></canvas></div>
@@ -183,6 +196,10 @@ $jsData = [
     <div class="kpi-panel">
         <h2>Per mètode de pagament</h2>
         <div class="kpi-chart-wrap"><canvas id="chartPagament"></canvas></div>
+    </div>
+    <div class="kpi-panel">
+        <h2>Xip groc: propi o de cessió</h2>
+        <div class="kpi-chart-wrap"><canvas id="chartChip"></canvas></div>
     </div>
 </div>
 
@@ -335,6 +352,7 @@ $jsData = [
     makePie('chartCategoria', data.tarifa);
     makePie('chartSexo', data.sexo);
     makePie('chartPagament', data.pagament);
+    makePie('chartChip', data.chip);
     makeBarSimple('chartTrams', data.vendaTrams);
 
     // ── Evolució 90 dies: una línia per categoria ───────────

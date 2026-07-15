@@ -300,6 +300,15 @@ final class EventoController
             [$id]
         )->fetchAll(\PDO::FETCH_KEY_PAIR);
 
+        // ── Xip groc (propi o de cessió) ────────────────────────
+        $porChip = $db->query(
+            "SELECT COALESCE(chip_groc, 'sense_resposta') AS chip, COUNT(*) AS n
+             FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+             GROUP BY chip",
+            [$id]
+        )->fetchAll(\PDO::FETCH_KEY_PAIR);
+
         // ── Por tarifa ─────────────────────────────────────────
         $porTarifa = $db->query(
             "SELECT t.nombre, t.precio, COUNT(i.id) AS n
@@ -458,6 +467,7 @@ final class EventoController
             'ingresosConfirmados' => $ingresosConfirmados,
             'ingresosPotenciales' => $ingresosPotenciales,
             'porSexo'             => $porSexo,
+            'porChip'             => $porChip,
             'porTarifa'           => $porTarifa,
             'rangos'              => $rangos,
             'porPagament'         => $porPagament,
