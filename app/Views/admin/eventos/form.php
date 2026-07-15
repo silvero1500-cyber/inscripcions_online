@@ -153,6 +153,21 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
             <?php if ($err('imagen')): ?><div class="field-error"><?= e($err('imagen')) ?></div><?php endif; ?>
         </div>
 
+        <div class="form-row">
+            <label for="banner">Banner superior del formulari</label>
+            <?php if ($isEdit && !empty($evento['banner_superior'])): ?>
+                <div class="current-image">
+                    <img src="<?= e(ImageUploader::publicUrl($evento['banner_superior'])) ?>" alt="Banner actual">
+                    <label class="inline-check">
+                        <input type="checkbox" name="eliminar_banner" value="1">
+                        Eliminar banner actual
+                    </label>
+                </div>
+            <?php endif; ?>
+            <input type="file" id="banner" name="banner" accept="image/jpeg,image/png,image/webp,image/gif">
+            <small class="muted">Opcional. Franja horitzontal que es mostra a dalt de tot del formulari públic (ex: patrocinadors/ajuntament). Mida recomanada ~2400×250 px.</small>
+        </div>
+
         <div class="form-grid-2">
             <label class="inline-check">
                 <input type="checkbox" name="activo" value="1"

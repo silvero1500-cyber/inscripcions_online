@@ -62,7 +62,9 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
 
 <section class="container">
 
-    <img class="evt-banner" src="<?= e(asset('img/banner-festa-major.png')) ?>" alt="Curses de Festa Major Sabadell">
+    <?php if (!empty($evento['banner_superior'])): ?>
+        <img class="evt-banner" src="<?= e(ImageUploader::publicUrl($evento['banner_superior'])) ?>" alt="<?= e($evento['titulo']) ?>">
+    <?php endif; ?>
 
     <nav class="breadcrumb" aria-label="Breadcrumb">
         <a href="<?= e(base_url('/')) ?>"><?= e(t('event.breadcrumb_home')) ?></a>

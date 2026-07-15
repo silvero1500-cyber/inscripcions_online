@@ -81,7 +81,8 @@ final class EventoController
         }
 
         try {
-            $imagePath = ImageUploader::handleEventImage($_FILES['imagen'] ?? []);
+            $imagePath  = ImageUploader::handleEventImage($_FILES['imagen'] ?? []);
+            $bannerPath = ImageUploader::handleEventImage($_FILES['banner'] ?? [], 'banners');
         } catch (\Throwable $e) {
             self::flashOldAndErrors($_POST, ['imagen' => [$e->getMessage()]]);
             Response::redirect(base_url('/admin/eventos/nou'));
@@ -110,6 +111,7 @@ final class EventoController
                     'tallas_sexo'              => $data['tallas_sexo'],
                     'franjas_config'           => $data['franjas_config'],
                     'imagen_portada'           => $imagePath,
+                    'banner_superior'          => $bannerPath,
                     'activo'                   => $data['activo'],
                     'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
                     'descuentos_activos'       => $data['descuentos_activos'],
@@ -215,6 +217,15 @@ final class EventoController
             } elseif (($_POST['eliminar_imagen'] ?? '') === '1') {
                 ImageUploader::deleteEventImage($evento['imagen_portada'] ?? null);
                 $update['imagen_portada'] = null;
+            }
+            // Banner superior: mateix patró
+            $newBanner = ImageUploader::handleEventImage($_FILES['banner'] ?? [], 'banners');
+            if ($newBanner !== null) {
+                ImageUploader::deleteEventImage($evento['banner_superior'] ?? null);
+                $update['banner_superior'] = $newBanner;
+            } elseif (($_POST['eliminar_banner'] ?? '') === '1') {
+                ImageUploader::deleteEventImage($evento['banner_superior'] ?? null);
+                $update['banner_superior'] = null;
             }
         } catch (\Throwable $e) {
             self::flashOldAndErrors($_POST, ['imagen' => [$e->getMessage()]]);
@@ -560,6 +571,7 @@ final class EventoController
         }
 
         ImageUploader::deleteEventImage($evento['imagen_portada'] ?? null);
+        ImageUploader::deleteEventImage($evento['banner_superior'] ?? null);
         Evento::delete($id);
         AuditLog::registrar(AuditLog::EVENTO_ESBORRAT, ($evento['titulo'] ?? '') . ' #' . $id);
 
@@ -649,6 +661,7 @@ final class EventoController
                     'tallas_sexo'              => $evento['tallas_sexo'] ?? null,
                     'franjas_config'           => $evento['franjas_config'] ?? null,
                     'imagen_portada'           => ImageUploader::copyEventImage($evento['imagen_portada'] ?? null),
+                    'banner_superior'          => ImageUploader::copyEventImage($evento['banner_superior'] ?? null),
                     'activo'                   => 0, // la còpia comença inactiva
                     'inscripciones_abiertas'   => (int) $evento['inscripciones_abiertas'],
                     'descuentos_activos'       => (int) ($evento['descuentos_activos'] ?? 1),

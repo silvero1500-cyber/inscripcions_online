@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS `eventos` (
     `fecha_limite_inscripcion`  DATETIME        NULL,
     `aforo_maximo`              INT UNSIGNED    NULL COMMENT 'NULL = sin límite',
     `imagen_portada`            VARCHAR(500)    NULL,
+    `banner_superior`           VARCHAR(500)    NULL COMMENT 'Banner a dalt del formulari public (opcional)',
     `activo`                    TINYINT(1)      NOT NULL DEFAULT 1,
     `inscripciones_abiertas`    TINYINT(1)      NOT NULL DEFAULT 1,
     `descuentos_activos`        TINYINT(1)      NOT NULL DEFAULT 1,
