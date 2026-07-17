@@ -9,15 +9,16 @@ use App\Models\CampoPersonalizado;
 use App\Models\Inscrito;
 
 /**
- * Còpia de seguretat diària en CSV dels inscrits dels esdeveniments ACTIUS.
- * S'executa com a molt un cop al dia (marcador .last-run) i es dispara des del
- * front controller en acabar la resposta (sense cron). Guarda a storage/backups/
- * una carpeta per dia (YYYY-MM-DD) amb un CSV per esdeveniment, i conserva els
- * últims RETENTION_DAYS dies.
+ * Còpia de seguretat en CSV dels inscrits dels esdeveniments ACTIUS.
+ * S'executa com a molt un cop cada INTERVAL_HOURS hores (marcador .last-run)
+ * i es dispara des del front controller en acabar la resposta (sense cron).
+ * Guarda a storage/backups/ una carpeta per execució (YYYY-MM-DD_HHh) amb un
+ * CSV per esdeveniment, i conserva els últims RETENTION_DAYS dies.
  */
 final class BackupService
 {
     private const RETENTION_DAYS = 14;
+    private const INTERVAL_HOURS = 12;
 
     public static function runDailyIfDue(): void
     {
@@ -30,13 +31,13 @@ final class BackupService
             if (!is_file($ht)) @file_put_contents($ht, "Require all denied\n");
 
             $marker = $dir . '/.last-run';
-            $today  = date('Y-m-d');
-            if (is_file($marker) && trim((string) @file_get_contents($marker)) === $today) return;
+            $last = is_file($marker) ? (int) trim((string) @file_get_contents($marker)) : 0;
+            if (time() - $last < self::INTERVAL_HOURS * 3600) return;
 
             // Reserva el torn abans de treballar (evita dobles execucions concurrents)
-            if (@file_put_contents($marker, $today, LOCK_EX) === false) return;
+            if (@file_put_contents($marker, (string) time(), LOCK_EX) === false) return;
 
-            self::backupEventosActivos($dir . '/' . $today);
+            self::backupEventosActivos($dir . '/' . date('Y-m-d_H\h'));
             self::prune($dir);
         } catch (\Throwable $e) {
             error_log('[Backup] Error: ' . $e->getMessage());
@@ -124,8 +125,9 @@ final class BackupService
     private static function prune(string $dir): void
     {
         $limit = date('Y-m-d', strtotime('-' . self::RETENTION_DAYS . ' days'));
-        foreach (glob($dir . '/????-??-??', GLOB_ONLYDIR) ?: [] as $sub) {
-            if (basename($sub) < $limit) {
+        // Cobreix el format antic (YYYY-MM-DD) i l'actual (YYYY-MM-DD_HHh)
+        foreach (glob($dir . '/????-??-??*', GLOB_ONLYDIR) ?: [] as $sub) {
+            if (substr(basename($sub), 0, 10) < $limit) {
                 foreach (glob($sub . '/*') ?: [] as $f) @unlink($f);
                 @rmdir($sub);
             }
