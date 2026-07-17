@@ -47,6 +47,14 @@ View::setViewsPath(BASE_PATH . '/app/Views');
 // ── Sesión segura ──────────────────────────────────────────
 Session::start(secureCookie: $isProd);
 
+// ── Còpia de seguretat diària (CSV d'eventos actius, sense cron) ──
+// S'executa després d'enviar la resposta; el marcador .last-run fa que
+// només treballi la primera petició de cada dia.
+register_shutdown_function(static function (): void {
+    if (function_exists('fastcgi_finish_request')) @fastcgi_finish_request();
+    \App\Services\BackupService::runDailyIfDue();
+});
+
 // ── Request + Router ───────────────────────────────────────
 $req    = new Request(basePath: base_path_prefix());
 $router = new Router();
