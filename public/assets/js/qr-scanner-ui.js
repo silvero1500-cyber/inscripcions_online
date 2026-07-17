@@ -85,22 +85,21 @@ window.WerunQrScanner = (function () {
             }
             if (typeof source === 'string') c.deviceId = { exact: source };
             else c.facingMode = { ideal: 'environment' };
-            // Demanar autofocus continu JA a l'arrencada (no només després): alguns
-            // navegadors/WebViews Android negocien focus fix si no es demana aquí,
-            // i aplicar-ho més tard amb applyConstraints no sempre el desbloqueja.
-            c.advanced = [{ focusMode: 'continuous' }];
             return c;
         }
 
         function startWith(source) {
             var camArg = (typeof source === 'string') ? source : { facingMode: 'environment' };
             // Primer amb resolució EXACTA (si el navegador la ignorés amb "ideal",
-            // el vídeo quedaria en baixa qualitat); si la càmera no la suporta, "ideal".
+            // el vídeo quedaria en baixa qualitat); si la càmera no la suporta, "ideal";
+            // i si encara falla (NotReadableError/OverconstrainedError en alguns
+            // Android en combinar exact+advanced), sense cap constraint de mida.
             var cfgExact = Object.assign({}, config, { videoConstraints: buildConstraints(source, true) });
             var cfgIdeal = Object.assign({}, config, { videoConstraints: buildConstraints(source, false) });
             if (!currentRes()) return reader.start(camArg, config, onSuccess, onError);
             return reader.start(camArg, cfgExact, onSuccess, onError)
-                .catch(function () { return reader.start(camArg, cfgIdeal, onSuccess, onError); });
+                .catch(function () { return reader.start(camArg, cfgIdeal, onSuccess, onError); })
+                .catch(function () { return reader.start(camArg, config, onSuccess, onError); });
         }
 
         // Resolució REAL que ha donat la càmera (per mostrar-la a l'estat)
