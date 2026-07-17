@@ -27,6 +27,7 @@ window.WerunQrScanner = (function () {
     function init(opts) {
         var statusEl  = document.getElementById('reader-status');
         var btnStop   = document.getElementById('btn-stop');
+        var btnReset  = document.getElementById('btn-reset');
         var camSelect = document.getElementById('cam-select');
         var resSelect = document.getElementById('res-select');
         var zoomWrap  = document.getElementById('zoom-wrap');
@@ -88,6 +89,19 @@ window.WerunQrScanner = (function () {
             return c;
         }
 
+        // Alguns navegadors/Android es queden penjats (ni resolen ni rebutgen la
+        // promesa) quan el deviceId/constraint demanat ja no és vàlid. Sense
+        // timeout, l'usuari veuria "Obrint càmera…" per sempre i sense error.
+        function withTimeout(promise, ms) {
+            return new Promise(function (resolve, reject) {
+                var to = setTimeout(function () { reject(new Error('timeout')); }, ms);
+                promise.then(
+                    function (v) { clearTimeout(to); resolve(v); },
+                    function (e) { clearTimeout(to); reject(e); }
+                );
+            });
+        }
+
         function startWith(source) {
             var camArg = (typeof source === 'string') ? source : { facingMode: 'environment' };
             // Primer amb resolució EXACTA (si el navegador la ignorés amb "ideal",
@@ -96,10 +110,10 @@ window.WerunQrScanner = (function () {
             // Android en combinar exact+advanced), sense cap constraint de mida.
             var cfgExact = Object.assign({}, config, { videoConstraints: buildConstraints(source, true) });
             var cfgIdeal = Object.assign({}, config, { videoConstraints: buildConstraints(source, false) });
-            if (!currentRes()) return reader.start(camArg, config, onSuccess, onError);
-            return reader.start(camArg, cfgExact, onSuccess, onError)
-                .catch(function () { return reader.start(camArg, cfgIdeal, onSuccess, onError); })
-                .catch(function () { return reader.start(camArg, config, onSuccess, onError); });
+            if (!currentRes()) return withTimeout(reader.start(camArg, config, onSuccess, onError), 8000);
+            return withTimeout(reader.start(camArg, cfgExact, onSuccess, onError), 8000)
+                .catch(function () { return withTimeout(reader.start(camArg, cfgIdeal, onSuccess, onError), 8000); })
+                .catch(function () { return withTimeout(reader.start(camArg, config, onSuccess, onError), 8000); });
         }
 
         // Resolució REAL que ha donat la càmera (per mostrar-la a l'estat)
@@ -244,24 +258,54 @@ window.WerunQrScanner = (function () {
             }
         });
 
-        // ── Arrencada ────────────────────────────────────────────
-        // 1) càmera recordada; 2) darrere (environment); 3) el que hi hagi.
-        setStatus('Obrint càmera…', '');
-        var saved = localStorage.getItem(STORAGE_KEY);
-        var boot = saved
-            ? startWith(saved).then(function () { onStarted(null); })
-                .catch(function () { localStorage.removeItem(STORAGE_KEY); return startDefault(); })
-            : startDefault();
-
-        function startDefault() {
-            return startWith(null).then(function () { onStarted(null); })
-                .catch(function () {
-                    return startAny().then(function () { onStarted(null); });
-                })
-                .catch(function (err) {
-                    setStatus('Error iniciant càmera: ' + (err && err.name ? err.name + ' - ' + err.message : err), 'err');
+        // Reinici manual: per si la càmera es queda penjada o congelada sense
+        // arribar a mostrar cap error (alguns Android). Neteja l'estat guardat.
+        if (btnReset) {
+            btnReset.addEventListener('click', function () {
+                localStorage.removeItem(STORAGE_KEY);
+                camSelect.style.display = 'none';
+                zoomWrap.style.display = 'none';
+                tapBound = false;
+                setStatus('Reiniciant càmera…', '');
+                var p = reader.isScanning ? reader.stop() : Promise.resolve();
+                p.catch(function () {}).then(function () {
+                    return startWith(null);
+                }).then(function () {
+                    onStarted(null);
+                }).catch(function (err) {
+                    setStatus('Error reiniciant càmera: ' + (err && err.message ? err.message : err), 'err');
                 });
+            });
         }
+
+        // ── Arrencada ────────────────────────────────────────────
+        // SEMPRE amb facingMode (environment), mai amb un deviceId recordat de
+        // sessions anteriors: si aquell id ja no és vàlid, alguns Android deixen
+        // la promesa penjada (ni resol ni falla) i la càmera no arrenca mai.
+        // Un cop en marxa, si l'usuari havia triat una altra càmera, es canvia
+        // automàticament a través del selector.
+        setStatus('Obrint càmera…', '');
+        var boot = startWith(null).then(function () { onStarted(null); })
+            .catch(function () {
+                return startAny().then(function () { onStarted(null); });
+            })
+            .catch(function (err) {
+                setStatus('Error iniciant càmera: ' + (err && err.name ? err.name + ' - ' + err.message : err), 'err');
+            })
+            .then(function () {
+                var saved = localStorage.getItem(STORAGE_KEY);
+                if (saved && reader.isScanning) {
+                    // Canviar a la càmera recordada NOMÉS si segueix existint
+                    Html5Qrcode.getCameras().then(function (cams) {
+                        if ((cams || []).some(function (c) { return c.id === saved; })) {
+                            camSelect.value = saved;
+                            restartWithCurrent();
+                        } else {
+                            localStorage.removeItem(STORAGE_KEY);
+                        }
+                    }).catch(function () {});
+                }
+            });
 
         return boot;
     }

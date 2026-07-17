@@ -27,6 +27,7 @@
             <input type="range" id="zoom-input" style="width:100%;">
         </div>
         <button id="btn-stop" class="btn btn-secondary" style="display:none;">⏸ Pausar</button>
+        <button id="btn-reset" class="btn btn-secondary" type="button">🔄 Reiniciar càmera</button>
     </div>
 
     <div class="scanner-help">
