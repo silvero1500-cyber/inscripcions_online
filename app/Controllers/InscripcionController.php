@@ -829,8 +829,10 @@ final class InscripcionController
 
         // DNI / NIE / passaport (espanyol, andorrà, estranger…): no es verifica el
         // contingut ni la lletra de control; només es limita la llargada estàndard.
+        // Als menors (modalitat infantil) no se'ls exigeix DNI propi: ja es demana el del tutor.
+        $esInfantil = Tarifa::esInfantil($tarifa);
         if ($vis('dni')) {
-            if ($req('dni')) $v->required('dni');
+            if ($req('dni') && !$esInfantil) $v->required('dni');
             if (!empty($data['dni']) && !Inscrito::documentoValido((string) $data['dni'])) {
                 $v->addError('dni', 'El document ha de tenir entre 4 i 20 caràcters (lletres i números).');
             }
@@ -878,8 +880,9 @@ final class InscripcionController
         }
 
         // Xip groc (camp fix SÍ/NO + número condicional)
+        // Als infantils no s'exigeix: el formulari amaga el bloc del xip (no porten xip groc).
         if ($vis('chip_groc')) {
-            if ($req('chip_groc') && empty($data['chip_groc'])) {
+            if ($req('chip_groc') && empty($data['chip_groc']) && !$esInfantil) {
                 $v->addError('chip_groc', 'Indica si portes xip groc propi.');
             }
             if (($data['chip_groc'] ?? '') === 'si') {

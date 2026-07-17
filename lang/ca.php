@@ -113,6 +113,7 @@ return [
     'form.privacy.accept'              => "He llegit i accepto la",
     'form.privacy.link'                => 'política de privacitat',
     'form.privacy.required'            => "Has d'acceptar la política de privacitat per continuar.",
+    'form.errors.summary'              => "No s'ha pogut completar la inscripció. Revisa això:",
     'form.test.banner'                 => 'Mode prova',
     'form.test.banner_desc'            => 'clica per omplir el formulari amb dades aleatòries vàlides.',
     'form.test.fill'                   => '🧪 Omplir prova',

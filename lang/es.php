@@ -129,6 +129,7 @@ return [
     'form.privacy.accept'              => 'He leído y acepto la',
     'form.privacy.link'                => 'política de privacidad',
     'form.privacy.required'            => 'Debes aceptar la política de privacidad para continuar.',
+    'form.errors.summary'              => 'No se ha podido completar la inscripción. Revisa esto:',
     'form.test.banner'                 => 'Modo prueba',
     'form.test.banner_desc'            => 'clica para rellenar el formulario con datos aleatorios válidos.',
     'form.test.fill'                   => '🧪 Rellenar prueba',

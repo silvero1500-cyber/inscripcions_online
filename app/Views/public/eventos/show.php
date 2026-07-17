@@ -25,6 +25,20 @@ foreach ($tarifas as $_t) {
     if ((float)($_t['precio_actual'] ?? $_t['precio'] ?? 0) > 0) { $eventoSenseCost = false; break; }
 }
 
+// Resum d'errors de validació: SEMPRE visible dalt del formulari, encara que el
+// camp concret estigui amagat (p. ex. camps ocults per a modalitats infantils).
+$errorSummary = [];
+foreach ($errors as $ek => $emsgs) {
+    foreach ((array) $emsgs as $em) {
+        $pref = '';
+        if (preg_match('/^participants\.(\d+)\./', (string) $ek, $emm)) {
+            $pref = t('group.participant') . ' ' . ((int) $emm[1] + 1) . ': ';
+        }
+        $errorSummary[] = $pref . (string) $em;
+    }
+}
+$errorSummary = array_values(array_unique($errorSummary));
+
 // Consentiment RGPD obligatori (mateix per a individual i grup)
 $privacidadUrl = \App\Models\Ajuste::get(\App\Models\Ajuste::PRIVACIDAD_URL);
 $privacidadErr = $errors['acepta_privacidad'][0] ?? null;
@@ -179,6 +193,15 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         </div>
     <?php elseif (!$multi): ?>
 
+    <?php if (!empty($errorSummary)): ?>
+        <div class="alert alert-error" id="error-summary">
+            <strong><?= e(t('form.errors.summary')) ?></strong>
+            <ul style="margin:.5rem 0 0;padding-left:1.2rem;">
+                <?php foreach ($errorSummary as $em): ?><li><?= e($em) ?></li><?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
+
     <form id="formulari" method="post" action="<?= e(base_url('/eventos/' . $evento['slug'] . '/inscriure')) ?>" class="form-publico" novalidate>
         <?= Csrf::field() ?>
 
@@ -294,9 +317,9 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                             </div>
                         <?php break;
                         case 'dni': ?>
-                            <div class="form-row">
+                            <div class="form-row" id="dni-field">
                                 <label for="dni"><?= e(t('form.label.dni')) ?><?= $reqMark('dni') ?></label>
-                                <input type="text" id="dni" name="dni" <?= $reqAttr('dni') ?> minlength="4" maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($val('dni'))) ?>">
+                                <input type="text" id="dni" name="dni" data-field="dni" <?= $reqAttr('dni') ?> minlength="4" maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($val('dni'))) ?>">
                                 <?php if ($err('dni')): ?><div class="field-error"><?= e($err('dni')) ?></div><?php endif; ?>
                             </div>
                         <?php break;
@@ -574,9 +597,9 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
                         </div>
                     <?php break;
                     case 'dni': ?>
-                        <div class="form-row">
+                        <div class="form-row" data-field-row="dni">
                             <label for="<?= e($idf('dni')) ?>"><?= e(t('form.label.dni')) ?><?= $rm('dni') ?></label>
-                            <input type="text" id="<?= e($idf('dni')) ?>" name="<?= e($nm('dni')) ?>" <?= $ra('dni') ?> minlength="4" maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($pv('dni'))) ?>">
+                            <input type="text" id="<?= e($idf('dni')) ?>" name="<?= e($nm('dni')) ?>" data-field="dni" <?= $ra('dni') ?> minlength="4" maxlength="20" placeholder="12345678A" value="<?= e(strtoupper($pv('dni'))) ?>">
                             <?php $e = $pe('dni'); if ($e): ?><div class="field-error"><?= e($e) ?></div><?php endif; ?>
                         </div>
                     <?php break;
@@ -733,6 +756,15 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
     $initial = count($pold) > 0 ? $pold : [[]];
     ?>
 
+    <?php if (!empty($errorSummary)): ?>
+        <div class="alert alert-error" id="error-summary">
+            <strong><?= e(t('form.errors.summary')) ?></strong>
+            <ul style="margin:.5rem 0 0;padding-left:1.2rem;">
+                <?php foreach ($errorSummary as $em): ?><li><?= e($em) ?></li><?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
+
     <form id="formulari-grup" method="post" action="<?= e(base_url('/eventos/' . $evento['slug'] . '/inscriure')) ?>" class="form-publico" novalidate>
         <?= Csrf::field() ?>
         <input type="hidden" name="grupo" value="1">
@@ -867,14 +899,27 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         function toggleTutor(block) {
             var sel = block.querySelector('.p-tarifa');
             var box = block.querySelector('[data-tutor]');
-            if (!sel || !box) return;
+            if (!sel) return;
             var opt = sel.options[sel.selectedIndex];
             var infantil = opt && opt.getAttribute('data-infantil') === '1';
-            box.hidden = !infantil;
-            box.querySelectorAll('input').forEach(function (inp) {
-                if (infantil) { inp.setAttribute('required', 'required'); }
-                else { inp.removeAttribute('required'); inp.value = ''; }
-            });
+            if (box) {
+                box.hidden = !infantil;
+                box.querySelectorAll('input').forEach(function (inp) {
+                    if (infantil) { inp.setAttribute('required', 'required'); }
+                    else { inp.removeAttribute('required'); inp.value = ''; }
+                });
+            }
+            // DNI propi del corredor: als menors no se'ls exigeix ni es mostra (ja es demana el del tutor)
+            var dniRow = block.querySelector('[data-field-row="dni"]');
+            var dniInput = block.querySelector('[data-field="dni"]');
+            if (dniInput) {
+                if (dniInput.dataset.wasRequired === undefined) {
+                    dniInput.dataset.wasRequired = dniInput.hasAttribute('required') ? '1' : '0';
+                }
+                if (infantil) { dniInput.removeAttribute('required'); dniInput.value = ''; }
+                else if (dniInput.dataset.wasRequired === '1') { dniInput.setAttribute('required', 'required'); }
+            }
+            if (dniRow) dniRow.hidden = infantil;
         }
 
         function bind(block) {
@@ -1012,6 +1057,10 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
 
     // Camps del tutor: visibles + obligatoris només si la modalitat és infantil
     var tutorBox = document.getElementById('tutor-fields');
+    // DNI propi del corredor: als menors no se'ls exigeix ni es mostra (ja es demana el del tutor)
+    var dniField = document.getElementById('dni-field');
+    var dniInput = document.getElementById('dni');
+    var dniWasRequired = dniInput ? dniInput.hasAttribute('required') : false;
     function toggleTutor() {
         if (!tutorBox) return;
         var opt = sel.options[sel.selectedIndex];
@@ -1021,6 +1070,11 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
             if (infantil) { inp.setAttribute('required', 'required'); }
             else { inp.removeAttribute('required'); inp.value = ''; }
         });
+        if (dniField) dniField.hidden = infantil;
+        if (dniInput) {
+            if (infantil) { dniInput.removeAttribute('required'); dniInput.value = ''; }
+            else if (dniWasRequired) { dniInput.setAttribute('required', 'required'); }
+        }
     }
 
     function check(onSubmit) {
@@ -1381,5 +1435,14 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         var tar = block.querySelector('.p-tarifa');
         if (input && resEl) validar(input.value, b, resEl, tar);
     });
+})();
+</script>
+
+<script>
+// Si hi ha errors de validació del servidor, porta l'usuari fins al resum
+// perquè mai quedin invisibles (p. ex. errors en camps amagats).
+(function () {
+    var s = document.getElementById('error-summary');
+    if (s) s.scrollIntoView({ behavior: 'smooth', block: 'center' });
 })();
 </script>
