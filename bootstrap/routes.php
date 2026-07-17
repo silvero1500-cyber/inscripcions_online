@@ -137,6 +137,11 @@ $router->post('/admin/configuracio',                 [ConfigController::class, '
 // Auditoria de seguretat (superadmin)
 $router->get ('/admin/auditoria',                    [AuditController::class, 'index'],   $superadmin);
 
+// Còpies de seguretat CSV (superadmin)
+$router->get ('/admin/backups',             [\App\Controllers\BackupsAdminController::class, 'index'],    $superadmin);
+$router->get ('/admin/backups/descarregar', [\App\Controllers\BackupsAdminController::class, 'download'], $superadmin);
+$router->post('/admin/backups/generar',     [\App\Controllers\BackupsAdminController::class, 'generar'],  $superadmin);
+
 // Tienda — gestió de productes (NOMÉS superadmin)
 $router->get ('/admin/tienda',                       [TiendaAdminController::class, 'index'],   $superadmin);
 $router->post('/admin/tienda/toggle',                [TiendaAdminController::class, 'toggleActiva'], $superadmin);
