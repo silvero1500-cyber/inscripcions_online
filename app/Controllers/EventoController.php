@@ -459,6 +459,9 @@ final class EventoController
         // ── Comparativa amb l'edició anterior (mateix punt del compte enrere) ──
         $comparativa = $this->edicioAnterior($evento, $totalActivas, $darrers7);
 
+        // ── Evolució comparada per dies des de l'inici d'inscripcions (edició actual vs anterior) ──
+        $evolucioEdicions = $this->evolucioPerEdicions($evento);
+
         View::render('admin/eventos/kpis', [
             'user'                => $user,
             'evento'              => $evento,
@@ -481,6 +484,7 @@ final class EventoController
             'topPoblaciones'      => $topPoblaciones,
             'darrers7'            => $darrers7,
             'comparativa'         => $comparativa,
+            'evolucioEdicions'    => $evolucioEdicions,
             'aforoMax'            => $evento['aforo_maximo'] !== null ? (int) $evento['aforo_maximo'] : null,
         ], layout: 'admin');
     }
@@ -561,6 +565,76 @@ final class EventoController
             'delta7'             => $darrers7 - $darrers7Ant,
             'previsio'           => $previsio,
         ];
+    }
+
+    /**
+     * Evolució d'inscripcions els últims 90 dies ABANS de la cursa (compte enrere),
+     * per a l'edició actual i l'edició anterior de la mateixa carrera (si n'hi ha).
+     * El "dia 90" és 90 dies abans de la cursa, el "dia 0" és el dia de la cursa.
+     *
+     * @return array{
+     *   anyActual:int, anyAnterior:?int,
+     *   actual: list<array{dia:int, n:int}>,
+     *   anterior: list<array{dia:int, n:int}>
+     * }|null
+     */
+    private function evolucioPerEdicions(array $evento): ?array
+    {
+        $db = Database::getInstance();
+        $id = (int) $evento['id'];
+
+        $actual = $this->evolucioPreviaCursa($db, $id, (string) $evento['fecha_evento']);
+        if ($actual === null) return null;
+
+        $carreraId = $evento['carrera_id'] ?? null;
+        $anio      = $evento['anio_edicion'] ?? null;
+
+        $anterior = null;
+        $anyAnterior = null;
+        if (!empty($carreraId) && !empty($anio)) {
+            $ant = $db->query(
+                "SELECT id, anio_edicion, fecha_evento FROM eventos WHERE carrera_id = ? AND anio_edicion = ? LIMIT 1",
+                [(int) $carreraId, (int) $anio - 1]
+            )->fetch();
+            if ($ant) {
+                $anterior = $this->evolucioPreviaCursa($db, (int) $ant['id'], (string) $ant['fecha_evento']);
+                $anyAnterior = (int) $ant['anio_edicion'];
+            }
+        }
+
+        return [
+            'anyActual'   => (int) ($anio ?? 0),
+            'anyAnterior' => $anyAnterior,
+            'actual'      => $actual ?? [],
+            'anterior'    => $anterior ?? [],
+        ];
+    }
+
+    /**
+     * Recompte d'inscripcions agrupat per "dies abans de la cursa" (0 = dia de la cursa,
+     * 90 = 90 dies abans), limitat a la finestra [0, 90]. Retorna null si l'esdeveniment
+     * no té cap inscripció.
+     *
+     * @return list<array{dia:int, n:int}>|null
+     */
+    private function evolucioPreviaCursa(Database $db, int $eventoId, string $fechaEvento): ?array
+    {
+        $hi = (int) $db->query(
+            "SELECT COUNT(*) FROM inscritos WHERE evento_id = ?", [$eventoId]
+        )->fetchColumn();
+        if ($hi === 0) return null;
+
+        $rows = $db->query(
+            "SELECT DATEDIFF(DATE(?), DATE(created_at)) AS diaN, COUNT(*) AS n
+             FROM inscritos
+             WHERE evento_id = ?
+             GROUP BY diaN
+             HAVING diaN BETWEEN 0 AND 90
+             ORDER BY diaN DESC",
+            [$fechaEvento, $eventoId]
+        )->fetchAll();
+
+        return array_map(fn($r) => ['dia' => (int) $r['diaN'], 'n' => (int) $r['n']], $rows);
     }
 
     public function destroy(Request $req, array $params): void
@@ -1103,6 +1177,7 @@ final class EventoController
             }
 
             $out[] = [
+                'id'              => (int) ($c['id'] ?? 0),
                 'nombre_campo'    => substr($nombre, 0, 100),
                 'etiqueta'        => substr($etiqueta, 0, 255),
                 'tipo'            => $tipo,

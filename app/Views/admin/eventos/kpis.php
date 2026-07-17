@@ -19,6 +19,7 @@
 /** @var list<array> $topPoblaciones */
 /** @var int $darrers7 */
 /** @var array|null $comparativa */
+/** @var array|null $evolucioEdicions */
 /** @var int|null $aforoMax */
 
 $sexoLabels = ['H' => 'Home', 'M' => 'Dona', 'NB' => 'No binari'];
@@ -70,6 +71,35 @@ foreach ($evoCats as $cat) {
     ];
 }
 
+// ── Comparativa d'evolució: últims 90 dies ABANS de la cursa (compte enrere), edició actual vs anterior ──
+// 'dia' = dies abans de la cursa (90 = fa 90 dies de la cursa, 0 = dia de la cursa).
+// Eix ordenat de 90 -> 0 perquè el temps avanci d'esquerra a dreta cap al dia de la cursa.
+$edicionsDies = [];
+$edicionsSeries = [];
+if ($evolucioEdicions !== null) {
+    $edicionsDies = range(90, 0, -1);
+
+    $toAcumulat = function (array $rows, array $dies): array {
+        $perDia = [];
+        foreach ($rows as $r) { $perDia[$r['dia']] = $r['n']; }
+        // Acumulat cronològic: comença pel dia més llunyà (90) cap al dia de la cursa (0)
+        $acum = 0; $out = [];
+        foreach ($dies as $d) { $acum += ($perDia[$d] ?? 0); $out[$d] = $acum; }
+        return $out;
+    };
+
+    $edicionsSeries[] = [
+        'label' => 'Edició ' . $evolucioEdicions['anyActual'],
+        'data'  => array_values($toAcumulat($evolucioEdicions['actual'], $edicionsDies)),
+    ];
+    if ($evolucioEdicions['anyAnterior'] !== null) {
+        $edicionsSeries[] = [
+            'label' => 'Edició ' . $evolucioEdicions['anyAnterior'],
+            'data'  => array_values($toAcumulat($evolucioEdicions['anterior'], $edicionsDies)),
+        ];
+    }
+}
+
 // ── Talla × sexe (apilat): per cada talla, Unisex i Dona ──
 $tallaGrupMap = [];                        // [talla][grup] = n
 $tallaTotals  = [];
@@ -116,6 +146,8 @@ $jsData = [
     'tallaLabels' => $tallaLabels,
     'tallaUnisex' => $tallaUnisex,
     'tallaDona'   => $tallaDona,
+    'edicionsDies'   => $edicionsDies,
+    'edicionsSeries' => $edicionsSeries,   // [{label, data[]}] acumulat
 ];
 ?>
 <section class="page-head with-action">
@@ -234,6 +266,20 @@ $jsData = [
         <div class="kpi-chart-wrap kpi-chart-wide"><canvas id="chartEvolucion"></canvas></div>
     <?php endif; ?>
 </div>
+
+<?php if (count($edicionsSeries) > 1): ?>
+<div class="kpi-panel">
+    <div class="kpi-panel-head">
+        <h2>Comparativa entre edicions <span class="muted" style="font-weight:400;font-size:.9rem;">(acumulat, dies abans de la cursa)</span></h2>
+        <select id="edicionsRang">
+            <option value="90">Últims 90 dies</option>
+            <option value="60">Últims 60 dies</option>
+            <option value="30">Últims 30 dies</option>
+        </select>
+    </div>
+    <div class="kpi-chart-wrap kpi-chart-wide"><canvas id="chartEdicions"></canvas></div>
+</div>
+<?php endif; ?>
 
 <div class="kpi-panel">
     <h2>Talla samarreta <span class="muted" style="font-weight:400;font-size:.9rem;">(unisex / dona)</span></h2>
@@ -368,6 +414,33 @@ $jsData = [
             data: { labels: data.evoDays.map(d => d.slice(5)), datasets: datasets },
             options: { ...baseOpts, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
         });
+    })();
+
+    // ── Comparativa entre edicions: acumulat, dies abans de la cursa (compte enrere) ──
+    (function () {
+        const el = document.getElementById('chartEdicions');
+        const sel = document.getElementById('edicionsRang');
+        if (!el || !data.edicionsDies || data.edicionsDies.length === 0) return;
+
+        let chart = null;
+        function render(rang) {
+            // edicionsDies va de 90 (fa temps) a 0 (dia de la cursa); ens quedem els últims N dies abans de la cursa
+            const idxStart = data.edicionsDies.findIndex(d => d <= rang);
+            const labels = data.edicionsDies.slice(idxStart).map(d => d === 0 ? 'Cursa' : `-${d}`);
+            const datasets = (data.edicionsSeries || []).map((s, idx) => {
+                const c = colors[idx % colors.length];
+                return { label: s.label, data: s.data.slice(idxStart), borderColor: c, backgroundColor: c + '22', tension: 0.3, fill: false, pointRadius: 0, borderWidth: 2 };
+            });
+            if (chart) { chart.destroy(); }
+            chart = new Chart(el, {
+                type: 'line',
+                data: { labels: labels, datasets: datasets },
+                options: { ...baseOpts, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+            });
+        }
+
+        render(90);
+        if (sel) sel.addEventListener('change', () => render(parseInt(sel.value, 10)));
     })();
 
     // ── Talla samarreta apilada (Unisex / Dona) ─────────────
