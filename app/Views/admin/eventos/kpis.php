@@ -148,6 +148,7 @@ $jsData = [
     'tallaDona'   => $tallaDona,
     'edicionsDies'   => $edicionsDies,
     'edicionsSeries' => $edicionsSeries,   // [{label, data[]}] acumulat
+    'edicionsAvui'   => $evolucioEdicions['diesFalten'] ?? null,  // dies que falten avui (marca vermella)
 ];
 ?>
 <section class="page-head with-action">
@@ -422,11 +423,40 @@ $jsData = [
         const sel = document.getElementById('edicionsRang');
         if (!el || !data.edicionsDies || data.edicionsDies.length === 0) return;
 
+        // Línia vertical vermella que marca "avui" (dies que falten per a la cursa)
+        const avuiLine = {
+            id: 'avuiLine',
+            afterDraw(chart) {
+                const dia = chart.config._avuiDia;
+                if (dia === null || dia === undefined) return;
+                const idx = chart.config._avuiIdx;
+                if (idx < 0) return;
+                const x = chart.scales.x.getPixelForValue(idx);
+                const { top, bottom } = chart.chartArea;
+                const ctx = chart.ctx;
+                ctx.save();
+                ctx.strokeStyle = '#dc2626';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 4]);
+                ctx.beginPath();
+                ctx.moveTo(x, top);
+                ctx.lineTo(x, bottom);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#dc2626';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Avui', x, top - 4);
+                ctx.restore();
+            }
+        };
+
         let chart = null;
         function render(rang) {
             // edicionsDies va de 90 (fa temps) a 0 (dia de la cursa); ens quedem els últims N dies abans de la cursa
             const idxStart = data.edicionsDies.findIndex(d => d <= rang);
-            const labels = data.edicionsDies.slice(idxStart).map(d => d === 0 ? 'Cursa' : `-${d}`);
+            const dies = data.edicionsDies.slice(idxStart);
+            const labels = dies.map(d => d === 0 ? 'Cursa' : `-${d}`);
             const datasets = (data.edicionsSeries || []).map((s, idx) => {
                 const c = colors[idx % colors.length];
                 return { label: s.label, data: s.data.slice(idxStart), borderColor: c, backgroundColor: c + '22', tension: 0.3, fill: false, pointRadius: 0, borderWidth: 2 };
@@ -435,8 +465,13 @@ $jsData = [
             chart = new Chart(el, {
                 type: 'line',
                 data: { labels: labels, datasets: datasets },
-                options: { ...baseOpts, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+                options: { ...baseOpts, layout: { padding: { top: 16 } }, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+                plugins: [avuiLine]
             });
+            chart.config._avuiDia = data.edicionsAvui;
+            chart.config._avuiIdx = (data.edicionsAvui !== null && data.edicionsAvui !== undefined)
+                ? dies.indexOf(data.edicionsAvui) : -1;
+            chart.update();
         }
 
         render(90);

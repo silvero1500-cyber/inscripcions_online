@@ -573,7 +573,7 @@ final class EventoController
      * El "dia 90" és 90 dies abans de la cursa, el "dia 0" és el dia de la cursa.
      *
      * @return array{
-     *   anyActual:int, anyAnterior:?int,
+     *   anyActual:int, anyAnterior:?int, diesFalten:?int,
      *   actual: list<array{dia:int, n:int}>,
      *   anterior: list<array{dia:int, n:int}>
      * }|null
@@ -585,6 +585,12 @@ final class EventoController
 
         $actual = $this->evolucioPreviaCursa($db, $id, (string) $evento['fecha_evento']);
         if ($actual === null) return null;
+
+        // Dies que falten avui per a la cursa (marca "avui" al gràfic); null si ja ha passat
+        $diesFalten = (int) $db->query(
+            "SELECT DATEDIFF(?, CURDATE())", [(string) $evento['fecha_evento']]
+        )->fetchColumn();
+        if ($diesFalten < 0 || $diesFalten > 90) $diesFalten = null;
 
         $carreraId = $evento['carrera_id'] ?? null;
         $anio      = $evento['anio_edicion'] ?? null;
@@ -605,6 +611,7 @@ final class EventoController
         return [
             'anyActual'   => (int) ($anio ?? 0),
             'anyAnterior' => $anyAnterior,
+            'diesFalten'  => $diesFalten,
             'actual'      => $actual ?? [],
             'anterior'    => $anterior ?? [],
         ];
