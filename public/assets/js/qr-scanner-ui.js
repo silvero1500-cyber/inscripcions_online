@@ -66,7 +66,13 @@ window.WerunQrScanner = (function () {
             }
             stopped = true;
             setStatus('QR llegit, redirigint…', 'ok');
-            reader.stop().then(function () { opts.onToken(token); });
+            // stop() atura el track però clear() allibera també els recursos del
+            // reader; sense això, alguns Android deixen la càmera "reservada" un
+            // instant i la següent pàgina no la pot tornar a obrir.
+            reader.stop()
+                .then(function () { try { reader.clear(); } catch (e) {} })
+                .catch(function () {})
+                .then(function () { opts.onToken(token); });
         }
 
         function onError(_e) { /* frames sense QR */ }
@@ -278,14 +284,25 @@ window.WerunQrScanner = (function () {
             });
         }
 
+        function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
         // ── Arrencada ────────────────────────────────────────────
         // SEMPRE amb facingMode (environment), mai amb un deviceId recordat de
         // sessions anteriors: si aquell id ja no és vàlid, alguns Android deixen
         // la promesa penjada (ni resol ni falla) i la càmera no arrenca mai.
         // Un cop en marxa, si l'usuari havia triat una altra càmera, es canvia
         // automàticament a través del selector.
+        //
+        // Si es ve d'una altra pàgina que també usava la càmera (p. ex. l'escàner
+        // anterior després de llegir un QR), el dispositiu pot trigar un instant a
+        // alliberar-la del tot: si el primer intent falla, se'n reintenta un segon
+        // després d'una petita espera abans de rendir-se.
         setStatus('Obrint càmera…', '');
         var boot = startWith(null).then(function () { onStarted(null); })
+            .catch(function () {
+                setStatus('Alliberant càmera anterior…', '');
+                return wait(700).then(function () { return startWith(null); }).then(function () { onStarted(null); });
+            })
             .catch(function () {
                 return startAny().then(function () { onStarted(null); });
             })
