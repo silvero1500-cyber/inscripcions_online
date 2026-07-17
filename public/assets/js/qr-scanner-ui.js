@@ -85,6 +85,10 @@ window.WerunQrScanner = (function () {
             }
             if (typeof source === 'string') c.deviceId = { exact: source };
             else c.facingMode = { ideal: 'environment' };
+            // Demanar autofocus continu JA a l'arrencada (no només després): alguns
+            // navegadors/WebViews Android negocien focus fix si no es demana aquí,
+            // i aplicar-ho més tard amb applyConstraints no sempre el desbloqueja.
+            c.advanced = [{ focusMode: 'continuous' }];
             return c;
         }
 
@@ -116,14 +120,18 @@ window.WerunQrScanner = (function () {
             });
         }
 
+        var focusSupported = null; // null = encara no sabem, true/false un cop comprovat
+
         // Millores post-arrencada: enfocament continu + slider de zoom si existeix
         function tuneRunningTrack() {
             try {
-                reader.applyVideoConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function () {});
-            } catch (e) { /* no suportat */ }
-
-            try {
                 var caps = reader.getRunningTrackCapabilities();
+                focusSupported = !!(caps && caps.focusMode && caps.focusMode.indexOf('continuous') !== -1);
+                if (focusSupported) {
+                    reader.applyVideoConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function () {});
+                }
+                setupTapToFocus(!focusSupported);
+
                 if (caps && caps.zoom && caps.zoom.max > caps.zoom.min) {
                     zoomInput.min = caps.zoom.min;
                     zoomInput.max = Math.min(caps.zoom.max, 8);
@@ -138,7 +146,33 @@ window.WerunQrScanner = (function () {
                 } else {
                     zoomWrap.style.display = 'none';
                 }
-            } catch (e) { zoomWrap.style.display = 'none'; }
+            } catch (e) {
+                zoomWrap.style.display = 'none';
+                setupTapToFocus(true);
+            }
+        }
+
+        // Tap-to-focus: molts mòbils (sobretot Android/WebView) no reenfoquen sols
+        // de prop encara que el navegador digui que suporta 'continuous'. Tocar la
+        // imatge força un refocus puntual amb 'single-shot' al punt tocat.
+        var tapBound = false;
+        function setupTapToFocus(showHint) {
+            var video = document.querySelector('#reader video');
+            if (!video || tapBound) return;
+            tapBound = true;
+            video.style.cursor = 'pointer';
+            video.addEventListener('click', function () {
+                try {
+                    reader.applyVideoConstraints({ advanced: [{ focusMode: 'single-shot' }] })
+                        .catch(function () {})
+                        .then(function () {
+                            if (focusSupported) {
+                                reader.applyVideoConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function () {});
+                            }
+                        });
+                } catch (e) { /* no suportat: no fem res */ }
+            });
+            if (showHint) setStatus(statusEl.textContent + ' · toca la pantalla per enfocar', 'ok');
         }
 
         function onStarted(label) {
