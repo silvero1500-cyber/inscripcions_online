@@ -447,6 +447,19 @@ $jsData = [
                 ctx.font = 'bold 11px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillText('Avui', x, top - 4);
+
+                // Diferència d'acumulat al punt d'avui vs l'edició anterior
+                const ds = chart.data.datasets;
+                if (ds.length >= 2 && ds[0].data[idx] !== undefined && ds[1].data[idx] !== undefined) {
+                    const diff = ds[0].data[idx] - ds[1].data[idx];
+                    const txt = (diff >= 0 ? '+' : '−') + Math.abs(diff) + ' vs ' + (ds[1].label || '').replace('Edició ', '');
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.fillStyle = diff >= 0 ? '#15803d' : '#dc2626';
+                    // Enganxat a la línia, dins l'àrea del gràfic; cap a l'esquerra si és massa a prop del final
+                    const nearEnd = x > chart.chartArea.right - 90;
+                    ctx.textAlign = nearEnd ? 'right' : 'left';
+                    ctx.fillText(txt, nearEnd ? x - 6 : x + 6, top + 14);
+                }
                 ctx.restore();
             }
         };
