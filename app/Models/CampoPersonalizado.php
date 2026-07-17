@@ -72,8 +72,12 @@ final class CampoPersonalizado
      * @param list<array{nombre_campo:string, etiqueta:string, tipo:string, opciones:?string, requerido:int, orden:int}> $campos
      */
     /**
-     * Reemplaça els camps personalitzats. Retorna la llista d'ids creats EN ORDRE
-     * (per poder enllaçar l'ordre del formulari amb els nous ids).
+     * Sincronitza els camps personalitzats SENSE destruir dades: els camps que
+     * arriben amb `id` existent s'ACTUALITZEN (conserven l'id i, per tant, les
+     * respostes ja desades a inscrito_campos_valores); els nous s'insereixen; i
+     * els que ja no vénen només s'esborren si cap inscrit hi té resposta (si en
+     * tenen, es desactiven per no perdre les dades).
+     * Retorna la llista d'ids EN ORDRE (per enllaçar l'ordre del formulari).
      * @return list<int>
      */
     public static function syncForEvento(int $eventoId, array $campos): array
@@ -86,8 +90,13 @@ final class CampoPersonalizado
                 [$eventoId]
             )->fetchAll(\PDO::FETCH_COLUMN));
 
-            $db->query('DELETE FROM campos_personalizados WHERE evento_id = ?', [$eventoId]);
+            $existingIds = array_map('intval', $db->query(
+                'SELECT id FROM campos_personalizados WHERE evento_id = ?',
+                [$eventoId]
+            )->fetchAll(\PDO::FETCH_COLUMN));
+
             $ids = [];
+            $keepIds = [];
             foreach ($campos as $orden => $c) {
                 // Llista de tarifes (condicional): només les vàlides de l'esdeveniment
                 $tarifaIds = [];
@@ -116,7 +125,7 @@ final class CampoPersonalizado
                     }
                 }
 
-                $ids[] = $db->insert('campos_personalizados', [
+                $payload = [
                     'evento_id'       => $eventoId,
                     'tarifa_id'       => null,
                     'tarifa_ids'      => $tarifaIds ? (string) json_encode($tarifaIds) : null,
@@ -133,8 +142,32 @@ final class CampoPersonalizado
                     'oculto'       => !empty($c['oculto']) ? 1 : 0,
                     'placeholder'  => $c['placeholder'] ?? null,
                     'ayuda'        => $c['ayuda'] ?? null,
-                ]);
+                ];
+
+                if (!empty($c['id']) && in_array((int) $c['id'], $existingIds, true)) {
+                    $cid = (int) $c['id'];
+                    $db->update('campos_personalizados', $payload, ['id' => $cid]);
+                } else {
+                    $cid = $db->insert('campos_personalizados', $payload);
+                }
+                $ids[] = $cid;
+                $keepIds[] = $cid;
             }
+
+            // Camps eliminats de l'editor: esborrar només si cap inscrit hi té
+            // resposta; si en tenen, desactivar (les respostes es conserven).
+            foreach (array_diff($existingIds, $keepIds) as $oldId) {
+                $used = (int) $db->query(
+                    'SELECT COUNT(*) FROM inscrito_campos_valores WHERE campo_id = ?',
+                    [$oldId]
+                )->fetchColumn();
+                if ($used === 0) {
+                    $db->query('DELETE FROM campos_personalizados WHERE id = ?', [$oldId]);
+                } else {
+                    $db->update('campos_personalizados', ['activo' => 0, 'oculto' => 1], ['id' => $oldId]);
+                }
+            }
+
             return $ids;
         });
     }

@@ -393,6 +393,7 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
             ?>
             <div class="campo-row card-item field-item collapsed" data-index="<?= $idx ?>">
                 <input type="hidden" name="campos_orden[]" value="__CUSTOM__">
+                <input type="hidden" name="campos[<?= $idx ?>][id]" value="<?= (int) ($c['id'] ?? 0) ?: '' ?>">
                 <div class="item-head">
                     <span class="drag-handle" title="Arrossega per ordenar" aria-hidden="true">⠿</span>
                     <span class="item-title"><?= e($etiqueta !== '' ? $etiqueta : 'Camp personalitzat') ?></span>
