@@ -15,6 +15,13 @@
 
     <div class="scanner-actions" style="text-align:center;margin:1rem 0;display:flex;flex-direction:column;gap:.6rem;align-items:center;">
         <select id="cam-select" style="display:none;max-width:320px;"></select>
+        <select id="res-select" style="display:none;max-width:320px;">
+            <option value="auto">Resolució: automàtica</option>
+            <option value="720">Resolució: 1280×720</option>
+            <option value="1080" selected>Resolució: 1920×1080</option>
+            <option value="1440">Resolució: 2560×1440</option>
+            <option value="2160">Resolució: 4K (3840×2160)</option>
+        </select>
         <div id="zoom-wrap" style="display:none;width:100%;max-width:320px;">
             <label for="zoom-input" style="font-size:.85rem;">🔍 Zoom</label>
             <input type="range" id="zoom-input" style="width:100%;">

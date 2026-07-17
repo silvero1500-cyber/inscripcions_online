@@ -12,11 +12,23 @@
  */
 window.WerunQrScanner = (function () {
     var STORAGE_KEY = 'werun_scanner_cam';
+    var RES_KEY     = 'werun_scanner_res';
+
+    // Presets de resolució seleccionables (més resolució = QR petits més nítids,
+    // però algunes càmeres/mòbils van més lents o no ho suporten)
+    var RES_PRESETS = {
+        'auto': null,
+        '720':  { w: 1280, h: 720 },
+        '1080': { w: 1920, h: 1080 },
+        '1440': { w: 2560, h: 1440 },
+        '2160': { w: 3840, h: 2160 }
+    };
 
     function init(opts) {
         var statusEl  = document.getElementById('reader-status');
         var btnStop   = document.getElementById('btn-stop');
         var camSelect = document.getElementById('cam-select');
+        var resSelect = document.getElementById('res-select');
         var zoomWrap  = document.getElementById('zoom-wrap');
         var zoomInput = document.getElementById('zoom-input');
 
@@ -59,17 +71,41 @@ window.WerunQrScanner = (function () {
         function onError(_e) { /* frames sense QR */ }
 
         // Constraints d'arrencada: resolució alta ajuda a llegir QR petits/borrosos
-        function buildConstraints(source) {
-            var c = { width: { ideal: 1920 }, height: { ideal: 1080 } };
+        function currentRes() {
+            var k = (resSelect && resSelect.value) || localStorage.getItem(RES_KEY) || '1080';
+            return RES_PRESETS.hasOwnProperty(k) ? RES_PRESETS[k] : RES_PRESETS['1080'];
+        }
+
+        function buildConstraints(source, exact) {
+            var c = {};
+            var r = currentRes();
+            if (r) {
+                c.width  = exact ? { exact: r.w } : { ideal: r.w };
+                c.height = exact ? { exact: r.h } : { ideal: r.h };
+            }
             if (typeof source === 'string') c.deviceId = { exact: source };
             else c.facingMode = { ideal: 'environment' };
             return c;
         }
 
         function startWith(source) {
-            var cfg = Object.assign({}, config, { videoConstraints: buildConstraints(source) });
             var camArg = (typeof source === 'string') ? source : { facingMode: 'environment' };
-            return reader.start(camArg, cfg, onSuccess, onError);
+            // Primer amb resolució EXACTA (si el navegador la ignorés amb "ideal",
+            // el vídeo quedaria en baixa qualitat); si la càmera no la suporta, "ideal".
+            var cfgExact = Object.assign({}, config, { videoConstraints: buildConstraints(source, true) });
+            var cfgIdeal = Object.assign({}, config, { videoConstraints: buildConstraints(source, false) });
+            if (!currentRes()) return reader.start(camArg, config, onSuccess, onError);
+            return reader.start(camArg, cfgExact, onSuccess, onError)
+                .catch(function () { return reader.start(camArg, cfgIdeal, onSuccess, onError); });
+        }
+
+        // Resolució REAL que ha donat la càmera (per mostrar-la a l'estat)
+        function actualRes() {
+            try {
+                var v = document.querySelector('#reader video');
+                if (v && v.videoWidth) return v.videoWidth + '×' + v.videoHeight;
+            } catch (e) {}
+            return null;
         }
 
         // Últim recurs: primera càmera que hi hagi, sense constraints extra
@@ -106,10 +142,16 @@ window.WerunQrScanner = (function () {
         }
 
         function onStarted(label) {
-            setStatus(label ? 'Càmera: ' + label : 'Apunta al QR', 'ok');
             btnStop.style.display = 'inline-block';
+            if (resSelect) resSelect.style.display = '';
             tuneRunningTrack();
             populateSelector();
+            // La resolució real triga uns ms a estar disponible al <video>
+            setTimeout(function () {
+                var res = actualRes();
+                var txt = (label ? 'Càmera: ' + label : 'Apunta al QR') + (res ? ' · ' + res : '');
+                setStatus(txt, 'ok');
+            }, 600);
         }
 
         // Selector de càmeres pel nom (un cop hi ha permís, els labels són visibles)
@@ -130,9 +172,10 @@ window.WerunQrScanner = (function () {
             }).catch(function () {});
         }
 
-        camSelect.addEventListener('change', function () {
-            var id = camSelect.value;
-            localStorage.setItem(STORAGE_KEY, id);
+        function restartWithCurrent() {
+            var id = camSelect.style.display !== 'none' && camSelect.value
+                ? camSelect.value
+                : (localStorage.getItem(STORAGE_KEY) || null);
             var p = reader.isScanning ? reader.stop() : Promise.resolve();
             p.then(function () {
                 zoomWrap.style.display = 'none';
@@ -140,10 +183,24 @@ window.WerunQrScanner = (function () {
                     var cam = cameras.find(function (c) { return c.id === id; });
                     onStarted(cam ? cam.label : null);
                 }).catch(function (err) {
-                    setStatus('Error obrint la càmera triada: ' + (err && err.message ? err.message : err), 'err');
+                    setStatus('Error obrint la càmera: ' + (err && err.message ? err.message : err), 'err');
                 });
             });
+        }
+
+        camSelect.addEventListener('change', function () {
+            localStorage.setItem(STORAGE_KEY, camSelect.value);
+            restartWithCurrent();
         });
+
+        if (resSelect) {
+            var savedRes = localStorage.getItem(RES_KEY);
+            if (savedRes && RES_PRESETS.hasOwnProperty(savedRes)) resSelect.value = savedRes;
+            resSelect.addEventListener('change', function () {
+                localStorage.setItem(RES_KEY, resSelect.value);
+                restartWithCurrent();
+            });
+        }
 
         btnStop.addEventListener('click', function () {
             if (reader.isScanning) {
