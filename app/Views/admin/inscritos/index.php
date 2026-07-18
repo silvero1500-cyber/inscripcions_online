@@ -324,6 +324,14 @@ $pageUrl = function (int $p) use ($filtersClean): string {
                                     <button type="submit" class="btn-tiny" title="Reenviar email de confirmació (pots canviar el correu)">✉ Reenviar</button>
                                 </form>
                             <?php endif; ?>
+                            <?php if ($canEdit): ?>
+                                <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int)$i['id'] . '/eliminar')) ?>" class="inline"
+                                      onsubmit="return deletePrompt(this, <?= !empty($i['te_pago']) ? 'true' : 'false' ?>)">
+                                    <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+                                    <input type="hidden" name="mode" value="">
+                                    <button type="submit" class="btn-tiny btn-danger" title="Eliminar inscrit">🗑</button>
+                                </form>
+                            <?php endif; ?>
                         </span>
                         <?php if ($canEdit): ?>
                             <span class="acc-edit-mode" style="display:none;">
@@ -347,6 +355,33 @@ $pageUrl = function (int $p) use ($filtersClean): string {
         if (to === '') { alert('Indica un correu electrònic.'); return false; }
         form.querySelector('input[name="email_to"]').value = to;
         return true;
+    }
+
+    // Eliminar inscrit. Si té pagament, deixa triar conservar-lo o esborrar-ho tot.
+    function deletePrompt(form, tePagos) {
+        if (!tePagos) {
+            return confirm('Segur que vols ELIMINAR aquest inscrit? Aquesta acció no es pot desfer.');
+        }
+        var opt = window.prompt(
+            'Aquest inscrit té un PAGAMENT associat. Què vols fer?\n\n' +
+            '1 = Eliminar només l\'inscrit i CONSERVAR el pagament\n' +
+            '    (es marca com a cancel·lat, deixa de comptar per l\'aforament)\n\n' +
+            '2 = Eliminar l\'inscrit I el pagament (definitiu)\n\n' +
+            'Escriu 1 o 2 (o cancel·la per no fer res):'
+        );
+        if (opt === null) return false;
+        opt = opt.trim();
+        if (opt === '1') {
+            form.querySelector('input[name="mode"]').value = 'cancelar';
+            return true;
+        }
+        if (opt === '2') {
+            if (!confirm('Segur? S\'eliminaran DEFINITIVAMENT l\'inscrit i el seu pagament.')) return false;
+            form.querySelector('input[name="mode"]').value = 'full';
+            return true;
+        }
+        alert('Opció no vàlida. No s\'ha fet res.');
+        return false;
     }
     </script>
 

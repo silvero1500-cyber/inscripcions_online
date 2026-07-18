@@ -249,7 +249,8 @@ final class Inscrito
         return Database::getInstance()->query(
             "SELECT i.*,
                     e.titulo AS evento_titulo, e.slug AS evento_slug, e.fecha_evento,
-                    t.nombre AS tarifa_nombre, t.precio AS tarifa_precio
+                    t.nombre AS tarifa_nombre, t.precio AS tarifa_precio,
+                    EXISTS(SELECT 1 FROM pagos p WHERE p.inscrito_id = i.id) AS te_pago
              FROM inscritos i
              JOIN eventos e ON e.id = i.evento_id
              JOIN tarifas_evento t ON t.id = i.tarifa_id
