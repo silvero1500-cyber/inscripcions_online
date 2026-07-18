@@ -36,9 +36,6 @@ $pctRec = $stats['inscritos'] > 0 ? (int) round($stats['recollits'] / $stats['in
             <?php if ($diesText !== ''): ?> · <?= e($diesText) ?><?php endif; ?>
         </p>
     </div>
-    <?php if ($isSuper): ?>
-        <a class="btn btn-primary dash-hero-btn" href="<?= e(base_url('/admin/eventos/' . $evId . '/editar')) ?>">✏️ Editar edició</a>
-    <?php endif; ?>
 </section>
 
 <?php if (!empty($flash['error'])): ?>
