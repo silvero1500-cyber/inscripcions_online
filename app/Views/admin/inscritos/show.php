@@ -64,6 +64,11 @@ $row = function (string $label, $value, bool $raw = false): void {
     <?php if ($evento): ?>
         <a class="btn btn-small" href="<?= e(base_url('/eventos/' . $evento['slug'])) ?>" target="_blank" rel="noopener">👁️ Veure esdeveniment</a>
     <?php endif; ?>
+    <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int) $inscrito['id'] . '/eliminar')) ?>" class="inline" style="margin-left:auto;"
+          onsubmit="return confirm('Segur que vols ELIMINAR aquest inscrit? Aquesta acció no es pot desfer.');">
+        <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+        <button type="submit" class="btn btn-small btn-danger">🗑 Eliminar inscrit</button>
+    </form>
 </div>
 
 <div class="detail-cols">

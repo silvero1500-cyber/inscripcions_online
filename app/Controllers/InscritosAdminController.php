@@ -242,6 +242,57 @@ final class InscritosAdminController
     }
 
     /**
+     * Elimina un inscrit de forma definitiva (dades personals, respostes de
+     * camps personalitzats i pagaments associats). Si formava part d'una comanda
+     * de grup que queda buida, també s'esborra la comanda. Torna al llistat.
+     */
+    public function destroy(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+
+        $inscrito = Inscrito::findById($id);
+        if ($inscrito === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, (int) $inscrito['evento_id'])) Response::forbidden();
+
+        $eventoId = (int) $inscrito['evento_id'];
+        $pedidoId = !empty($inscrito['pedido_id']) ? (int) $inscrito['pedido_id'] : null;
+        $nom      = trim((string) $inscrito['nombre'] . ' ' . (string) ($inscrito['apellido'] ?? ''));
+
+        $db = Database::getInstance();
+        try {
+            $db->transaction(function ($db) use ($id, $pedidoId): void {
+                // Els FK amb ON DELETE CASCADE ja esborren valors de camps i pagaments,
+                // però ho fem explícit per no dependre'n.
+                $db->query('DELETE FROM inscrito_campos_valores WHERE inscrito_id = ?', [$id]);
+                $db->query('DELETE FROM pagos WHERE inscrito_id = ?', [$id]);
+                $db->query('DELETE FROM inscritos WHERE id = ?', [$id]);
+
+                // Comanda de grup que queda sense cap inscrit → esborrar-la també
+                if ($pedidoId !== null) {
+                    $rest = (int) $db->query(
+                        'SELECT COUNT(*) FROM inscritos WHERE pedido_id = ?', [$pedidoId]
+                    )->fetchColumn();
+                    if ($rest === 0) {
+                        $db->query('DELETE FROM pedidos WHERE id = ?', [$pedidoId]);
+                    }
+                }
+            });
+
+            AuditLog::registrar('inscrit_esborrat', 'Inscrit #' . $id . ' (' . $nom . ') de l\'esdeveniment #' . $eventoId);
+            Session::flash('success', 'Inscrit eliminat correctament.');
+        } catch (\Throwable $e) {
+            error_log('[InscritosAdmin] Esborrat fallit: ' . $e->getMessage());
+            Session::flash('error', 'No s\'ha pogut eliminar l\'inscrit: ' . $e->getMessage());
+            Response::redirect(base_url('/admin/inscritos/' . $id));
+        }
+
+        Response::redirect(base_url('/admin/inscritos?' . http_build_query(['evento_id' => $eventoId])));
+    }
+
+    /**
      * Edició inline d'un inscrit des del grid. Valida i desa els camps de dades
      * personals + inscripció. Respon JSON (èxit amb valors formatats / errors).
      */
