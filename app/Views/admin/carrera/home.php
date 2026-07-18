@@ -67,11 +67,6 @@ $pctRec = $stats['inscritos'] > 0 ? (int) round($stats['recollits'] / $stats['in
         <span class="dash-kpi-val"><?= (int) $stats['inscritos'] ?></span>
         <span class="dash-kpi-lbl">Inscrits confirmats</span>
     </a>
-    <a class="dash-kpi kpi-indigo" href="<?= e(base_url('/admin/recollida?evento_id=' . $evId)) ?>">
-        <span class="dash-kpi-ico">🎽</span>
-        <span class="dash-kpi-val"><?= (int) $stats['recollits'] ?></span>
-        <span class="dash-kpi-lbl">Dorsals recollits</span>
-    </a>
     <?php if ($stats['comp_delta'] !== null): $d = (int) $stats['comp_delta']; ?>
         <a class="dash-kpi <?= $d >= 0 ? 'kpi-green' : 'kpi-amber' ?>" href="<?= e(base_url('/admin/eventos/' . $evId . '/kpis')) ?>">
             <span class="dash-kpi-ico"><?= $d >= 0 ? '📈' : '📉' ?></span>
@@ -89,6 +84,11 @@ $pctRec = $stats['inscritos'] > 0 ? (int) round($stats['recollits'] / $stats['in
         <span class="dash-kpi-ico">💶</span>
         <span class="dash-kpi-val"><?= e(number_format((float) $stats['ingressos'], 0, ',', '.')) ?> €</span>
         <span class="dash-kpi-lbl">Ingressos confirmats</span>
+    </a>
+    <a class="dash-kpi kpi-indigo" href="<?= e(base_url('/admin/recollida?evento_id=' . $evId)) ?>">
+        <span class="dash-kpi-ico">🎽</span>
+        <span class="dash-kpi-val"><?= (int) $stats['recollits'] ?></span>
+        <span class="dash-kpi-lbl">Dorsals recollits</span>
     </a>
 </section>
 
