@@ -46,6 +46,7 @@
                     [$rolLbl, $rolBdg] = match ($u['rol']) {
                         'superadmin' => ['superadmin', 'badge-warning'],
                         'recollida'  => ['recollida', 'badge-info'],
+                        'export'     => ['export CSV', 'badge-info'],
                         default      => ['organitzador', 'badge-muted'],
                     };
                     ?>
