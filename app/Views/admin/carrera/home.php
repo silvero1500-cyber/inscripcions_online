@@ -85,10 +85,10 @@ $pctRec = $stats['inscritos'] > 0 ? (int) round($stats['recollits'] / $stats['in
             <span class="dash-kpi-lbl">Dorsals pendents</span>
         </a>
     <?php endif; ?>
-    <a class="dash-kpi kpi-blue" href="<?= e(base_url('/admin/inscritos?evento_id=' . $evId)) ?>">
-        <span class="dash-kpi-ico">📈</span>
-        <span class="dash-kpi-val"><?= (int) $stats['darrers7'] ?></span>
-        <span class="dash-kpi-lbl">Inscripcions (7 dies)</span>
+    <a class="dash-kpi kpi-blue" href="<?= e(base_url('/admin/eventos/' . $evId . '/kpis')) ?>">
+        <span class="dash-kpi-ico">💶</span>
+        <span class="dash-kpi-val"><?= e(number_format((float) $stats['ingressos'], 0, ',', '.')) ?> €</span>
+        <span class="dash-kpi-lbl">Ingressos confirmats</span>
     </a>
 </section>
 

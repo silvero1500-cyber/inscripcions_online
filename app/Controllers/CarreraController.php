@@ -55,6 +55,11 @@ final class CarreraController
             'darrers7'  => (int) $db->query(
                 "SELECT COUNT(*) FROM inscritos WHERE estado='confirmado' AND evento_id = ? AND created_at >= (NOW() - INTERVAL 7 DAY)", [$eventoId]
             )->fetchColumn(),
+            'ingressos' => (float) $db->query(
+                "SELECT COALESCE(SUM(t.precio), 0)
+                 FROM inscritos i JOIN tarifas_evento t ON t.id = i.tarifa_id
+                 WHERE i.evento_id = ? AND i.estado = 'confirmado'", [$eventoId]
+            )->fetchColumn(),
         ];
         $stats['pendents'] = max(0, $stats['inscritos'] - $stats['recollits']);
 
