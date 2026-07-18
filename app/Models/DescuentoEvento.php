@@ -78,6 +78,15 @@ final class DescuentoEvento
         );
     }
 
+    /** Allibera un ús del cupó (p. ex. quan s'elimina l'inscrit que el va fer servir). */
+    public static function decrementarUsos(int $id): void
+    {
+        Database::getInstance()->query(
+            'UPDATE descuentos_evento SET usos_actuales = GREATEST(0, usos_actuales - 1) WHERE id = ?',
+            [$id]
+        );
+    }
+
     /** @return list<array<string,mixed>> */
     public static function listByEvento(int $eventoId): array
     {

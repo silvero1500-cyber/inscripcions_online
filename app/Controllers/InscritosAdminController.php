@@ -13,6 +13,7 @@ use App\Core\Session;
 use App\Core\View;
 use App\Models\AuditLog;
 use App\Models\CampoPersonalizado;
+use App\Models\DescuentoEvento;
 use App\Models\Evento;
 use App\Models\Inscrito;
 use App\Models\Tarifa;
@@ -245,6 +246,13 @@ final class InscritosAdminController
      * Elimina un inscrit de forma definitiva (dades personals, respostes de
      * camps personalitzats i pagaments associats). Si formava part d'una comanda
      * de grup que queda buida, també s'esborra la comanda. Torna al llistat.
+     *
+     * Proteccions anti-danys col·laterals:
+     *  - Bloqueja si té un pagament Redsys COMPLETAT (cobrament real): no es pot
+     *    destruir el registre comptable des d'aquí (cal reembossar/gestionar a part).
+     *  - Allibera l'ús del cupó de descompte que hagués consumit.
+     *  - El log de recollida (recollida_log) conserva el nom desnormalitzat: no es
+     *    perd la traça històrica encara que s'esborri l'inscrit.
      */
     public function destroy(Request $req, array $params): void
     {
@@ -257,18 +265,36 @@ final class InscritosAdminController
         if ($inscrito === null) Response::notFound();
         if (!Evento::userCanEdit($user->id, $user->rol, (int) $inscrito['evento_id'])) Response::forbidden();
 
-        $eventoId = (int) $inscrito['evento_id'];
-        $pedidoId = !empty($inscrito['pedido_id']) ? (int) $inscrito['pedido_id'] : null;
-        $nom      = trim((string) $inscrito['nombre'] . ' ' . (string) ($inscrito['apellido'] ?? ''));
+        $eventoId   = (int) $inscrito['evento_id'];
+        $pedidoId   = !empty($inscrito['pedido_id']) ? (int) $inscrito['pedido_id'] : null;
+        $descuentoId = !empty($inscrito['descuento_id']) ? (int) $inscrito['descuento_id'] : null;
+        $nom        = trim((string) $inscrito['nombre'] . ' ' . (string) ($inscrito['apellido'] ?? ''));
 
         $db = Database::getInstance();
+
+        // Protecció: no esborrar si hi ha un cobrament real (pagament completat).
+        $pagoCompletat = (int) $db->query(
+            "SELECT COUNT(*) FROM pagos WHERE inscrito_id = ? AND estado = 'completado'",
+            [$id]
+        )->fetchColumn();
+        if ($pagoCompletat > 0) {
+            Session::flash('error', 'Aquest inscrit té un pagament cobrat (TPV). No es pot eliminar des d\'aquí per no perdre el registre comptable; gestiona primer el reembossament.');
+            Response::redirect(base_url('/admin/inscritos/' . $id));
+        }
+
         try {
-            $db->transaction(function ($db) use ($id, $pedidoId): void {
+            $db->transaction(function ($db) use ($id, $pedidoId, $descuentoId): void {
                 // Els FK amb ON DELETE CASCADE ja esborren valors de camps i pagaments,
                 // però ho fem explícit per no dependre'n.
                 $db->query('DELETE FROM inscrito_campos_valores WHERE inscrito_id = ?', [$id]);
+                // Aquí només poden quedar pagaments NO completats (iniciats/fallits/cancel·lats)
                 $db->query('DELETE FROM pagos WHERE inscrito_id = ?', [$id]);
                 $db->query('DELETE FROM inscritos WHERE id = ?', [$id]);
+
+                // Allibera l'ús del cupó que aquest inscrit havia consumit
+                if ($descuentoId !== null) {
+                    DescuentoEvento::decrementarUsos($descuentoId);
+                }
 
                 // Comanda de grup que queda sense cap inscrit → esborrar-la també
                 if ($pedidoId !== null) {
