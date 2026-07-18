@@ -42,19 +42,20 @@ foreach ($errors as $ek => $emsgs) {
 }
 $errorSummary = array_values(array_unique($errorSummary));
 
-// Consentiment RGPD obligatori (mateix per a individual i grup)
+// Consentiment RGPD + reglament en una sola casella (mateix per a individual i grup)
 $privacidadUrl = \App\Models\Ajuste::get(\App\Models\Ajuste::PRIVACIDAD_URL);
 $privacidadErr = $errors['acepta_privacidad'][0] ?? null;
-$consentField = function () use ($privacidadUrl, $privacidadErr): void { ?>
+$reglamentUrl  = $evento['reglamento_url'] ?? null;
+$consentField = function () use ($privacidadUrl, $privacidadErr, $reglamentUrl): void { ?>
     <div class="form-row consent-row">
         <label class="inline-check">
             <input type="checkbox" name="acepta_privacidad" value="1" required>
-            <?= e(t('form.privacy.accept')) ?>
+            <?= e(t('form.consent.accept')) ?>
             <?php if (!empty($privacidadUrl)): ?>
-                <a href="<?= e($privacidadUrl) ?>" target="_blank" rel="noopener"><?= e(t('form.privacy.link')) ?></a>
-            <?php else: ?>
-                <?= e(t('form.privacy.link')) ?>
-            <?php endif; ?>
+                <a href="<?= e($privacidadUrl) ?>" target="_blank" rel="noopener"><?= e(t('form.privacy.link')) ?></a><?php else: ?><?= e(t('form.privacy.link')) ?><?php endif; ?>
+            <?= e(t('form.consent.and')) ?>
+            <?php if (!empty($reglamentUrl)): ?>
+                <a href="<?= e($reglamentUrl) ?>" target="_blank" rel="noopener"><?= e(t('form.consent.reglament')) ?></a><?php else: ?><?= e(t('form.consent.reglament')) ?><?php endif; ?>
             <span class="req">*</span>
         </label>
         <?php if ($privacidadErr): ?><div class="field-error"><?= e($privacidadErr) ?></div><?php endif; ?>
