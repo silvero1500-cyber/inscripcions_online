@@ -145,6 +145,12 @@ $router->post('/admin/configuracio',                 [ConfigController::class, '
 // Auditoria de seguretat (superadmin)
 $router->get ('/admin/auditoria',                    [AuditController::class, 'index'],   $superadmin);
 
+// Incidències del formulari públic (superadmin)
+$router->get ('/admin/incidencies',                  [\App\Controllers\IncidenciasController::class, 'index'],    $superadmin);
+$router->post('/admin/incidencies/{id}/resolta',     [\App\Controllers\IncidenciasController::class, 'resolta'],  $superadmin);
+$router->post('/admin/incidencies/{id}/nova',        [\App\Controllers\IncidenciasController::class, 'nova'],     $superadmin);
+$router->post('/admin/incidencies/{id}/eliminar',    [\App\Controllers\IncidenciasController::class, 'eliminar'], $superadmin);
+
 // Còpies de seguretat CSV (superadmin)
 $router->get ('/admin/backups',             [\App\Controllers\BackupsAdminController::class, 'index'],    $superadmin);
 $router->get ('/admin/backups/descarregar', [\App\Controllers\BackupsAdminController::class, 'download'], $superadmin);

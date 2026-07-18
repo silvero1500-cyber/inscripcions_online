@@ -80,6 +80,12 @@ final class AdminController
             }
         }
 
+        // Comptador d'incidències sense resoldre (només rellevant per a superadmin)
+        $incidenciesNoves = 0;
+        if ($user->rol === 'superadmin') {
+            try { $incidenciesNoves = \App\Models\Incidencia::countNoves(); } catch (\Throwable $e) { $incidenciesNoves = 0; }
+        }
+
         View::render('admin/dashboard', [
             'user'     => $user,
             'stats'    => $stats,
@@ -87,6 +93,7 @@ final class AdminController
             'proxims'  => $proxims,
             'chart'    => $chart,
             'chartMax' => $chartMax,
+            'incidenciesNoves' => $incidenciesNoves,
         ], layout: 'admin');
     }
 }

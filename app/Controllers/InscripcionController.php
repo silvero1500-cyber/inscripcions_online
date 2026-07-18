@@ -101,6 +101,9 @@ final class InscripcionController
 
         RateLimit::hit($rlKey);
 
+        // Desar la incidència (encara que el correu falli, queda registrada a l'admin)
+        \App\Models\Incidencia::crear((int) $evento['id'], (string) $evento['titulo'], $missatge, (string) $req->ip);
+
         $safe = nl2br(e($missatge));
         $html = '<h2 style="font-family:sans-serif;color:#1e88c2;">Nova incidència · formulari públic</h2>'
               . '<p style="font-family:sans-serif;"><strong>Esdeveniment:</strong> ' . e((string) $evento['titulo']) . ' (#' . (int) $evento['id'] . ')</p>'
@@ -108,6 +111,8 @@ final class InscripcionController
               . '<div style="font-family:sans-serif;white-space:pre-wrap;border-left:3px solid #1e88c2;padding-left:12px;color:#333;">' . $safe . '</div>'
               . '<p style="font-family:sans-serif;color:#6b7280;font-size:.85rem;margin-top:16px;">IP: ' . e((string) $req->ip) . ' · ' . date('d/m/Y H:i') . '</p>';
 
+        // L'enviament del correu és secundari: si falla, la incidència ja està
+        // desada a l'admin, així que igualment confirmem la recepció a l'usuari.
         try {
             EmailService::send(
                 self::INCIDENCIA_EMAIL,
@@ -115,8 +120,7 @@ final class InscripcionController
                 $html
             );
         } catch (\Throwable $e) {
-            error_log('[Incidencia] Enviament fallit: ' . $e->getMessage());
-            Response::json(['ok' => false, 'message' => 'No s\'ha pogut enviar. Torna-ho a provar més tard.'], 500);
+            error_log('[Incidencia] Enviament de correu fallit (guardada igualment): ' . $e->getMessage());
         }
 
         Response::json(['ok' => true, 'message' => 'Gràcies! Hem rebut la teva incidència.']);
