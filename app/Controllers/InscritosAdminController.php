@@ -243,16 +243,19 @@ final class InscritosAdminController
     }
 
     /**
-     * Elimina un inscrit de forma definitiva (dades personals, respostes de
-     * camps personalitzats i pagaments associats). Si formava part d'una comanda
-     * de grup que queda buida, també s'esborra la comanda. Torna al llistat.
+     * Elimina un inscrit. El comportament depèn de si té algun pagament associat:
      *
-     * Proteccions anti-danys col·laterals:
-     *  - Bloqueja si té un pagament Redsys COMPLETAT (cobrament real): no es pot
-     *    destruir el registre comptable des d'aquí (cal reembossar/gestionar a part).
-     *  - Allibera l'ús del cupó de descompte que hagués consumit.
-     *  - El log de recollida (recollida_log) conserva el nom desnormalitzat: no es
-     *    perd la traça històrica encara que s'esborri l'inscrit.
+     *  - SENSE pagaments: esborrat definitiu (dades, respostes de camps, comanda
+     *    de grup buida) i s'allibera l'ús del cupó.
+     *  - AMB pagament(s): el formulari envia un mode explícit:
+     *      · mode 'cancelar' → NO s'esborra res; l'inscrit passa a estat 'cancelado'
+     *        (deixa de comptar per aforament i surt dels llistats actius) i el
+     *        pagament es conserva intacte. Útil per moure'l a un altre lloc sense
+     *        perdre el registre del cobrament.
+     *      · mode 'full' → esborrat definitiu de l'inscrit I dels seus pagaments.
+     *
+     * El log de recollida (recollida_log) conserva el nom desnormalitzat, així que
+     * la traça històrica no es perd encara que s'esborri l'inscrit.
      */
     public function destroy(Request $req, array $params): void
     {
@@ -265,29 +268,44 @@ final class InscritosAdminController
         if ($inscrito === null) Response::notFound();
         if (!Evento::userCanEdit($user->id, $user->rol, (int) $inscrito['evento_id'])) Response::forbidden();
 
-        $eventoId   = (int) $inscrito['evento_id'];
-        $pedidoId   = !empty($inscrito['pedido_id']) ? (int) $inscrito['pedido_id'] : null;
+        $eventoId    = (int) $inscrito['evento_id'];
+        $pedidoId    = !empty($inscrito['pedido_id']) ? (int) $inscrito['pedido_id'] : null;
         $descuentoId = !empty($inscrito['descuento_id']) ? (int) $inscrito['descuento_id'] : null;
-        $nom        = trim((string) $inscrito['nombre'] . ' ' . (string) ($inscrito['apellido'] ?? ''));
+        $nom         = trim((string) $inscrito['nombre'] . ' ' . (string) ($inscrito['apellido'] ?? ''));
+        $back        = base_url('/admin/inscritos?' . http_build_query(['evento_id' => $eventoId]));
 
         $db = Database::getInstance();
 
-        // Protecció: no esborrar si hi ha un cobrament real (pagament completat).
-        $pagoCompletat = (int) $db->query(
-            "SELECT COUNT(*) FROM pagos WHERE inscrito_id = ? AND estado = 'completado'",
-            [$id]
+        $numPagos = (int) $db->query(
+            'SELECT COUNT(*) FROM pagos WHERE inscrito_id = ?', [$id]
         )->fetchColumn();
-        if ($pagoCompletat > 0) {
-            Session::flash('error', 'Aquest inscrit té un pagament cobrat (TPV). No es pot eliminar des d\'aquí per no perdre el registre comptable; gestiona primer el reembossament.');
-            Response::redirect(base_url('/admin/inscritos/' . $id));
+
+        // ── Cas AMB pagament: cal un mode explícit triat per l'usuari ──
+        if ($numPagos > 0) {
+            $mode = (string) $req->post('mode', '');
+
+            if ($mode === 'cancelar') {
+                // Conservar tot; només marcar com a cancel·lat (surt de l'aforament)
+                if ($inscrito['estado'] !== 'cancelado') {
+                    $db->update('inscritos', ['estado' => 'cancelado'], ['id' => $id]);
+                    if ($descuentoId !== null) DescuentoEvento::decrementarUsos($descuentoId);
+                }
+                AuditLog::registrar('inscrit_cancelat', 'Inscrit #' . $id . ' (' . $nom . ') cancel·lat conservant el pagament · esdeveniment #' . $eventoId);
+                Session::flash('success', 'Inscrit cancel·lat. Deixa de comptar per l\'aforament i el pagament es conserva.');
+                Response::redirect($back);
+            }
+
+            if ($mode !== 'full') {
+                // Sense mode vàlid: no fer res destructiu; tornar a la fitxa
+                Session::flash('error', 'Tria una opció per gestionar el pagament abans d\'eliminar.');
+                Response::redirect(base_url('/admin/inscritos/' . $id));
+            }
+            // mode 'full' → segueix avall amb esborrat complet (inclou pagaments)
         }
 
         try {
             $db->transaction(function ($db) use ($id, $pedidoId, $descuentoId): void {
-                // Els FK amb ON DELETE CASCADE ja esborren valors de camps i pagaments,
-                // però ho fem explícit per no dependre'n.
                 $db->query('DELETE FROM inscrito_campos_valores WHERE inscrito_id = ?', [$id]);
-                // Aquí només poden quedar pagaments NO completats (iniciats/fallits/cancel·lats)
                 $db->query('DELETE FROM pagos WHERE inscrito_id = ?', [$id]);
                 $db->query('DELETE FROM inscritos WHERE id = ?', [$id]);
 
@@ -307,15 +325,16 @@ final class InscritosAdminController
                 }
             });
 
-            AuditLog::registrar('inscrit_esborrat', 'Inscrit #' . $id . ' (' . $nom . ') de l\'esdeveniment #' . $eventoId);
-            Session::flash('success', 'Inscrit eliminat correctament.');
+            $detall = $numPagos > 0 ? ' (inclòs el pagament)' : '';
+            AuditLog::registrar('inscrit_esborrat', 'Inscrit #' . $id . ' (' . $nom . ')' . $detall . ' de l\'esdeveniment #' . $eventoId);
+            Session::flash('success', 'Inscrit eliminat correctament' . ($numPagos > 0 ? ', juntament amb el pagament.' : '.'));
         } catch (\Throwable $e) {
             error_log('[InscritosAdmin] Esborrat fallit: ' . $e->getMessage());
             Session::flash('error', 'No s\'ha pogut eliminar l\'inscrit: ' . $e->getMessage());
             Response::redirect(base_url('/admin/inscritos/' . $id));
         }
 
-        Response::redirect(base_url('/admin/inscritos?' . http_build_query(['evento_id' => $eventoId])));
+        Response::redirect($back);
     }
 
     /**

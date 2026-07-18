@@ -64,12 +64,51 @@ $row = function (string $label, $value, bool $raw = false): void {
     <?php if ($evento): ?>
         <a class="btn btn-small" href="<?= e(base_url('/eventos/' . $evento['slug'])) ?>" target="_blank" rel="noopener">👁️ Veure esdeveniment</a>
     <?php endif; ?>
-    <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int) $inscrito['id'] . '/eliminar')) ?>" class="inline" style="margin-left:auto;"
-          onsubmit="return confirm('Segur que vols ELIMINAR aquest inscrit? Aquesta acció no es pot desfer.');">
+    <?php $tePagos = !empty($pagos) && count($pagos) > 0; ?>
+    <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int) $inscrito['id'] . '/eliminar')) ?>" class="inline" style="margin-left:auto;" id="form-eliminar">
         <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+        <input type="hidden" name="mode" id="del-mode" value="">
         <button type="submit" class="btn btn-small btn-danger">🗑 Eliminar inscrit</button>
     </form>
 </div>
+
+<script>
+(function () {
+    var form = document.getElementById('form-eliminar');
+    if (!form) return;
+    var tePagos = <?= $tePagos ? 'true' : 'false' ?>;
+    form.addEventListener('submit', function (e) {
+        if (!tePagos) {
+            if (!confirm('Segur que vols ELIMINAR aquest inscrit? Aquesta acció no es pot desfer.')) {
+                e.preventDefault();
+            }
+            return;
+        }
+        // Té pagament: cal triar què fer amb ell
+        e.preventDefault();
+        var opt = prompt(
+            'Aquest inscrit té un PAGAMENT associat. Què vols fer?\n\n' +
+            '1 = Eliminar només l\'inscrit i CONSERVAR el pagament\n' +
+            '    (l\'inscrit es marca com a cancel·lat, deixa de comptar per l\'aforament)\n\n' +
+            '2 = Eliminar l\'inscrit I el pagament (definitiu)\n\n' +
+            'Escriu 1 o 2 (o cancel·la per no fer res):'
+        );
+        if (opt === null) return;
+        opt = opt.trim();
+        if (opt === '1') {
+            document.getElementById('del-mode').value = 'cancelar';
+            form.submit();
+        } else if (opt === '2') {
+            if (confirm('Segur? S\'eliminaran DEFINITIVAMENT l\'inscrit i el seu pagament.')) {
+                document.getElementById('del-mode').value = 'full';
+                form.submit();
+            }
+        } else {
+            alert('Opció no vàlida. No s\'ha fet res.');
+        }
+    });
+})();
+</script>
 
 <div class="detail-cols">
     <!-- ── Dades personals ── -->
