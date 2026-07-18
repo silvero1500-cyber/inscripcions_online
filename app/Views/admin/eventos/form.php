@@ -186,6 +186,12 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
                     <?= ($isEdit ? (int)($evento['descuentos_activos'] ?? 1) : 1) === 1 ? 'checked' : '' ?>>
                 Codis de descompte actius
             </label>
+
+            <label class="inline-check">
+                <input type="checkbox" name="incidencias_activo" value="1"
+                    <?= ($isEdit ? (int)($evento['incidencias_activo'] ?? 0) : 0) === 1 ? 'checked' : '' ?>>
+                Bústia d'incidències al formulari públic
+            </label>
         </div>
 
         <div class="form-row" style="max-width:420px;">

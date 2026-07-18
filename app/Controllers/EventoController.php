@@ -115,6 +115,7 @@ final class EventoController
                     'activo'                   => $data['activo'],
                     'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
                     'descuentos_activos'       => $data['descuentos_activos'],
+                    'incidencias_activo'       => $data['incidencias_activo'],
                     'form_password'            => $data['form_password'],
                     'campos_fijos'             => $data['campos_fijos'],
                     'campos_orden'             => null,
@@ -199,6 +200,7 @@ final class EventoController
             'activo'                   => $data['activo'],
             'inscripciones_abiertas'   => $data['inscripciones_abiertas'],
             'descuentos_activos'       => $data['descuentos_activos'],
+            'incidencias_activo'       => $data['incidencias_activo'],
             'form_password'            => $data['form_password'],
             'campos_fijos'             => $data['campos_fijos'],
         ];
@@ -756,6 +758,7 @@ final class EventoController
                     'activo'                   => 0, // la còpia comença inactiva
                     'inscripciones_abiertas'   => (int) $evento['inscripciones_abiertas'],
                     'descuentos_activos'       => (int) ($evento['descuentos_activos'] ?? 1),
+                    'incidencias_activo'       => (int) ($evento['incidencias_activo'] ?? 0),
                     'form_password'            => $evento['form_password'] ?? null,
                     'campos_fijos'             => $evento['campos_fijos'] ?? null,
                     'campos_orden'             => $evento['campos_orden'] ?? null,
@@ -852,6 +855,7 @@ final class EventoController
             'activo'                   => isset($post['activo']) ? 1 : 0,
             'inscripciones_abiertas'   => isset($post['inscripciones_abiertas']) ? 1 : 0,
             'descuentos_activos'       => isset($post['descuentos_activos']) ? 1 : 0,
+            'incidencias_activo'       => isset($post['incidencias_activo']) ? 1 : 0,
             'form_password'            => trim((string)($post['form_password'] ?? '')) ?: null,
             'campos_fijos'             => CamposFijos::fromPost($post),
         ];

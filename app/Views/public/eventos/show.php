@@ -1029,6 +1029,57 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         </form>
     </div>
     <?php endif; ?>
+
+    <?php if (!empty($evento['incidencias_activo'])): ?>
+    <div class="incidencia-box" style="margin-top:2rem;text-align:center;">
+        <button type="button" id="inc-toggle" class="btn btn-secondary">🛟 <?= e(t('incidencia.button')) ?></button>
+        <div id="inc-panel" hidden style="max-width:520px;margin:1rem auto 0;text-align:left;">
+            <p class="muted" style="font-size:.9rem;margin:0 0 .6rem;"><?= e(t('incidencia.help')) ?></p>
+            <form id="inc-form" method="post" action="<?= e(base_url('/eventos/' . $evento['slug'] . '/incidencia')) ?>">
+                <?= Csrf::field() ?>
+                <div aria-hidden="true" style="position:absolute;left:-9999px;">
+                    <label>No omplir<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+                </div>
+                <textarea name="missatge" id="inc-missatge" rows="4" maxlength="3000" required
+                          style="width:100%;" placeholder="<?= e(t('incidencia.placeholder')) ?>"></textarea>
+                <div id="inc-msg" style="margin:.5rem 0;font-size:.9rem;"></div>
+                <button type="submit" id="inc-send" class="btn btn-primary"><?= e(t('incidencia.send')) ?></button>
+            </form>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var toggle = document.getElementById('inc-toggle');
+        var panel  = document.getElementById('inc-panel');
+        var form   = document.getElementById('inc-form');
+        var msg    = document.getElementById('inc-msg');
+        var send   = document.getElementById('inc-send');
+        if (!toggle || !form) return;
+        toggle.addEventListener('click', function () {
+            panel.hidden = !panel.hidden;
+            if (!panel.hidden) document.getElementById('inc-missatge').focus();
+        });
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            msg.textContent = '';
+            send.disabled = true;
+            fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    msg.style.color = d.ok ? '#15803d' : '#dc2626';
+                    msg.textContent = d.message || '';
+                    if (d.ok) { form.reset(); setTimeout(function () { panel.hidden = true; msg.textContent = ''; }, 3000); }
+                    send.disabled = false;
+                })
+                .catch(function () {
+                    msg.style.color = '#dc2626';
+                    msg.textContent = 'Error de connexió. Torna-ho a provar.';
+                    send.disabled = false;
+                });
+        });
+    })();
+    </script>
+    <?php endif; ?>
 </section>
 
 <script>

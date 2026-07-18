@@ -58,6 +58,70 @@ final class InscripcionController
         ]);
     }
 
+    /** Correu de destí de les incidències del formulari públic. */
+    private const INCIDENCIA_EMAIL = 'sergio_silvero@hotmail.com';
+
+    /**
+     * Bústia d'incidències del formulari públic (AJAX). Envia el missatge per
+     * correu a l'administrador. Només si l'event té la bústia activada.
+     * Retorna JSON {ok, message}.
+     */
+    public function incidencia(Request $req, array $params): void
+    {
+        $slug   = (string) ($params['slug'] ?? '');
+        $evento = Evento::findBySlug($slug);
+        if ($evento === null) {
+            Response::json(['ok' => false, 'message' => 'Esdeveniment no trobat.'], 404);
+        }
+        if (empty($evento['incidencias_activo'])) {
+            Response::json(['ok' => false, 'message' => 'La bústia d\'incidències no està activa.'], 403);
+        }
+        if (!Csrf::verify($req->post('_csrf'))) {
+            Response::json(['ok' => false, 'message' => 'Sessió expirada. Recarrega la pàgina.'], 419);
+        }
+
+        // Anti-bot: honeypot (camp ocult que ha de quedar buit)
+        if (trim((string) $req->post('website', '')) !== '') {
+            Response::json(['ok' => true, 'message' => 'Gràcies, ho hem rebut.']); // silenci per als bots
+        }
+
+        // Límit de freqüència per IP: màx 5 incidències / 10 min
+        $rlKey = 'incidencia:' . $req->ip;
+        if (RateLimit::tooMany($rlKey, 5, 600)) {
+            Response::json(['ok' => false, 'message' => 'Has enviat massa missatges. Torna-ho a provar més tard.'], 429);
+        }
+
+        $missatge = trim((string) $req->post('missatge', ''));
+        if (mb_strlen($missatge) < 5) {
+            Response::json(['ok' => false, 'message' => 'Escriu una mica més de detall, si us plau.']);
+        }
+        if (mb_strlen($missatge) > 3000) {
+            $missatge = mb_substr($missatge, 0, 3000);
+        }
+
+        RateLimit::hit($rlKey);
+
+        $safe = nl2br(e($missatge));
+        $html = '<h2 style="font-family:sans-serif;color:#1e88c2;">Nova incidència · formulari públic</h2>'
+              . '<p style="font-family:sans-serif;"><strong>Esdeveniment:</strong> ' . e((string) $evento['titulo']) . ' (#' . (int) $evento['id'] . ')</p>'
+              . '<p style="font-family:sans-serif;"><strong>Missatge:</strong></p>'
+              . '<div style="font-family:sans-serif;white-space:pre-wrap;border-left:3px solid #1e88c2;padding-left:12px;color:#333;">' . $safe . '</div>'
+              . '<p style="font-family:sans-serif;color:#6b7280;font-size:.85rem;margin-top:16px;">IP: ' . e((string) $req->ip) . ' · ' . date('d/m/Y H:i') . '</p>';
+
+        try {
+            EmailService::send(
+                self::INCIDENCIA_EMAIL,
+                '[Incidència] ' . (string) $evento['titulo'],
+                $html
+            );
+        } catch (\Throwable $e) {
+            error_log('[Incidencia] Enviament fallit: ' . $e->getMessage());
+            Response::json(['ok' => false, 'message' => 'No s\'ha pogut enviar. Torna-ho a provar més tard.'], 500);
+        }
+
+        Response::json(['ok' => true, 'message' => 'Gràcies! Hem rebut la teva incidència.']);
+    }
+
     public function store(Request $req, array $params): void
     {
         $slug = (string) ($params['slug'] ?? '');

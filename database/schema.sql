@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS `eventos` (
     `activo`                    TINYINT(1)      NOT NULL DEFAULT 1,
     `inscripciones_abiertas`    TINYINT(1)      NOT NULL DEFAULT 1,
     `descuentos_activos`        TINYINT(1)      NOT NULL DEFAULT 1,
+    `incidencias_activo`        TINYINT(1)      NOT NULL DEFAULT 0,
     `form_password`             VARCHAR(100)    NULL COMMENT 'Si té valor, el formulari public demana aquesta contrasenya',
     `campos_fijos`              JSON            NULL COMMENT 'Config per camp fix: obligatori/opcional/ocult',
     `franjas_config`            JSON            NULL COMMENT 'Franges de temps + calaix: [{label, calaix}]',

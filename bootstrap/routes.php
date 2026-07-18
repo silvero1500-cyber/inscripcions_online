@@ -40,6 +40,7 @@ $router->get ('/eventos/{slug}',                      [PublicController::class, 
 $router->post('/eventos/{slug}/acces',                [PublicController::class,       'acces']);
 $router->post('/eventos/{slug}/inscriure',            [InscripcionController::class,  'store']);
 $router->post('/eventos/{slug}/validar-cupo',         [InscripcionController::class,  'validarCupo']);
+$router->post('/eventos/{slug}/incidencia',           [InscripcionController::class,  'incidencia']);
 $router->post('/eventos/{slug}/llista-espera',        [WaitingListController::class,  'store']);
 $router->get ('/eventos/{slug}/gracies',              [InscripcionController::class,  'exito']);
 
