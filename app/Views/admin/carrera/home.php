@@ -72,11 +72,19 @@ $pctRec = $stats['inscritos'] > 0 ? (int) round($stats['recollits'] / $stats['in
         <span class="dash-kpi-val"><?= (int) $stats['recollits'] ?></span>
         <span class="dash-kpi-lbl">Dorsals recollits</span>
     </a>
-    <a class="dash-kpi kpi-amber" href="<?= e(base_url('/admin/recollida?evento_id=' . $evId . '&recollida=pendent')) ?>">
-        <span class="dash-kpi-ico">⏳</span>
-        <span class="dash-kpi-val"><?= (int) $stats['pendents'] ?></span>
-        <span class="dash-kpi-lbl">Dorsals pendents</span>
-    </a>
+    <?php if ($stats['comp_delta'] !== null): $d = (int) $stats['comp_delta']; ?>
+        <a class="dash-kpi <?= $d >= 0 ? 'kpi-green' : 'kpi-amber' ?>" href="<?= e(base_url('/admin/eventos/' . $evId . '/kpis')) ?>">
+            <span class="dash-kpi-ico"><?= $d >= 0 ? '📈' : '📉' ?></span>
+            <span class="dash-kpi-val"><?= ($d >= 0 ? '+' : '−') . abs($d) ?></span>
+            <span class="dash-kpi-lbl">vs edició <?= (int) $stats['comp_any'] ?> (mateix punt)</span>
+        </a>
+    <?php else: ?>
+        <a class="dash-kpi kpi-amber" href="<?= e(base_url('/admin/recollida?evento_id=' . $evId . '&recollida=pendent')) ?>">
+            <span class="dash-kpi-ico">⏳</span>
+            <span class="dash-kpi-val"><?= (int) $stats['pendents'] ?></span>
+            <span class="dash-kpi-lbl">Dorsals pendents</span>
+        </a>
+    <?php endif; ?>
     <a class="dash-kpi kpi-blue" href="<?= e(base_url('/admin/inscritos?evento_id=' . $evId)) ?>">
         <span class="dash-kpi-ico">📈</span>
         <span class="dash-kpi-val"><?= (int) $stats['darrers7'] ?></span>
