@@ -69,11 +69,6 @@ if (count($carreres) > 0) {
                     <a class="race-pill<?= trim($navActive('/admin/recollida')) ? ' active' : '' ?>"
                        href="<?= e(base_url('/admin/recollida')) ?>">Recollida de dorsals</a>
                 </nav>
-            <?php elseif ($isExport): ?>
-                <nav class="race-nav" aria-label="Exportar">
-                    <a class="race-pill<?= trim($navActive('/admin/export')) ? ' active' : '' ?>"
-                       href="<?= e(base_url('/admin/export')) ?>">Exportar CSV</a>
-                </nav>
             <?php elseif (count($carreres) > 0): ?>
                 <nav class="race-nav" aria-label="Curses">
                     <?php foreach ($carreres as $c): ?>
