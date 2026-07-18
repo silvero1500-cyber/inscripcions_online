@@ -49,14 +49,14 @@ $pctRec = $stats['inscritos'] > 0 ? (int) round($stats['recollits'] / $stats['in
 <section class="dash-quick">
     <h3>Accessos ràpids · <?= e($carrera['nombre']) ?> <?= $anio !== null ? $anio : '' ?></h3>
     <div class="dash-quick-grid">
-        <a class="dash-quick-btn" href="<?= e(base_url('/admin/recollida?evento_id=' . $evId)) ?>">🎽 <span>Recollida de dorsals</span></a>
-        <a class="dash-quick-btn" href="<?= e(base_url('/admin/inscritos?evento_id=' . $evId)) ?>">📋 <span>Inscrits</span></a>
-        <a class="dash-quick-btn" href="<?= e(base_url('/admin/inscritos/export?evento_id=' . $evId)) ?>">⬇️ <span>Exportar CSV</span></a>
-        <a class="dash-quick-btn" href="<?= e(base_url('/admin/eventos/' . $evId . '/kpis')) ?>">📊 <span>KPIs</span></a>
-        <a class="dash-quick-btn" href="<?= e(base_url('/eventos/' . $edicion['slug'])) ?>" target="_blank" rel="noopener">👁️ <span>Veure pública</span></a>
         <?php if ($isSuper): ?>
             <a class="dash-quick-btn" href="<?= e(base_url('/admin/eventos/' . $evId . '/editar')) ?>">✏️ <span>Editar edició</span></a>
         <?php endif; ?>
+        <a class="dash-quick-btn" href="<?= e(base_url('/admin/inscritos?evento_id=' . $evId)) ?>">📋 <span>Inscrits</span></a>
+        <a class="dash-quick-btn" href="<?= e(base_url('/admin/eventos/' . $evId . '/kpis')) ?>">📊 <span>KPIs</span></a>
+        <a class="dash-quick-btn" href="<?= e(base_url('/admin/recollida?evento_id=' . $evId)) ?>">🎽 <span>Recollida de dorsals</span></a>
+        <a class="dash-quick-btn" href="<?= e(base_url('/admin/inscritos/export?evento_id=' . $evId)) ?>">⬇️ <span>Exportar CSV</span></a>
+        <a class="dash-quick-btn" href="<?= e(base_url('/eventos/' . $edicion['slug'])) ?>" target="_blank" rel="noopener">👁️ <span>Veure pública</span></a>
     </div>
 </section>
 
