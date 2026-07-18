@@ -65,7 +65,10 @@ $pctAforo = function (array $ev): ?int {
         <?php if ($isSuper): ?>
             <a class="dash-quick-btn" href="<?= e(base_url('/admin/tienda')) ?>">🛍️ <span>Botiga</span></a>
             <a class="dash-quick-btn" href="<?= e(base_url('/admin/usuarios')) ?>">👥 <span>Usuaris</span></a>
-            <a class="dash-quick-btn" href="<?= e(base_url('/admin/incidencies')) ?>">🛟 <span>Incidències<?= !empty($incidenciesNoves) ? ' (' . (int) $incidenciesNoves . ')' : '' ?></span></a>
+            <a class="dash-quick-btn<?= !empty($incidenciesNoves) ? ' has-badge' : '' ?>" href="<?= e(base_url('/admin/incidencies')) ?>">
+                🛟 <span>Incidències</span>
+                <?php if (!empty($incidenciesNoves)): ?><span class="dash-badge"><?= (int) $incidenciesNoves ?></span><?php endif; ?>
+            </a>
             <a class="dash-quick-btn" href="<?= e(base_url('/admin/auditoria')) ?>">🛡️ <span>Auditoria</span></a>
             <a class="dash-quick-btn" href="<?= e(base_url('/admin/backups')) ?>">💾 <span>Còpies de seguretat</span></a>
             <a class="dash-quick-btn" href="<?= e(base_url('/admin/configuracio')) ?>">⚙️ <span>Configuració</span></a>

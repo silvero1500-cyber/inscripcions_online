@@ -1554,6 +1554,21 @@ li.col-manager-item label {
 .dash-quick-btn span { font-size: .95rem; }
 .dash-quick-btn:hover { transform: translateY(-2px); border-color: #c7d2fe; box-shadow: 0 6px 18px rgba(15,23,42,.08); }
 
+/* Notificació d'incidències pendents sobre l'accés ràpid */
+.dash-quick-btn.has-badge { position: relative; border-color: #fca5a5; }
+.dash-badge {
+    position: absolute; top: -8px; right: -8px;
+    min-width: 22px; height: 22px; padding: 0 6px;
+    display: flex; align-items: center; justify-content: center;
+    background: #dc2626; color: #fff; font-size: .8rem; font-weight: 700;
+    border-radius: 11px; box-shadow: 0 2px 6px rgba(220,38,38,.4);
+    animation: dash-badge-pulse 1.8s ease-in-out infinite;
+}
+@keyframes dash-badge-pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.12); }
+}
+
 @media (max-width: 820px) {
     .dash-kpis { grid-template-columns: repeat(2, 1fr); }
     .dash-cols { grid-template-columns: 1fr; }
