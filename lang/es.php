@@ -112,6 +112,7 @@ return [
 
     // Traducciones de campos personalizados (etiquetas/opciones guardadas en BD en catalán).
     // Clave = 'custom.' + texto original exacto. Solo se traduce lo visible.
+    'custom.Correu participant'         => 'Correo del participante',
     'custom.Capacitat diverses'         => 'Capacidades diversas',
     'custom.Capacitats diverses'        => 'Capacidades diversas',
     'custom.Discapacitat visual'        => 'Discapacidad visual',
