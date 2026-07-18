@@ -40,7 +40,8 @@ $navActive = function (string $rel, bool $exact = false) use ($curPath): string 
 // Cada pastilla obre l'edició activa d'aquella carrera. Marquem l'activa si la
 // pàgina actual treballa amb una edició d'aquesta carrera (per ?evento_id o ruta).
 $isRecollida = $currentUser && (($currentUser->rol ?? '') === 'recollida');
-$carreres = (!$isRecollida && function_exists('current_carreres')) ? current_carreres() : [];
+$isExport    = $currentUser && (($currentUser->rol ?? '') === 'export');
+$carreres = (!$isRecollida && !$isExport && function_exists('current_carreres')) ? current_carreres() : [];
 $activeCarreraId = null;
 if (count($carreres) > 0) {
     $evId = isset($_GET['evento_id']) ? (int) $_GET['evento_id'] : 0;
@@ -67,6 +68,11 @@ if (count($carreres) > 0) {
                 <nav class="race-nav" aria-label="Recollida">
                     <a class="race-pill<?= trim($navActive('/admin/recollida')) ? ' active' : '' ?>"
                        href="<?= e(base_url('/admin/recollida')) ?>">Recollida de dorsals</a>
+                </nav>
+            <?php elseif ($isExport): ?>
+                <nav class="race-nav" aria-label="Exportar">
+                    <a class="race-pill<?= trim($navActive('/admin/export')) ? ' active' : '' ?>"
+                       href="<?= e(base_url('/admin/export')) ?>">Exportar CSV</a>
                 </nav>
             <?php elseif (count($carreres) > 0): ?>
                 <nav class="race-nav" aria-label="Curses">
