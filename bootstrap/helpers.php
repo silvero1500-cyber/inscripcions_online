@@ -48,7 +48,12 @@ if (!function_exists('base_path_prefix')) {
 if (!function_exists('asset')) {
     function asset(string $path): string
     {
-        return base_url('/public/assets/' . ltrim($path, '/'));
+        $rel  = ltrim($path, '/');
+        $file = BASE_PATH . '/public/assets/' . $rel;
+        // Cache-busting: la data de modificació com a versió, perquè els
+        // navegadors (sobretot mòbils) no serveixin JS/CSS antic després d'un deploy.
+        $v = is_file($file) ? (string) filemtime($file) : '';
+        return base_url('/public/assets/' . $rel) . ($v !== '' ? '?v=' . $v : '');
     }
 }
 

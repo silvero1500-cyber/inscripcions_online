@@ -78,8 +78,14 @@ $superadmin = [[Auth::class, 'requireSuperadmin']];
 
 // Global: els usuaris 'recollida' només poden accedir a la seva zona
 $router->middleware([Auth::class, 'recollidaScope']);
+// Global: els usuaris 'export' només poden accedir a la seva zona d'exportació
+$router->middleware([Auth::class, 'exportScope']);
 
 $router->get ('/admin',                              [AdminController::class, 'dashboard'], $auth);
+
+// Zona del rol 'export' (i superadmin): descàrrega de CSV d'eventos assignats
+$router->get ('/admin/export',                       [\App\Controllers\ExportController::class, 'index'],    $auth);
+$router->get ('/admin/export/{id}/csv',              [\App\Controllers\ExportController::class, 'download'], $auth);
 
 // Entrada per carrera (barra superior) → obre l'edició activa d'aquesta carrera
 $router->get ('/admin/carrera/{slug}',               [CarreraController::class, 'enter'],   $auth);

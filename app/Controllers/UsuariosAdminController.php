@@ -70,8 +70,8 @@ final class UsuariosAdminController
             'activo'   => $data['activo'],
         ]);
 
-        // Organizador o recollida → guardar els eventos assignats del form
-        if (in_array($data['rol'], ['organizador', 'recollida'], true)) {
+        // Organizador, recollida o export → guardar els eventos assignats del form
+        if (in_array($data['rol'], ['organizador', 'recollida', 'export'], true)) {
             $eventIds = is_array($_POST['eventos'] ?? null) ? array_map('intval', $_POST['eventos']) : [];
             Usuario::setAssignedEvents($newId, $eventIds);
         }
@@ -143,8 +143,8 @@ final class UsuariosAdminController
         }
         Usuario::update($id, $payload);
 
-        // Guardar assignacions d'eventos per organizador/recollida; superadmin no en necessita
-        if (in_array($data['rol'], ['organizador', 'recollida'], true)) {
+        // Guardar assignacions d'eventos per organizador/recollida/export; superadmin no en necessita
+        if (in_array($data['rol'], ['organizador', 'recollida', 'export'], true)) {
             $eventIds = is_array($_POST['eventos'] ?? null) ? array_map('intval', $_POST['eventos']) : [];
             Usuario::setAssignedEvents($id, $eventIds);
         } else {
@@ -256,7 +256,7 @@ final class UsuariosAdminController
             'nombre'   => trim((string)($post['nombre'] ?? '')),
             'email'    => strtolower(trim((string)($post['email'] ?? ''))),
             'password' => (string)($post['password'] ?? ''),
-            'rol'      => in_array($post['rol'] ?? '', ['superadmin', 'organizador', 'recollida'], true) ? $post['rol'] : 'organizador',
+            'rol'      => in_array($post['rol'] ?? '', ['superadmin', 'organizador', 'recollida', 'export'], true) ? $post['rol'] : 'organizador',
             'activo'   => isset($post['activo']) ? 1 : 0,
         ];
     }

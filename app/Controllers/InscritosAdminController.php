@@ -547,13 +547,26 @@ final class InscritosAdminController
             Response::forbidden();
         }
 
-        $evento = Evento::findById((int) $filters['evento_id']);
-        AuditLog::registrar(AuditLog::INSCRITS_EXPORT, 'Evento «' . ($evento['titulo'] ?? '') . '» #' . (int) $filters['evento_id']);
-        $inscritos = Inscrito::listForAdminExport(array_filter($filters));
+        AuditLog::registrar(AuditLog::INSCRITS_EXPORT, 'Evento #' . (int) $filters['evento_id']);
+        self::streamCsv((int) $filters['evento_id'], array_filter($filters));
+    }
+
+    /**
+     * Genera i envia el CSV d'inscrits d'un evento (BOM UTF-8 + separador ;).
+     * Compartit entre l'export d'admin i el rol restringit 'export'. Fa exit().
+     *
+     * @param array<string,mixed> $filters  filtres opcionals (estado/search/club)
+     */
+    public static function streamCsv(int $eventoId, array $filters = []): void
+    {
+        $evento = Evento::findById($eventoId);
+        if ($evento === null) Response::notFound();
+
+        $filters['evento_id'] = $eventoId;
+        $inscritos = Inscrito::listForAdminExport($filters);
 
         // Camps personalitzats (visibles + ocults) com a columnes extra del CSV.
-        // Els ocults serveixen per omplir info a mà i tornar-la a importar.
-        $campos = CampoPersonalizado::listByEvento((int) $filters['evento_id']);
+        $campos = CampoPersonalizado::listByEvento($eventoId);
         $valores = CampoPersonalizado::valoresPorInscrito(array_map(fn($i) => (int) $i['id'], $inscritos));
 
         $filename = 'inscrits_' . preg_replace('/[^a-z0-9_-]+/i', '_', (string) $evento['slug'])

@@ -117,4 +117,19 @@ final class Auth
         if (!str_starts_with($p, '/admin')) return; // públic: permès
         Response::redirect(base_url('/admin/recollida'));
     }
+
+    /**
+     * Middleware GLOBAL: tanca els usuaris amb rol 'export' a la seva zona.
+     * Només poden accedir a /admin/export* (i login/logout); qualsevol altra
+     * ruta /admin els redirigeix a la pàgina d'exportació.
+     */
+    public static function exportScope(Request $req): void
+    {
+        if (self::rol() !== 'export') return;
+        $p = $req->path;
+        if (str_starts_with($p, '/admin/export')) return;
+        if ($p === '/admin/logout' || $p === '/admin/login') return;
+        if (!str_starts_with($p, '/admin')) return; // públic: permès
+        Response::redirect(base_url('/admin/export'));
+    }
 }

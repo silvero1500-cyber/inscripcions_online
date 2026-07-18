@@ -14,7 +14,10 @@ use App\Models\CamposFijos;
 use App\Models\Inscrito;
 use App\Services\ImageUploader;
 
-$val = fn(string $k, string $d = ''): string => (string)($old[$k] ?? $d);
+// Valor antic del POST; els checkbox múltiples arriben com a array
+$val = fn(string $k, string $d = ''): string => is_array($old[$k] ?? null)
+    ? implode(', ', array_map('strval', $old[$k]))
+    : (string)($old[$k] ?? $d);
 $err = fn(string $k): ?string => $errors[$k][0] ?? null;
 $img = ImageUploader::publicUrl($evento['imagen_portada']);
 
@@ -507,7 +510,10 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         $isTpl = !is_int($i);
         $nm  = fn(string $f): string => 'participants[' . $i . '][' . $f . ']';
         $idf = fn(string $f): string => 'p_' . $i . '_' . $f;
-        $pv  = fn(string $f, string $d = ''): string => (string) ($pd[$f] ?? $d);
+        // Valor antic del POST; els checkbox múltiples arriben com a array
+        $pv  = fn(string $f, string $d = ''): string => is_array($pd[$f] ?? null)
+            ? implode(', ', array_map('strval', $pd[$f]))
+            : (string) ($pd[$f] ?? $d);
         $pe  = fn(string $f): ?string => (!$isTpl && isset($errors["participants.$i.$f"])) ? (string) $errors["participants.$i.$f"][0] : null;
         $rm  = fn(string $k): string => CamposFijos::requerido($cf, $k) ? ' <span class="req">*</span>' : '';
         $ra  = fn(string $k): string => CamposFijos::requerido($cf, $k) ? 'required' : '';

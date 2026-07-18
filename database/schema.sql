@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
     `nombre`         VARCHAR(100)     NOT NULL,
     `email`          VARCHAR(255)     NOT NULL,
     `password_hash`  VARCHAR(255)     NOT NULL,
-    `rol`            ENUM('superadmin','organizador','recollida') NOT NULL DEFAULT 'organizador',
+    `rol`            ENUM('superadmin','organizador','recollida','export') NOT NULL DEFAULT 'organizador',
     `activo`         TINYINT(1)       NOT NULL DEFAULT 1,
     `ultimo_login`   DATETIME         NULL,
     `token_reset`    VARCHAR(100)     NULL COMMENT 'Token para reset de contraseña',

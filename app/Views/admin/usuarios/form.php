@@ -53,9 +53,10 @@ $action = $isEdit
             <select id="rol" name="rol" required>
                 <option value="organizador" <?= $val('rol') === 'organizador' ? 'selected' : '' ?>>Organitzador</option>
                 <option value="recollida" <?= $val('rol') === 'recollida' ? 'selected' : '' ?>>Recollida de dorsals</option>
+                <option value="export" <?= $val('rol') === 'export' ? 'selected' : '' ?>>Només exportar CSV</option>
                 <option value="superadmin" <?= $val('rol') === 'superadmin' ? 'selected' : '' ?>>Superadmin</option>
             </select>
-            <small class="muted">Superadmin: accés total. Organitzador: només els seus eventos. <strong>Recollida</strong>: NOMÉS la recollida de dorsals dels eventos assignats (res més).</small>
+            <small class="muted">Superadmin: accés total. Organitzador: només els seus eventos. <strong>Recollida</strong>: NOMÉS la recollida de dorsals dels eventos assignats. <strong>Només exportar CSV</strong>: NOMÉS descarregar el CSV d'inscrits dels eventos assignats.</small>
             <?php if ($err('rol')): ?><div class="field-error"><?= e($err('rol')) ?></div><?php endif; ?>
         </div>
         <div class="form-row">
@@ -84,10 +85,10 @@ $action = $isEdit
     // expressament hagi seleccionat "superadmin".
     $rolActual = $val('rol') ?: 'organizador';
     ?>
-    <div id="eventos-section" style="margin-top:1.5rem;<?= in_array($rolActual, ['organizador', 'recollida'], true) ? '' : 'display:none;' ?>">
+    <div id="eventos-section" style="margin-top:1.5rem;<?= in_array($rolActual, ['organizador', 'recollida', 'export'], true) ? '' : 'display:none;' ?>">
         <h3 style="font-size:1rem;margin:0 0 .8rem;">Eventos assignats</h3>
         <p class="muted" style="font-size:.85rem;margin:0 0 .8rem;">
-            Marca els eventos que aquest organizador podrà veure i gestionar.
+            Marca els eventos que aquest usuari podrà gestionar (segons el seu rol).
             (Els eventos on és propietari directe ja li donen accés sense necessitat de marcar-los.)
         </p>
         <?php if (count($allEventos) === 0): ?>
@@ -142,7 +143,7 @@ $action = $isEdit
     var section = document.getElementById('eventos-section');
     if (rolSelect && section) {
         rolSelect.addEventListener('change', function () {
-            section.style.display = (rolSelect.value === 'organizador' || rolSelect.value === 'recollida') ? '' : 'none';
+            section.style.display = ['organizador', 'recollida', 'export'].indexOf(rolSelect.value) !== -1 ? '' : 'none';
         });
     }
 
