@@ -73,29 +73,6 @@ $pctAforo = function (array $ev): ?int {
     </div>
 </section>
 
-<!-- ── KPIs ───────────────────────────────────────── -->
-<section class="dash-kpis">
-    <a class="dash-kpi kpi-blue" href="<?= e(base_url('/admin/eventos')) ?>">
-        <span class="dash-kpi-ico">📅</span>
-        <span class="dash-kpi-val"><?= (int) $stats['eventos'] ?></span>
-        <span class="dash-kpi-lbl">Esdeveniments actius</span>
-    </a>
-    <a class="dash-kpi kpi-green" href="<?= e(base_url('/admin/inscritos')) ?>">
-        <span class="dash-kpi-ico">✅</span>
-        <span class="dash-kpi-val"><?= (int) $stats['inscritos'] ?></span>
-        <span class="dash-kpi-lbl">Inscrits confirmats</span>
-    </a>
-    <a class="dash-kpi kpi-indigo" href="<?= e(base_url('/admin/recollida')) ?>">
-        <span class="dash-kpi-ico">🎽</span>
-        <span class="dash-kpi-val"><?= (int) $stats['recollits'] ?></span>
-        <span class="dash-kpi-lbl">Dorsals recollits</span>
-    </a>
-    <a class="dash-kpi kpi-amber" href="<?= e(base_url('/admin/inscritos')) ?>">
-        <span class="dash-kpi-ico">📈</span>
-        <span class="dash-kpi-val"><?= (int) $stats['darrers7'] ?></span>
-        <span class="dash-kpi-lbl">Inscripcions (7 dies)</span>
-    </a>
-</section>
 
 <div class="dash-cols">
     <!-- ── Pròxima carrera ──────────────────────────── -->
