@@ -89,12 +89,12 @@ if ($evolucioEdicions !== null) {
     };
 
     $edicionsSeries[] = [
-        'label' => 'Edició ' . $evolucioEdicions['anyActual'],
+        'label' => (string) $evolucioEdicions['anyActual'],
         'data'  => array_values($toAcumulat($evolucioEdicions['actual'], $edicionsDies)),
     ];
     if ($evolucioEdicions['anyAnterior'] !== null) {
         $edicionsSeries[] = [
-            'label' => 'Edició ' . $evolucioEdicions['anyAnterior'],
+            'label' => (string) $evolucioEdicions['anyAnterior'],
             'data'  => array_values($toAcumulat($evolucioEdicions['anterior'], $edicionsDies)),
         ];
     }
@@ -118,11 +118,12 @@ $tallaDona   = array_map(fn($tl) => (int) ($tallaGrupMap[$tl]['Dona'] ?? 0), $ta
 $pctTotal = fn(int $n): string => $totalActivas > 0 ? number_format($n * 100 / $totalActivas, 1, ',', '.') . '%' : '—';
 
 // ── Xip groc: valor absolut + (%) al mateix label, per veure's sense hover ──
-$chipLabels = ['si' => 'Xip propi', 'no' => 'Xip de cessió', 'sense_resposta' => 'Sense resposta'];
-$chipTotal = array_sum($porChip);
+$chipLabels = ['si' => 'Xip propi', 'no' => 'Xip de cessió'];
+// "Sense resposta" no es compta: el % es calcula només sobre propi + cessió
+$chipTotal = (int) ($porChip['si'] ?? 0) + (int) ($porChip['no'] ?? 0);
 $pctChip = fn(int $n): string => $chipTotal > 0 ? number_format($n * 100 / $chipTotal, 0) : '0';
 $chipData = [];
-foreach (['si', 'no', 'sense_resposta'] as $k) {
+foreach (['si', 'no'] as $k) {
     if (empty($porChip[$k])) continue;
     $n = (int) $porChip[$k];
     $chipData[] = ['label' => $chipLabels[$k] . ' — ' . $n . ' (' . $pctChip($n) . '%)', 'value' => $n];
@@ -274,7 +275,7 @@ $jsData = [
         <h2>Comparativa entre edicions <span class="muted" style="font-weight:400;font-size:.9rem;">(acumulat, dies abans de la cursa)</span></h2>
         <select id="edicionsRang">
             <option value="90">Últims 90 dies</option>
-            <option value="60">Últims 60 dies</option>
+            <option value="60" selected>Últims 60 dies</option>
             <option value="30">Últims 30 dies</option>
         </select>
     </div>
@@ -452,7 +453,7 @@ $jsData = [
                 const ds = chart.data.datasets;
                 if (ds.length >= 2 && ds[0].data[idx] !== undefined && ds[1].data[idx] !== undefined) {
                     const diff = ds[0].data[idx] - ds[1].data[idx];
-                    const txt = (diff >= 0 ? '+' : '−') + Math.abs(diff) + ' vs ' + (ds[1].label || '').replace('Edició ', '');
+                    const txt = (diff >= 0 ? '+' : '−') + Math.abs(diff) + ' vs ' + (ds[1].label || '');
                     ctx.font = 'bold 12px sans-serif';
                     ctx.fillStyle = diff >= 0 ? '#15803d' : '#dc2626';
                     // Enganxat a la línia, dins l'àrea del gràfic; cap a l'esquerra si és massa a prop del final
@@ -487,7 +488,7 @@ $jsData = [
             chart.update();
         }
 
-        render(90);
+        render(sel ? parseInt(sel.value, 10) : 60);
         if (sel) sel.addEventListener('change', () => render(parseInt(sel.value, 10)));
     })();
 
