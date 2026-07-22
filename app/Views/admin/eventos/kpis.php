@@ -118,12 +118,13 @@ $tallaDona   = array_map(fn($tl) => (int) ($tallaGrupMap[$tl]['Dona'] ?? 0), $ta
 $pctTotal = fn(int $n): string => $totalActivas > 0 ? number_format($n * 100 / $totalActivas, 1, ',', '.') . '%' : '—';
 
 // ── Xip groc: valor absolut + (%) al mateix label, per veure's sense hover ──
-$chipLabels = ['si' => 'Xip propi', 'no' => 'Xip de cessió'];
-// "Sense resposta" no es compta: el % es calcula només sobre propi + cessió
-$chipTotal = (int) ($porChip['si'] ?? 0) + (int) ($porChip['no'] ?? 0);
+// Els inscrits sense resposta de xip són els de curses infantils (els menors no
+// porten xip), per això aquesta franja s'etiqueta "Curses infantils".
+$chipLabels = ['si' => 'Xip propi', 'no' => 'Xip de cessió', 'sense_resposta' => 'Curses infantils'];
+$chipTotal = array_sum($porChip);
 $pctChip = fn(int $n): string => $chipTotal > 0 ? number_format($n * 100 / $chipTotal, 0) : '0';
 $chipData = [];
-foreach (['si', 'no'] as $k) {
+foreach (['si', 'no', 'sense_resposta'] as $k) {
     if (empty($porChip[$k])) continue;
     $n = (int) $porChip[$k];
     $chipData[] = ['label' => $chipLabels[$k] . ' — ' . $n . ' (' . $pctChip($n) . '%)', 'value' => $n];
