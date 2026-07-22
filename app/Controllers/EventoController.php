@@ -281,14 +281,18 @@ final class EventoController
         $totalActivas = (int) ($estados['pendiente'] ?? 0) + (int) ($estados['confirmado'] ?? 0);
 
         // ── Ingresos (solo confirmados) ────────────────────────
+        // Es fa servir el preu REALMENT aplicat (precio_aplicado) quan hi és;
+        // si no (registres antics sense aquest valor), el preu base de la tarifa.
+        // Així els events amb dades importades (preu pagat per persona) i tarifa 0
+        // mostren l'ingrés real.
         $ingresosConfirmados = (float) $db->query(
-            "SELECT COALESCE(SUM(t.precio), 0)
+            "SELECT COALESCE(SUM(COALESCE(i.precio_aplicado, t.precio)), 0)
              FROM inscritos i JOIN tarifas_evento t ON t.id = i.tarifa_id
              WHERE i.evento_id = ? AND i.estado = 'confirmado'",
             [$id]
         )->fetchColumn();
         $ingresosPotenciales = (float) $db->query(
-            "SELECT COALESCE(SUM(t.precio), 0)
+            "SELECT COALESCE(SUM(COALESCE(i.precio_aplicado, t.precio)), 0)
              FROM inscritos i JOIN tarifas_evento t ON t.id = i.tarifa_id
              WHERE i.evento_id = ? AND i.estado IN ('pendiente', 'confirmado')",
             [$id]
