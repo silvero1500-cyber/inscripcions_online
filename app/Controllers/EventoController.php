@@ -601,25 +601,30 @@ final class EventoController
         $carreraId = $evento['carrera_id'] ?? null;
         $anio      = $evento['anio_edicion'] ?? null;
 
-        $anterior = null;
-        $anyAnterior = null;
-        if (!empty($carreraId) && !empty($anio)) {
-            $ant = $db->query(
-                "SELECT id, anio_edicion, fecha_evento FROM eventos WHERE carrera_id = ? AND anio_edicion = ? LIMIT 1",
-                [(int) $carreraId, (int) $anio - 1]
-            )->fetch();
-            if ($ant) {
-                $anterior = $this->evolucioPreviaCursa($db, (int) $ant['id'], (string) $ant['fecha_evento']);
-                $anyAnterior = (int) $ant['anio_edicion'];
+        // Totes les edicions de la mateixa carrera (amb inscrits), no només l'anterior.
+        $edicions = [];
+        if (!empty($carreraId)) {
+            $rows = $db->query(
+                "SELECT id, anio_edicion, fecha_evento FROM eventos
+                 WHERE carrera_id = ? AND anio_edicion IS NOT NULL
+                 ORDER BY anio_edicion ASC",
+                [(int) $carreraId]
+            )->fetchAll();
+            foreach ($rows as $r) {
+                $punts = ((int) $r['id'] === $id)
+                    ? $actual
+                    : $this->evolucioPreviaCursa($db, (int) $r['id'], (string) $r['fecha_evento']);
+                if ($punts === null) continue; // edició sense inscrits
+                $edicions[] = ['any' => (int) $r['anio_edicion'], 'punts' => $punts];
             }
+        } else {
+            $edicions[] = ['any' => (int) ($anio ?? 0), 'punts' => $actual];
         }
 
         return [
-            'anyActual'   => (int) ($anio ?? 0),
-            'anyAnterior' => $anyAnterior,
-            'diesFalten'  => $diesFalten,
-            'actual'      => $actual ?? [],
-            'anterior'    => $anterior ?? [],
+            'anyActual'  => (int) ($anio ?? 0),
+            'diesFalten' => $diesFalten,
+            'edicions'   => $edicions,
         ];
     }
 

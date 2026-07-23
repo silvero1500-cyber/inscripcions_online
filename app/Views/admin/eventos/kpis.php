@@ -88,14 +88,11 @@ if ($evolucioEdicions !== null) {
         return $out;
     };
 
-    $edicionsSeries[] = [
-        'label' => (string) $evolucioEdicions['anyActual'],
-        'data'  => array_values($toAcumulat($evolucioEdicions['actual'], $edicionsDies)),
-    ];
-    if ($evolucioEdicions['anyAnterior'] !== null) {
+    // Una línia per cada edició existent de la carrera (ordenades per any)
+    foreach ($evolucioEdicions['edicions'] as $ed) {
         $edicionsSeries[] = [
-            'label' => (string) $evolucioEdicions['anyAnterior'],
-            'data'  => array_values($toAcumulat($evolucioEdicions['anterior'], $edicionsDies)),
+            'label' => (string) $ed['any'],
+            'data'  => array_values($toAcumulat($ed['punts'], $edicionsDies)),
         ];
     }
 }
@@ -151,6 +148,7 @@ $jsData = [
     'edicionsDies'   => $edicionsDies,
     'edicionsSeries' => $edicionsSeries,   // [{label, data[]}] acumulat
     'edicionsAvui'   => $evolucioEdicions['diesFalten'] ?? null,  // dies que falten avui (marca vermella)
+    'edicionsActual' => (string) ($evolucioEdicions['anyActual'] ?? ''),  // any de l'edició que s'està veient
 ];
 ?>
 <section class="page-head with-action">
@@ -450,14 +448,16 @@ $jsData = [
                 ctx.textAlign = 'center';
                 ctx.fillText('Avui', x, top - 4);
 
-                // Diferència d'acumulat al punt d'avui vs l'edició anterior
+                // Diferència d'acumulat al punt d'avui: edició actual vs la de l'any anterior
                 const ds = chart.data.datasets;
-                if (ds.length >= 2 && ds[0].data[idx] !== undefined && ds[1].data[idx] !== undefined) {
-                    const diff = ds[0].data[idx] - ds[1].data[idx];
-                    const txt = (diff >= 0 ? '+' : '−') + Math.abs(diff) + ' vs ' + (ds[1].label || '');
+                const actual = String(data.edicionsActual || '');
+                const cur = ds.find(function (s) { return String(s.label) === actual; });
+                const prev = ds.find(function (s) { return String(s.label) === String(parseInt(actual, 10) - 1); });
+                if (cur && prev && cur.data[idx] !== undefined && prev.data[idx] !== undefined) {
+                    const diff = cur.data[idx] - prev.data[idx];
+                    const txt = (diff >= 0 ? '+' : '−') + Math.abs(diff) + ' vs ' + prev.label;
                     ctx.font = 'bold 12px sans-serif';
                     ctx.fillStyle = diff >= 0 ? '#15803d' : '#dc2626';
-                    // Enganxat a la línia, dins l'àrea del gràfic; cap a l'esquerra si és massa a prop del final
                     const nearEnd = x > chart.chartArea.right - 90;
                     ctx.textAlign = nearEnd ? 'right' : 'left';
                     ctx.fillText(txt, nearEnd ? x - 6 : x + 6, top + 14);
