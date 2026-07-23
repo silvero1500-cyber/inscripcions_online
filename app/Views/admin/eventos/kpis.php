@@ -127,11 +127,21 @@ foreach (['si', 'no', 'sense_resposta'] as $k) {
     $chipData[] = ['label' => $chipLabels[$k] . ' — ' . $n . ' (' . $pctChip($n) . '%)', 'value' => $n];
 }
 
+// Afegeix " — N (X%)" a l'etiqueta (el % es calcula sobre el total de la sèrie),
+// igual que al gràfic de xip, perquè la llegenda mostri xifra i percentatge.
+$ambPct = function (array $items): array {
+    $tot = array_sum(array_map(fn($x) => (int) $x['value'], $items));
+    return array_map(function ($x) use ($tot) {
+        $pct = $tot > 0 ? number_format((int) $x['value'] * 100 / $tot, 0) : '0';
+        return ['label' => $x['label'] . ' — ' . (int) $x['value'] . ' (' . $pct . '%)', 'value' => (int) $x['value']];
+    }, $items);
+};
+
 // Dades JSON per a JavaScript
 $jsData = [
-    'tarifa'  => array_map(fn($r) => ['label' => $r['nombre'], 'value' => (int) $r['n']], $porTarifa),
-    'sexo'    => array_map(fn($k) => ['label' => $sexoLabels[$k] ?? $k, 'value' => (int) $porSexo[$k]], array_keys($porSexo)),
-    'pagament'=> array_map(fn($k) => ['label' => $k, 'value' => (int) $porPagament[$k]], array_keys($porPagament)),
+    'tarifa'  => $ambPct(array_map(fn($r) => ['label' => $r['nombre'], 'value' => (int) $r['n']], $porTarifa)),
+    'sexo'    => $ambPct(array_map(fn($k) => ['label' => $sexoLabels[$k] ?? $k, 'value' => (int) $porSexo[$k]], array_keys($porSexo))),
+    'pagament'=> $ambPct(array_map(fn($k) => ['label' => $k, 'value' => (int) $porPagament[$k]], array_keys($porPagament))),
     'chip'    => $chipData,
     'edat'    => array_map(fn($f) => ['label' => $f, 'value' => (int) $edatTotals[$f]], $franjaOrden),
     'edatCat' => $edatCatMap,        // [franja][categoria] = n
