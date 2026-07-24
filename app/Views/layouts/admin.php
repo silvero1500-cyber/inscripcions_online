@@ -43,6 +43,8 @@ $isRecollida = $currentUser && (($currentUser->rol ?? '') === 'recollida');
 $isExport    = $currentUser && (($currentUser->rol ?? '') === 'export');
 $carreres = (!$isRecollida && !$isExport && function_exists('current_carreres')) ? current_carreres() : [];
 $activeCarreraId = null;
+$ctxCarrera = null;   // carrera on estem treballant (per a la franja de context)
+$ctxAny = null;       // any de l'edició, si es coneix
 if (count($carreres) > 0) {
     $evId = isset($_GET['evento_id']) ? (int) $_GET['evento_id'] : 0;
     if ($evId === 0 && preg_match('#/admin/eventos/(\d+)(?:/|$)#', $curPath, $mm)) {
@@ -51,6 +53,19 @@ if (count($carreres) > 0) {
     if ($evId > 0) {
         $evRow = \App\Models\Evento::findById($evId);
         $activeCarreraId = $evRow['carrera_id'] ?? null;
+        $ctxAny = $evRow['anio_edicion'] ?? null;
+    }
+    // També quan som a la home d'una carrera: /admin/carrera/{slug}
+    if ($activeCarreraId === null && preg_match('#/admin/carrera/([^/?]+)#', $curPath, $sm)) {
+        $slug = urldecode($sm[1]);
+        foreach ($carreres as $c) {
+            if ((string) $c['slug'] === $slug) { $activeCarreraId = (int) $c['id']; break; }
+        }
+    }
+    if ($activeCarreraId !== null) {
+        foreach ($carreres as $c) {
+            if ((int) $c['id'] === (int) $activeCarreraId) { $ctxCarrera = $c; break; }
+        }
     }
 }
 ?>
@@ -91,6 +106,16 @@ if (count($carreres) > 0) {
             </div>
         </div>
     </header>
+
+    <?php if ($ctxCarrera !== null):
+        $ctxColor = !empty($ctxCarrera['color']) ? $ctxCarrera['color'] : '#1e88c2';
+    ?>
+    <div class="carrera-context" style="--ctx:<?= e($ctxColor) ?>;">
+        <span class="carrera-context-dot"></span>
+        <strong><?= e($ctxCarrera['nombre']) ?></strong>
+        <?php if (!empty($ctxAny)): ?><span class="carrera-context-any"><?= (int) $ctxAny ?></span><?php endif; ?>
+    </div>
+    <?php endif; ?>
 
     <main class="content<?= !empty($wide) ? ' content-wide' : '' ?>">
         <?= $content ?? '' ?>
