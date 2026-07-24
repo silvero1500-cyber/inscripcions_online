@@ -70,6 +70,7 @@ if (count($carreres) > 0) {
 }
 ?>
 <body class="layout-admin">
+  <div class="topbar-sticky">
     <header class="topbar topbar-light">
         <a class="brand" href="<?= e(base_url('/admin')) ?>">
             <img class="brand-logo" src="<?= e(asset('img/werun-logo.png')) ?>" alt="WeRun">
@@ -109,13 +110,20 @@ if (count($carreres) > 0) {
 
     <?php if ($ctxCarrera !== null):
         $ctxColor = !empty($ctxCarrera['color']) ? $ctxCarrera['color'] : '#1e88c2';
+        $hx = ltrim($ctxColor, '#');
+        if (strlen($hx) === 3) { $hx = $hx[0].$hx[0].$hx[1].$hx[1].$hx[2].$hx[2]; }
+        $cr = strlen($hx) === 6 ? hexdec(substr($hx, 0, 2)) : 30;
+        $cg = strlen($hx) === 6 ? hexdec(substr($hx, 2, 2)) : 136;
+        $cb = strlen($hx) === 6 ? hexdec(substr($hx, 4, 2)) : 194;
+        $ctxSoft = "rgba({$cr},{$cg},{$cb},0.13)";
     ?>
-    <div class="carrera-context" style="--ctx:<?= e($ctxColor) ?>;">
+    <div class="carrera-context" style="--ctx:<?= e($ctxColor) ?>;--ctx-soft:<?= e($ctxSoft) ?>;">
         <span class="carrera-context-dot"></span>
         <strong><?= e($ctxCarrera['nombre']) ?></strong>
         <?php if (!empty($ctxAny)): ?><span class="carrera-context-any"><?= (int) $ctxAny ?></span><?php endif; ?>
     </div>
     <?php endif; ?>
+  </div>
 
     <main class="content<?= !empty($wide) ? ' content-wide' : '' ?>">
         <?= $content ?? '' ?>

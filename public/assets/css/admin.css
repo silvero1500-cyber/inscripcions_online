@@ -163,8 +163,10 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 /* ── Layout ADMIN ───────────────────────────────────────── */
 .layout-admin { min-height: 100vh; display: flex; flex-direction: column; }
 
+/* Contenidor sticky: barra superior + franja de context viatgen juntes */
+.topbar-sticky { position: sticky; top: 0; z-index: 50; }
 .topbar {
-    position: sticky; top: 0; z-index: 50;
+    position: static;
     background: linear-gradient(120deg, #0f172a 0%, #1e3a8a 55%, #4338ca 100%);
     padding: .7rem 1.5rem;
     display: flex; align-items: center; gap: 1.5rem;
@@ -1590,8 +1592,7 @@ li.col-manager-item label {
 .carrera-context {
     display: flex; align-items: center; gap: .6rem;
     padding: .5rem 1.5rem;
-    background: color-mix(in srgb, var(--ctx) 14%, #fff);
-    border-top: 1px solid color-mix(in srgb, var(--ctx) 30%, #fff);
+    background: var(--ctx-soft, rgba(30,136,194,.13));
     border-bottom: 3px solid var(--ctx);
     color: #1e293b; font-size: 1rem;
 }
