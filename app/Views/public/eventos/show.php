@@ -1036,10 +1036,18 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
         <button type="button" id="inc-toggle" class="btn btn-secondary">🛟 <?= e(t('incidencia.button')) ?></button>
         <div id="inc-panel" hidden style="max-width:520px;margin:1rem auto 0;text-align:left;">
             <p class="muted" style="font-size:.9rem;margin:0 0 .6rem;"><?= e(t('incidencia.help')) ?></p>
+            <div class="alert alert-info" style="font-size:.9rem;margin:0 0 .8rem;">
+                <?= e(t('incidencia.recover_notice')) ?>
+                <a href="<?= e(base_url('/comprovant?e=' . urlencode((string) $evento['slug']))) ?>"><?= e(t('incidencia.recover_link')) ?></a>
+            </div>
             <form id="inc-form" method="post" action="<?= e(base_url('/eventos/' . $evento['slug'] . '/incidencia')) ?>">
                 <?= Csrf::field() ?>
                 <div aria-hidden="true" style="position:absolute;left:-9999px;">
                     <label>No omplir<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+                </div>
+                <div class="form-row" style="margin:0 0 .6rem;">
+                    <label for="inc-email"><?= e(t('incidencia.email_label')) ?></label>
+                    <input type="email" name="email" id="inc-email" maxlength="255" style="width:100%;" placeholder="nom@correu.com">
                 </div>
                 <textarea name="missatge" id="inc-missatge" rows="4" maxlength="3000" required
                           style="width:100%;" placeholder="<?= e(t('incidencia.placeholder')) ?>"></textarea>

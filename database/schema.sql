@@ -511,6 +511,7 @@ CREATE TABLE IF NOT EXISTS `incidencias` (
     `evento_id`   INT UNSIGNED NULL,
     `evento_nom`  VARCHAR(255) NULL COMMENT 'Nom desnormalitzat per si s''esborra l''event',
     `missatge`    TEXT         NOT NULL,
+    `email`       VARCHAR(255) NULL COMMENT 'Correu de contacte opcional de qui reporta',
     `estado`      ENUM('nova','resolta') NOT NULL DEFAULT 'nova',
     `ip`          VARCHAR(45)  NULL,
     `created_at`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,

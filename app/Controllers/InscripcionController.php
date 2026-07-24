@@ -99,14 +99,21 @@ final class InscripcionController
             $missatge = mb_substr($missatge, 0, 3000);
         }
 
+        // Correu de contacte opcional; si el posen, ha de ser vàlid
+        $emailContacte = trim((string) $req->post('email', ''));
+        if ($emailContacte !== '' && !filter_var($emailContacte, FILTER_VALIDATE_EMAIL)) {
+            Response::json(['ok' => false, 'message' => 'El correu indicat no és vàlid.']);
+        }
+
         RateLimit::hit($rlKey);
 
         // Desar la incidència (encara que el correu falli, queda registrada a l'admin)
-        \App\Models\Incidencia::crear((int) $evento['id'], (string) $evento['titulo'], $missatge, (string) $req->ip);
+        \App\Models\Incidencia::crear((int) $evento['id'], (string) $evento['titulo'], $missatge, (string) $req->ip, $emailContacte);
 
         $safe = nl2br(e($missatge));
         $html = '<h2 style="font-family:sans-serif;color:#1e88c2;">Nova incidència · formulari públic</h2>'
               . '<p style="font-family:sans-serif;"><strong>Esdeveniment:</strong> ' . e((string) $evento['titulo']) . ' (#' . (int) $evento['id'] . ')</p>'
+              . ($emailContacte !== '' ? '<p style="font-family:sans-serif;"><strong>Correu de contacte:</strong> <a href="mailto:' . e($emailContacte) . '">' . e($emailContacte) . '</a></p>' : '')
               . '<p style="font-family:sans-serif;"><strong>Missatge:</strong></p>'
               . '<div style="font-family:sans-serif;white-space:pre-wrap;border-left:3px solid #1e88c2;padding-left:12px;color:#333;">' . $safe . '</div>'
               . '<p style="font-family:sans-serif;color:#6b7280;font-size:.85rem;margin-top:16px;">IP: ' . e((string) $req->ip) . ' · ' . date('d/m/Y H:i') . '</p>';

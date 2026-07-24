@@ -13,13 +13,14 @@ use App\Core\Database;
 final class Incidencia
 {
     /** Crea una incidència. Tolerant: retorna l'id o 0 si falla (no bloqueja l'enviament). */
-    public static function crear(?int $eventoId, ?string $eventoNom, string $missatge, ?string $ip): int
+    public static function crear(?int $eventoId, ?string $eventoNom, string $missatge, ?string $ip, ?string $email = null): int
     {
         try {
             return Database::getInstance()->insert('incidencias', [
                 'evento_id'  => $eventoId,
                 'evento_nom' => $eventoNom !== null ? mb_substr($eventoNom, 0, 255) : null,
                 'missatge'   => mb_substr($missatge, 0, 3000),
+                'email'      => $email !== null && $email !== '' ? mb_substr($email, 0, 255) : null,
                 'estado'     => 'nova',
                 'ip'         => $ip,
             ]);

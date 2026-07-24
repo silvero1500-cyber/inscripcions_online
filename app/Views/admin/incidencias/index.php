@@ -37,7 +37,7 @@ $filtres = ['' => 'Totes', 'nova' => 'Noves', 'resolta' => 'Resoltes'];
     <div class="table-wrap">
         <table class="data-table">
             <thead>
-                <tr><th>Data</th><th>Esdeveniment</th><th>Missatge</th><th>Estat</th><th>IP</th><th></th></tr>
+                <tr><th>Data</th><th>Esdeveniment</th><th>Missatge</th><th>Correu</th><th>Estat</th><th>IP</th><th></th></tr>
             </thead>
             <tbody>
             <?php foreach ($incidencias as $i): $nova = $i['estado'] === 'nova'; ?>
@@ -45,6 +45,11 @@ $filtres = ['' => 'Totes', 'nova' => 'Noves', 'resolta' => 'Resoltes'];
                     <td style="white-space:nowrap;"><?= e(format_datetime_local((string) $i['created_at'], 'd/m/Y H:i')) ?></td>
                     <td><?= e((string) ($i['evento_nom'] ?? '—')) ?></td>
                     <td style="max-width:420px;white-space:pre-wrap;word-break:break-word;font-weight:400;"><?= e((string) $i['missatge']) ?></td>
+                    <td style="font-weight:400;">
+                        <?php if (!empty($i['email'])): ?>
+                            <a href="mailto:<?= e((string) $i['email']) ?>"><?= e((string) $i['email']) ?></a>
+                        <?php else: ?><span class="muted">—</span><?php endif; ?>
+                    </td>
                     <td>
                         <?php if ($nova): ?>
                             <span class="badge badge-warning">Nova</span>
