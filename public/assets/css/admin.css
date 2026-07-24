@@ -1585,22 +1585,3 @@ li.col-manager-item label {
 @media (max-width: 480px) {
     .dash-kpis { grid-template-columns: 1fr; }
 }
-
-/* Franja de context de cursa: color propi de la carrera on treballes */
-.carrera-context {
-    display: flex; align-items: center; gap: .6rem;
-    padding: .5rem 1.5rem;
-    background: color-mix(in srgb, var(--ctx) 14%, #fff);
-    border-top: 1px solid color-mix(in srgb, var(--ctx) 30%, #fff);
-    border-bottom: 3px solid var(--ctx);
-    color: #1e293b; font-size: 1rem;
-}
-.carrera-context strong { color: var(--ctx); font-weight: 800; letter-spacing: .2px; }
-.carrera-context-dot {
-    width: 12px; height: 12px; border-radius: 50%;
-    background: var(--ctx); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ctx) 25%, transparent);
-}
-.carrera-context-any {
-    margin-left: .1rem; background: var(--ctx); color: #fff;
-    font-weight: 700; font-size: .85rem; padding: .05rem .5rem; border-radius: 999px;
-}
