@@ -468,6 +468,9 @@ final class EventoController
         // ── Evolució comparada per dies des de l'inici d'inscripcions (edició actual vs anterior) ──
         $evolucioEdicions = $this->evolucioPerEdicions($evento);
 
+        // ── Ingressos per edició (comparativa entre anys de la mateixa carrera) ──
+        $ingressosEdicions = $this->ingressosPerEdicions($evento);
+
         View::render('admin/eventos/kpis', [
             'user'                => $user,
             'evento'              => $evento,
@@ -491,8 +494,35 @@ final class EventoController
             'darrers7'            => $darrers7,
             'comparativa'         => $comparativa,
             'evolucioEdicions'    => $evolucioEdicions,
+            'ingressosEdicions'   => $ingressosEdicions,
             'aforoMax'            => $evento['aforo_maximo'] !== null ? (int) $evento['aforo_maximo'] : null,
         ], layout: 'admin');
+    }
+
+    /**
+     * Ingressos confirmats de CADA edició de la mateixa carrera (per comparar anys).
+     * Fa servir el preu realment aplicat quan hi és; si no, el de la tarifa.
+     * @return list<array{any:int, total:float}>
+     */
+    private function ingressosPerEdicions(array $evento): array
+    {
+        $carreraId = $evento['carrera_id'] ?? null;
+        if (empty($carreraId)) return [];
+
+        return array_map(
+            fn($r) => ['any' => (int) $r['anio_edicion'], 'total' => (float) $r['total']],
+            Database::getInstance()->query(
+                "SELECT e.anio_edicion,
+                        COALESCE(SUM(COALESCE(i.precio_aplicado, t.precio)), 0) AS total
+                 FROM eventos e
+                 LEFT JOIN inscritos i ON i.evento_id = e.id AND i.estado = 'confirmado'
+                 LEFT JOIN tarifas_evento t ON t.id = i.tarifa_id
+                 WHERE e.carrera_id = ? AND e.anio_edicion IS NOT NULL
+                 GROUP BY e.id, e.anio_edicion
+                 ORDER BY e.anio_edicion ASC",
+                [(int) $carreraId]
+            )->fetchAll()
+        );
     }
 
     /**

@@ -20,6 +20,7 @@
 /** @var int $darrers7 */
 /** @var array|null $comparativa */
 /** @var array|null $evolucioEdicions */
+/** @var list<array>|null $ingressosEdicions */
 /** @var int|null $aforoMax */
 
 $sexoLabels = ['H' => 'Home', 'M' => 'Dona', 'NB' => 'No binari'];
@@ -159,6 +160,7 @@ $jsData = [
     'edicionsSeries' => $edicionsSeries,   // [{label, data[]}] acumulat
     'edicionsAvui'   => $evolucioEdicions['diesFalten'] ?? null,  // dies que falten avui (marca vermella)
     'edicionsActual' => (string) ($evolucioEdicions['anyActual'] ?? ''),  // any de l'edició que s'està veient
+    'ingressosEd'    => array_map(fn($r) => ['label' => (string) $r['any'], 'value' => round((float) $r['total'], 2)], $ingressosEdicions ?? []),
 ];
 
 // Amaga automàticament els KPIs SENSE dades reals (irrellevants per a l'event),
@@ -168,6 +170,10 @@ foreach ($tallaTotals as $tl => $n) {
     if ($tl !== 'Sense talla' && (int) $n > 0) { $mostraTalla = true; break; }
 }
 $mostraChip = ((int) ($porChip['si'] ?? 0) + (int) ($porChip['no'] ?? 0)) > 0;
+
+// Comparativa d'ingressos entre edicions: només si hi ha 2+ edicions i algun ingrés
+$ingEd = $ingressosEdicions ?? [];
+$mostraIngEd = count($ingEd) >= 2 && array_sum(array_map(fn($r) => (float) $r['total'], $ingEd)) > 0;
 ?>
 <section class="page-head with-action">
     <div>
@@ -299,6 +305,15 @@ $mostraChip = ((int) ($porChip['si'] ?? 0) + (int) ($porChip['no'] ?? 0)) > 0;
         </select>
     </div>
     <div class="kpi-chart-wrap kpi-chart-wide"><canvas id="chartEdicions"></canvas></div>
+</div>
+<?php endif; ?>
+
+<?php if ($mostraIngEd): ?>
+<div class="kpi-panel">
+    <div class="kpi-panel-head">
+        <h2>Ingressos per edició <span class="muted" style="font-weight:400;font-size:.9rem;">(confirmats, comparativa entre anys)</span></h2>
+    </div>
+    <div class="kpi-chart-wrap kpi-chart-wide"><canvas id="chartIngEd"></canvas></div>
 </div>
 <?php endif; ?>
 
@@ -513,6 +528,28 @@ $mostraChip = ((int) ($porChip['si'] ?? 0) + (int) ($porChip['no'] ?? 0)) > 0;
 
         render(sel ? parseInt(sel.value, 10) : 60);
         if (sel) sel.addEventListener('change', () => render(parseInt(sel.value, 10)));
+    })();
+
+    // ── Ingressos per edició (barres, € per any) ────────────
+    (function () {
+        const el = document.getElementById('chartIngEd');
+        if (!el || !data.ingressosEd || data.ingressosEd.length === 0) return;
+        const eur = v => new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
+        new Chart(el, {
+            type: 'bar',
+            data: {
+                labels: data.ingressosEd.map(d => d.label),
+                datasets: [{ data: data.ingressosEd.map(d => d.value), backgroundColor: colors, borderRadius: 4 }]
+            },
+            options: {
+                ...baseOpts,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => eur(ctx.parsed.y) } }
+                },
+                scales: { y: { beginAtZero: true, ticks: { callback: v => eur(v) } } }
+            }
+        });
     })();
 
     // ── Talla samarreta apilada (Unisex / Dona) ─────────────
