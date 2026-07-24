@@ -160,6 +160,13 @@ $jsData = [
     'edicionsAvui'   => $evolucioEdicions['diesFalten'] ?? null,  // dies que falten avui (marca vermella)
     'edicionsActual' => (string) ($evolucioEdicions['anyActual'] ?? ''),  // any de l'edició que s'està veient
 ];
+
+// Config dels camps fixos de l'event → per amagar KPIs de camps que no es recullen.
+// Un KPI és irrellevant (i no es mostra) si el seu camp està marcat com "ocult".
+$cfgFijos = is_string($evento['campos_fijos'] ?? null)
+    ? (json_decode((string) $evento['campos_fijos'], true) ?: [])
+    : (array) ($evento['campos_fijos'] ?? []);
+$campActiu = fn(string $k): bool => ($cfgFijos[$k] ?? 'opcional') !== 'ocult';
 ?>
 <section class="page-head with-action">
     <div>
@@ -240,10 +247,12 @@ $jsData = [
         <h2>Per mètode de pagament</h2>
         <div class="kpi-chart-wrap"><canvas id="chartPagament"></canvas></div>
     </div>
+    <?php if ($campActiu('chip_groc')): ?>
     <div class="kpi-panel">
         <h2>Xip groc: propi o de cessió</h2>
         <div class="kpi-chart-wrap"><canvas id="chartChip"></canvas></div>
     </div>
+    <?php endif; ?>
 </div>
 
 <div class="kpi-panel">
@@ -292,6 +301,7 @@ $jsData = [
 </div>
 <?php endif; ?>
 
+<?php if ($campActiu('talla_camiseta')): ?>
 <div class="kpi-panel">
     <h2>Talla samarreta <span class="muted" style="font-weight:400;font-size:.9rem;">(unisex / dona)</span></h2>
     <div class="kpi-grid kpi-grid-2">
@@ -320,6 +330,7 @@ $jsData = [
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <?php /* ══ NIVELL 4 · tops amb % sobre total ═══════════════════ */ ?>
 <div class="kpi-grid kpi-grid-2">
