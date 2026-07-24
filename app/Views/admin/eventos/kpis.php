@@ -503,16 +503,60 @@ $mostraIngEd = count($ingEd) >= 2 && array_sum(array_map(fn($r) => (float) $r['t
             }
         };
 
+        // Estimació per a l'edició actual: des d'AVUI fins al dia de la cursa,
+        // projecta seguint la FORMA mitjana de les altres edicions (normalitzada
+        // per la mida actual). projectat[d] = actual_avui × mitjana(altres[d]/altres[avui]).
+        function buildEstimacio() {
+            const D = data.edicionsAvui;
+            if (D === null || D === undefined) return null;
+            const actual = String(data.edicionsActual || '');
+            const cur = (data.edicionsSeries || []).find(s => String(s.label) === actual);
+            if (!cur) return null;
+            const jD = data.edicionsDies.indexOf(D);
+            if (jD < 0) return null;
+            const curAtD = cur.data[jD];
+            if (curAtD === null || curAtD === undefined) return null;
+            const others = (data.edicionsSeries || []).filter(s => String(s.label) !== actual);
+            if (others.length === 0) return null;
+            const estFull = data.edicionsDies.map((d, j) => {
+                if (d > D) return null;                 // abans d'avui: sense estimació
+                let sum = 0, cnt = 0;
+                others.forEach(s => { const base = s.data[jD]; if (base > 0) { sum += s.data[j] / base; cnt++; } });
+                if (!cnt) return null;
+                return Math.round(curAtD * (sum / cnt));
+            });
+            return estFull;
+        }
+
         let chart = null;
         function render(rang) {
             // edicionsDies va de 90 (fa temps) a 0 (dia de la cursa); ens quedem els últims N dies abans de la cursa
             const idxStart = data.edicionsDies.findIndex(d => d <= rang);
             const dies = data.edicionsDies.slice(idxStart);
             const labels = dies.map(d => d === 0 ? 'Cursa' : `-${d}`);
+            const D = data.edicionsAvui;
+            let curColor = '#dc2626';
             const datasets = (data.edicionsSeries || []).map((s, idx) => {
                 const c = colors[idx % colors.length];
-                return { label: s.label, data: s.data.slice(idxStart), borderColor: c, backgroundColor: c + '22', tension: 0.3, fill: false, pointRadius: 0, borderWidth: 2 };
+                const isCur = String(s.label) === String(data.edicionsActual || '');
+                if (isCur) curColor = c;
+                let arr = s.data.slice(idxStart);
+                // La línia sòlida de l'edició actual acaba a "Avui" (els dies futurs es projecten amb la discontínua)
+                if (isCur && D !== null && D !== undefined) {
+                    arr = arr.map((v, k) => (dies[k] < D ? null : v));
+                }
+                return { label: s.label, data: arr, borderColor: c, backgroundColor: c + '22', tension: 0.3, fill: false, pointRadius: 0, borderWidth: 2, spanGaps: false };
             });
+            // Línia d'estimació de l'edició actual (discontínua, mateix color)
+            const estFull = buildEstimacio();
+            if (estFull) {
+                datasets.push({
+                    label: (data.edicionsActual || '') + ' (estimació)',
+                    data: estFull.slice(idxStart),
+                    borderColor: curColor, borderDash: [5, 4], borderWidth: 2,
+                    tension: 0.3, fill: false, pointRadius: 0, spanGaps: false
+                });
+            }
             if (chart) { chart.destroy(); }
             chart = new Chart(el, {
                 type: 'line',
