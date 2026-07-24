@@ -161,12 +161,13 @@ $jsData = [
     'edicionsActual' => (string) ($evolucioEdicions['anyActual'] ?? ''),  // any de l'edició que s'està veient
 ];
 
-// Config dels camps fixos de l'event → per amagar KPIs de camps que no es recullen.
-// Un KPI és irrellevant (i no es mostra) si el seu camp està marcat com "ocult".
-$cfgFijos = is_string($evento['campos_fijos'] ?? null)
-    ? (json_decode((string) $evento['campos_fijos'], true) ?: [])
-    : (array) ($evento['campos_fijos'] ?? []);
-$campActiu = fn(string $k): bool => ($cfgFijos[$k] ?? 'opcional') !== 'ocult';
+// Amaga automàticament els KPIs SENSE dades reals (irrellevants per a l'event),
+// independentment de la config: es basa en si hi ha inscrits amb aquell valor.
+$mostraTalla = false;
+foreach ($tallaTotals as $tl => $n) {
+    if ($tl !== 'Sense talla' && (int) $n > 0) { $mostraTalla = true; break; }
+}
+$mostraChip = ((int) ($porChip['si'] ?? 0) + (int) ($porChip['no'] ?? 0)) > 0;
 ?>
 <section class="page-head with-action">
     <div>
@@ -247,7 +248,7 @@ $campActiu = fn(string $k): bool => ($cfgFijos[$k] ?? 'opcional') !== 'ocult';
         <h2>Per mètode de pagament</h2>
         <div class="kpi-chart-wrap"><canvas id="chartPagament"></canvas></div>
     </div>
-    <?php if ($campActiu('chip_groc')): ?>
+    <?php if ($mostraChip): ?>
     <div class="kpi-panel">
         <h2>Xip groc: propi o de cessió</h2>
         <div class="kpi-chart-wrap"><canvas id="chartChip"></canvas></div>
@@ -301,7 +302,7 @@ $campActiu = fn(string $k): bool => ($cfgFijos[$k] ?? 'opcional') !== 'ocult';
 </div>
 <?php endif; ?>
 
-<?php if ($campActiu('talla_camiseta')): ?>
+<?php if ($mostraTalla): ?>
 <div class="kpi-panel">
     <h2>Talla samarreta <span class="muted" style="font-weight:400;font-size:.9rem;">(unisex / dona)</span></h2>
     <div class="kpi-grid kpi-grid-2">
