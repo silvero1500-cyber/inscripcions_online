@@ -3,14 +3,14 @@
 /** @var array|null $usuario */
 /** @var array $old */
 /** @var array $errors */
-/** @var list<array> $allEventos */
-/** @var list<int> $assignedIds */
+/** @var list<array> $allCarreres */
+/** @var list<int> $assignedCarreraIds */
 
 $isEdit = $usuario !== null;
-$assignedSet = array_flip($assignedIds);
-// Si hi ha old['eventos'] (form failed validation), usar-lo per preservar selecció
-$oldEventos = isset($old['eventos']) && is_array($old['eventos'])
-    ? array_flip(array_map('intval', $old['eventos']))
+$assignedSet = array_flip($assignedCarreraIds);
+// Si hi ha old['carreres'] (form failed validation), usar-lo per preservar selecció
+$oldCarreres = isset($old['carreres']) && is_array($old['carreres'])
+    ? array_flip(array_map('intval', $old['carreres']))
     : null;
 $val = function (string $key, string $default = '') use ($old, $usuario): string {
     if (isset($old[$key])) return (string) $old[$key];
@@ -78,7 +78,7 @@ $action = $isEdit
         </label>
     </div>
 
-    <!-- ── Eventos assignats (només si és organizador) ── -->
+    <!-- ── Carreres assignades (organizador/recollida/export) ── -->
     <?php
     // Per defecte, en creació de nou usuari el rol comença buit però el <select>
     // mostra "Organitzador" (primera opció). Mostrar la secció a no ser que
@@ -86,46 +86,27 @@ $action = $isEdit
     $rolActual = $val('rol') ?: 'organizador';
     ?>
     <div id="eventos-section" style="margin-top:1.5rem;<?= in_array($rolActual, ['organizador', 'recollida', 'export'], true) ? '' : 'display:none;' ?>">
-        <h3 style="font-size:1rem;margin:0 0 .8rem;">Eventos assignats</h3>
+        <h3 style="font-size:1rem;margin:0 0 .8rem;">Curses amb accés</h3>
         <p class="muted" style="font-size:.85rem;margin:0 0 .8rem;">
-            Marca els eventos que aquest usuari podrà gestionar (segons el seu rol).
-            (Els eventos on és propietari directe ja li donen accés sense necessitat de marcar-los.)
+            Marca les curses que aquest usuari podrà gestionar. Tindrà accés a
+            <strong>totes les edicions</strong> de la cursa (també les inactives o passades).
         </p>
-        <?php if (count($allEventos) === 0): ?>
-            <p class="muted">No hi ha cap evento creat encara.</p>
+        <?php if (count($allCarreres) === 0): ?>
+            <p class="muted">No hi ha cap cursa creada encara.</p>
         <?php else: ?>
-            <div style="margin-bottom:.5rem;display:flex;gap:.5rem;justify-content:flex-end;">
-                <button type="button" class="btn-small" onclick="toggleAllEventos(true)">Marcar tots</button>
-                <button type="button" class="btn-small" onclick="toggleAllEventos(false)">Desmarcar tots</button>
-            </div>
-            <div class="grid-wrap">
-                <table class="data-grid" id="eventosGrid">
-                    <thead>
-                        <tr>
-                            <th style="width:40px;"></th>
-                            <th>Nom de l'evento</th>
-                            <th>Data</th>
-                            <th class="cell-right">Inscrits</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($allEventos as $ev): ?>
-                        <?php
-                        $eid = (int)$ev['id'];
-                        $checked = $oldEventos !== null ? isset($oldEventos[$eid]) : isset($assignedSet[$eid]);
-                        ?>
-                        <tr class="evento-row<?= $checked ? ' is-checked' : '' ?>" data-eid="<?= $eid ?>">
-                            <td>
-                                <input type="checkbox" name="eventos[]" value="<?= $eid ?>" <?= $checked ? 'checked' : '' ?>
-                                       class="evento-check-input">
-                            </td>
-                            <td><strong><?= e($ev['titulo']) ?></strong></td>
-                            <td><?= e(date('d/m/Y', strtotime((string)$ev['fecha_evento']))) ?></td>
-                            <td class="cell-right"><?= (int)$ev['inscrits'] ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
+            <div class="carreres-checks" style="display:flex;flex-direction:column;gap:.5rem;">
+                <?php foreach ($allCarreres as $c): ?>
+                    <?php
+                    $cid = (int) $c['id'];
+                    $checked = $oldCarreres !== null ? isset($oldCarreres[$cid]) : isset($assignedSet[$cid]);
+                    $inactiva = (int) ($c['activa'] ?? 1) !== 1;
+                    ?>
+                    <label class="inline-check" style="display:flex;align-items:center;gap:.5rem;">
+                        <input type="checkbox" name="carreres[]" value="<?= $cid ?>" <?= $checked ? 'checked' : '' ?>>
+                        <strong><?= e($c['nombre']) ?></strong>
+                        <?php if ($inactiva): ?><span class="badge badge-muted" style="font-size:.75rem;">inactiva</span><?php endif; ?>
+                    </label>
+                <?php endforeach; ?>
             </div>
         <?php endif; ?>
     </div>
@@ -138,7 +119,7 @@ $action = $isEdit
 
 <script>
 (function () {
-    // Mostrar/amagar la secció d'eventos segons el rol
+    // Mostrar/amagar la secció de curses segons el rol
     var rolSelect = document.getElementById('rol');
     var section = document.getElementById('eventos-section');
     if (rolSelect && section) {
@@ -146,28 +127,5 @@ $action = $isEdit
             section.style.display = ['organizador', 'recollida', 'export'].indexOf(rolSelect.value) !== -1 ? '' : 'none';
         });
     }
-
-    // Fer tota la fila clicable per marcar/desmarcar el check
-    var rows = document.querySelectorAll('.evento-row');
-    rows.forEach(function (row) {
-        var cb = row.querySelector('.evento-check-input');
-        if (!cb) return;
-        row.addEventListener('click', function (e) {
-            if (e.target.tagName === 'INPUT') return; // no doblar el clic si va al check
-            cb.checked = !cb.checked;
-            row.classList.toggle('is-checked', cb.checked);
-        });
-        cb.addEventListener('change', function () {
-            row.classList.toggle('is-checked', cb.checked);
-        });
-    });
 })();
-
-// Helpers de marcar tots / desmarcar tots
-function toggleAllEventos(state) {
-    document.querySelectorAll('.evento-check-input').forEach(function (cb) {
-        cb.checked = state;
-        cb.closest('tr').classList.toggle('is-checked', state);
-    });
-}
 </script>

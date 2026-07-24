@@ -205,6 +205,43 @@ final class Usuario
         });
     }
 
+    /**
+     * IDs de CARRERES a què l'usuari té accés: aquelles de les quals té assignat
+     * algun dels seus eventos (via organizador_evento).
+     * @return list<int>
+     */
+    public static function assignedCarreraIds(int $usuarioId): array
+    {
+        $rows = Database::getInstance()->query(
+            'SELECT DISTINCT e.carrera_id
+             FROM organizador_evento oe JOIN eventos e ON e.id = oe.evento_id
+             WHERE oe.usuario_id = ? AND e.carrera_id IS NOT NULL',
+            [$usuarioId]
+        )->fetchAll(\PDO::FETCH_COLUMN);
+        return array_map('intval', $rows);
+    }
+
+    /**
+     * Assigna l'usuari a TOTES les edicions (eventos) de les carreres indicades,
+     * incloses les inactives/arxivades. Substitueix el set anterior. Els eventos
+     * sense carrera no es toquen (queden fora d'aquest model).
+     *
+     * @param list<int> $carreraIds
+     */
+    public static function setAssignedCarreras(int $usuarioId, array $carreraIds): void
+    {
+        $ids = array_values(array_filter(array_map('intval', $carreraIds), fn($n) => $n > 0));
+        $eventIds = [];
+        if ($ids !== []) {
+            $ph = implode(',', array_fill(0, count($ids), '?'));
+            $eventIds = array_map('intval', Database::getInstance()->query(
+                "SELECT id FROM eventos WHERE carrera_id IN ($ph)",
+                $ids
+            )->fetchAll(\PDO::FETCH_COLUMN));
+        }
+        self::setAssignedEvents($usuarioId, $eventIds);
+    }
+
     public static function emailExists(string $email, ?int $exceptId = null): bool
     {
         $email = strtolower(trim($email));

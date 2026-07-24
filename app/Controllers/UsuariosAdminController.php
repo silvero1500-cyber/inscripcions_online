@@ -42,8 +42,8 @@ final class UsuariosAdminController
             'usuario'     => null,
             'old'         => $oldJson ? (json_decode($oldJson, true) ?: []) : [],
             'errors'      => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
-            'allEventos'  => self::allEventos(),
-            'assignedIds' => [],
+            'allCarreres' => \App\Models\Carrera::all(),
+            'assignedCarreraIds' => [],
         ], layout: 'admin');
     }
 
@@ -70,10 +70,10 @@ final class UsuariosAdminController
             'activo'   => $data['activo'],
         ]);
 
-        // Organizador, recollida o export → guardar els eventos assignats del form
+        // Organizador, recollida o export → assignar per CARRERA (totes les seves edicions)
         if (in_array($data['rol'], ['organizador', 'recollida', 'export'], true)) {
-            $eventIds = is_array($_POST['eventos'] ?? null) ? array_map('intval', $_POST['eventos']) : [];
-            Usuario::setAssignedEvents($newId, $eventIds);
+            $carreraIds = is_array($_POST['carreres'] ?? null) ? array_map('intval', $_POST['carreres']) : [];
+            Usuario::setAssignedCarreras($newId, $carreraIds);
         }
 
         AuditLog::registrar(AuditLog::USUARI_CREAT, $data['email'] . ' (' . $data['rol'] . ')');
@@ -97,8 +97,8 @@ final class UsuariosAdminController
             'usuario'     => $usuario,
             'old'         => $oldJson ? (json_decode($oldJson, true) ?: []) : [],
             'errors'      => $errorsJson ? (json_decode($errorsJson, true) ?: []) : [],
-            'allEventos'  => self::allEventos(),
-            'assignedIds' => Usuario::assignedEventIds($id),
+            'allCarreres' => \App\Models\Carrera::all(),
+            'assignedCarreraIds' => Usuario::assignedCarreraIds($id),
         ], layout: 'admin');
     }
 
@@ -143,10 +143,10 @@ final class UsuariosAdminController
         }
         Usuario::update($id, $payload);
 
-        // Guardar assignacions d'eventos per organizador/recollida/export; superadmin no en necessita
+        // Guardar assignacions per CARRERA (organizador/recollida/export); superadmin no en necessita
         if (in_array($data['rol'], ['organizador', 'recollida', 'export'], true)) {
-            $eventIds = is_array($_POST['eventos'] ?? null) ? array_map('intval', $_POST['eventos']) : [];
-            Usuario::setAssignedEvents($id, $eventIds);
+            $carreraIds = is_array($_POST['carreres'] ?? null) ? array_map('intval', $_POST['carreres']) : [];
+            Usuario::setAssignedCarreras($id, $carreraIds);
         } else {
             Usuario::setAssignedEvents($id, []);
         }

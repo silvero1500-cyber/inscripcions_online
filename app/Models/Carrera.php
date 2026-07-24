@@ -24,6 +24,14 @@ final class Carrera
         )->fetchAll();
     }
 
+    /** Totes les carreres, incloses les inactives (per assignar accés a usuaris). */
+    public static function all(): array
+    {
+        return Database::getInstance()->query(
+            'SELECT * FROM carreres ORDER BY activa DESC, orden, nombre'
+        )->fetchAll();
+    }
+
     public static function findById(int $id): ?array
     {
         $row = Database::getInstance()
