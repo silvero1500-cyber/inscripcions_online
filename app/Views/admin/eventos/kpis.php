@@ -192,6 +192,7 @@ $mostraIngEd = count($ingEd) >= 2 && array_sum(array_map(fn($r) => (float) $r['t
 $fidelEds = ($fidelitzacio !== null) ? ($fidelitzacio['edicions'] ?? []) : [];
 $fidelActual = ($fidelitzacio !== null) ? ($fidelitzacio['actual'] ?? null) : null;
 $mostraFidel = count($fidelEds) >= 2;
+$kpisHidden = $kpisHidden ?? [];
 ?>
 <section class="page-head with-action">
     <div>
@@ -199,10 +200,22 @@ $mostraFidel = count($fidelEds) >= 2;
         <p class="muted"><?= e(format_date_ca((string) $evento['fecha_evento'], true)) ?></p>
     </div>
     <div style="display:flex;gap:.6rem;">
+        <button type="button" class="btn" id="kpiCustomize">⚙️ Personalitzar</button>
         <a class="btn" href="<?= e(base_url('/admin/eventos')) ?>">← Tornar</a>
         <a class="btn" href="<?= e(base_url('/admin/eventos/' . (int) $evento['id'] . '/editar')) ?>">Editar</a>
     </div>
 </section>
+
+<div id="kpiCustomPanel" hidden class="panel" style="max-width:460px;margin:0 0 1.2rem;padding:1rem 1.2rem;">
+    <h3 style="margin:0 0 .3rem;font-size:1rem;">⚙️ Personalitzar KPIs</h3>
+    <p class="muted small" style="margin:0 0 .8rem;">Desmarca els gràfics que no vulguis veure. Es desa al teu compte.</p>
+    <div id="kpiCustomList" style="display:flex;flex-direction:column;gap:.4rem;"></div>
+</div>
+<script>
+    window.__kpiCsrf = <?= json_encode(\App\Core\Csrf::token()) ?>;
+    window.__kpiSaveUrl = <?= json_encode(base_url('/admin/kpis/prefs')) ?>;
+    window.__kpiHidden = <?= json_encode(array_values($kpisHidden), JSON_UNESCAPED_UNICODE) ?>;
+</script>
 
 <?php $barEvento = $evento; $barActual = 'kpis'; require __DIR__ . '/../partials/cursa_bar.php'; ?>
 
@@ -260,27 +273,27 @@ $mostraFidel = count($fidelEds) >= 2;
 
 <?php /* ══ NIVELL 2 · desglossos ══════════════════════════════ */ ?>
 <div class="kpi-grid kpi-grid-4">
-    <div class="kpi-panel">
+    <div class="kpi-panel" data-kpi="categoria" data-kpi-title="Per categoria">
         <h2>Per categoria</h2>
         <div class="kpi-chart-wrap"><canvas id="chartCategoria"></canvas></div>
     </div>
-    <div class="kpi-panel">
+    <div class="kpi-panel" data-kpi="sexe" data-kpi-title="Per sexe">
         <h2>Per sexe</h2>
         <div class="kpi-chart-wrap"><canvas id="chartSexo"></canvas></div>
     </div>
-    <div class="kpi-panel">
+    <div class="kpi-panel" data-kpi="pagament" data-kpi-title="Per mètode de pagament">
         <h2>Per mètode de pagament</h2>
         <div class="kpi-chart-wrap"><canvas id="chartPagament"></canvas></div>
     </div>
     <?php if ($mostraChip): ?>
-    <div class="kpi-panel">
+    <div class="kpi-panel" data-kpi="xip" data-kpi-title="Xip groc">
         <h2>Xip groc: propi o de cessió</h2>
         <div class="kpi-chart-wrap"><canvas id="chartChip"></canvas></div>
     </div>
     <?php endif; ?>
 </div>
 
-<div class="kpi-panel">
+<div class="kpi-panel" data-kpi="edat" data-kpi-title="Per franja d'edat">
     <div class="kpi-panel-head">
         <h2 id="edatTitol">Per franja d'edat</h2>
         <button type="button" id="edatBack" class="btn btn-small" style="display:none;">← Totes les franges</button>
@@ -290,7 +303,7 @@ $mostraFidel = count($fidelEds) >= 2;
 </div>
 
 <?php if (!empty($vendaTrams)): ?>
-<div class="kpi-panel">
+<div class="kpi-panel" data-kpi="trams" data-kpi-title="Venda per trams">
     <h2>Venda per trams</h2>
     <p class="muted small" style="margin:.2rem 0 1rem;">Inscrits segons el preu (tram) que se'ls va aplicar en inscriure's.</p>
     <div class="kpi-chart-wrap kpi-chart-wide"><canvas id="chartTrams"></canvas></div>
@@ -298,7 +311,7 @@ $mostraFidel = count($fidelEds) >= 2;
 <?php endif; ?>
 
 <?php /* ══ NIVELL 3 · evolució 90 dies + talla ════════════════ */ ?>
-<div class="kpi-panel">
+<div class="kpi-panel" data-kpi="evolucio" data-kpi-title="Evolució inscrits (90 dies)">
     <div class="kpi-panel-head">
         <h2>Evolució inscrits <span class="muted" style="font-weight:400;font-size:.9rem;">(últims 90 dies)</span></h2>
         <?php if ($creixementMitja !== null): ?>
@@ -313,7 +326,7 @@ $mostraFidel = count($fidelEds) >= 2;
 </div>
 
 <?php if (count($edicionsSeries) > 1): ?>
-<div class="kpi-panel">
+<div class="kpi-panel" data-kpi="comparativa" data-kpi-title="Comparativa entre edicions">
     <div class="kpi-panel-head">
         <h2>Comparativa entre edicions <span class="muted" style="font-weight:400;font-size:.9rem;">(acumulat, dies abans de la cursa)</span></h2>
         <select id="edicionsRang">
@@ -327,7 +340,7 @@ $mostraFidel = count($fidelEds) >= 2;
 <?php endif; ?>
 
 <?php if ($mostraIngEd): ?>
-<div class="kpi-panel">
+<div class="kpi-panel" data-kpi="ingressos-ed" data-kpi-title="Ingressos per edició">
     <div class="kpi-panel-head">
         <h2>Ingressos per edició <span class="muted" style="font-weight:400;font-size:.9rem;">(confirmats, comparativa entre anys)</span></h2>
     </div>
@@ -336,7 +349,7 @@ $mostraFidel = count($fidelEds) >= 2;
 <?php endif; ?>
 
 <?php if ($mostraFidel): ?>
-<div class="kpi-panel">
+<div class="kpi-panel" data-kpi="fidelitzacio" data-kpi-title="Fidelització">
     <div class="kpi-panel-head">
         <h2>Fidelització <span class="muted" style="font-weight:400;font-size:.9rem;">(% que ja havien participat en una edició anterior)</span></h2>
         <?php if ($fidelActual !== null): ?>
@@ -351,7 +364,7 @@ $mostraFidel = count($fidelEds) >= 2;
 <?php endif; ?>
 
 <?php if ($mostraTalla): ?>
-<div class="kpi-panel">
+<div class="kpi-panel" data-kpi="talla" data-kpi-title="Talla samarreta">
     <h2>Talla samarreta <span class="muted" style="font-weight:400;font-size:.9rem;">(unisex / dona)</span></h2>
     <div class="kpi-grid kpi-grid-2">
         <div>
@@ -383,7 +396,7 @@ $mostraFidel = count($fidelEds) >= 2;
 
 <?php /* ══ NIVELL 4 · tops amb % sobre total ═══════════════════ */ ?>
 <div class="kpi-grid kpi-grid-2">
-    <div class="kpi-panel">
+    <div class="kpi-panel" data-kpi="top-clubs" data-kpi-title="Top clubs">
         <h2>Top clubs</h2>
         <?php if (count($topClubs) === 0): ?>
             <p class="muted">Cap inscrit ha indicat club.</p>
@@ -402,7 +415,7 @@ $mostraFidel = count($fidelEds) >= 2;
             </table>
         <?php endif; ?>
     </div>
-    <div class="kpi-panel">
+    <div class="kpi-panel" data-kpi="top-poblacions" data-kpi-title="Top poblacions">
         <h2>Top poblacions</h2>
         <?php if (count($topPoblaciones) === 0): ?>
             <p class="muted">Cap inscrit ha indicat població.</p>
@@ -763,5 +776,62 @@ $mostraFidel = count($fidelEds) >= 2;
 
     btnBack.addEventListener('click', renderFranges);
     renderFranges();
+})();
+
+// ── Personalitzador de KPIs (amagar/mostrar, desat per usuari) ──
+(function () {
+    var btn = document.getElementById('kpiCustomize');
+    var panel = document.getElementById('kpiCustomPanel');
+    var list = document.getElementById('kpiCustomList');
+    if (!btn || !panel || !list) return;
+
+    function panels() { return Array.prototype.slice.call(document.querySelectorAll('[data-kpi]')); }
+
+    // Aplica l'estat desat (amaga els KPIs que l'usuari havia ocultat)
+    (function applyHidden() {
+        var h = window.__kpiHidden || [];
+        panels().forEach(function (p) {
+            if (h.indexOf(p.getAttribute('data-kpi')) !== -1) p.style.display = 'none';
+        });
+    })();
+
+    function currentHidden() {
+        return panels().filter(function (p) { return p.style.display === 'none'; })
+                       .map(function (p) { return p.getAttribute('data-kpi'); });
+    }
+
+    function save() {
+        var body = new FormData();
+        body.append('_csrf', window.__kpiCsrf || '');
+        currentHidden().forEach(function (id) { body.append('hidden[]', id); });
+        fetch(window.__kpiSaveUrl, { method: 'POST', body: body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .catch(function () {});
+    }
+
+    function buildList() {
+        list.innerHTML = '';
+        panels().forEach(function (p) {
+            var id = p.getAttribute('data-kpi');
+            var title = p.getAttribute('data-kpi-title') || id;
+            var visible = p.style.display !== 'none';
+            var lbl = document.createElement('label');
+            lbl.className = 'inline-check';
+            lbl.style.cssText = 'display:flex;align-items:center;gap:.5rem;';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.checked = visible;
+            cb.addEventListener('change', function () {
+                p.style.display = cb.checked ? '' : 'none';
+                save();
+            });
+            lbl.appendChild(cb);
+            lbl.appendChild(document.createTextNode(' ' + title));
+            list.appendChild(lbl);
+        });
+    }
+
+    btn.addEventListener('click', function () {
+        if (panel.hidden) { buildList(); panel.hidden = false; }
+        else { panel.hidden = true; }
+    });
 })();
 </script>

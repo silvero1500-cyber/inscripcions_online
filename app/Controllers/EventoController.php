@@ -499,8 +499,37 @@ final class EventoController
             'evolucioEdicions'    => $evolucioEdicions,
             'ingressosEdicions'   => $ingressosEdicions,
             'fidelitzacio'        => $fidelitzacio,
+            'kpisHidden'          => (function () use ($user) {
+                $raw = \App\Models\UserPref::get($user->id, 'kpis_hidden');
+                $arr = $raw ? (json_decode($raw, true) ?: []) : [];
+                return is_array($arr) ? array_values(array_filter(array_map('strval', $arr))) : [];
+            })(),
             'aforoMax'            => $evento['aforo_maximo'] !== null ? (int) $evento['aforo_maximo'] : null,
         ], layout: 'admin');
+    }
+
+    /**
+     * Desa la preferència de KPIs amagats per l'usuari (personalització del panell).
+     * Rep {hidden: ["id1","id2",...]}. Resposta JSON.
+     */
+    public function saveKpisPrefs(Request $req): void
+    {
+        $user = Auth::user();
+        if (!Csrf::verify($req->post('_csrf'))) Response::json(['ok' => false], 419);
+
+        $hidden = $req->post('hidden');
+        if (is_string($hidden)) $hidden = json_decode($hidden, true);
+        if (!is_array($hidden)) $hidden = [];
+        // sanititzar: només ids curts alfanumèrics/guions
+        $clean = [];
+        foreach ($hidden as $h) {
+            $h = preg_replace('/[^a-z0-9_-]/i', '', (string) $h);
+            if ($h !== '') $clean[] = $h;
+        }
+        $clean = array_values(array_unique($clean));
+
+        \App\Models\UserPref::set($user->id, 'kpis_hidden', (string) json_encode($clean));
+        Response::json(['ok' => true]);
     }
 
     /**

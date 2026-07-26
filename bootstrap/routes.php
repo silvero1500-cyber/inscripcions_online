@@ -97,6 +97,7 @@ $router->get ('/admin/eventos/nou',                  [EventoController::class, '
 $router->post('/admin/eventos',                      [EventoController::class, 'store'],   $superadmin);
 $router->get ('/admin/eventos/{id}/editar',          [EventoController::class, 'edit'],    $superadmin);
 $router->get ('/admin/eventos/{id}/kpis',            [EventoController::class, 'kpis'],    $auth);
+$router->post('/admin/kpis/prefs',                   [EventoController::class, 'saveKpisPrefs'], $auth);
 $router->get ('/admin/eventos/{id}/descuentos',          [DescuentosController::class, 'index'],         $auth);
 $router->get ('/admin/eventos/{id}/descuentos/generar', [DescuentosController::class, 'generar'],       $auth);
 $router->post('/admin/eventos/{id}/descuentos/generar', [DescuentosController::class, 'generarStore'],  $auth);
