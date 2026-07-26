@@ -200,12 +200,16 @@ $kpisHidden = $kpisHidden ?? [];
         <p class="muted"><?= e(format_date_ca((string) $evento['fecha_evento'], true)) ?></p>
     </div>
     <div style="display:flex;gap:.6rem;">
-        <button type="button" class="btn btn-primary" id="kpiCustomize">⚙️ Tria quins gràfics veure</button>
         <a class="btn" href="<?= e(base_url('/admin/eventos')) ?>">← Tornar</a>
         <a class="btn" href="<?= e(base_url('/admin/eventos/' . (int) $evento['id'] . '/editar')) ?>">Editar</a>
     </div>
 </section>
 
+<?php $barEvento = $evento; $barActual = 'kpis'; require __DIR__ . '/../partials/cursa_bar.php'; ?>
+
+<div style="margin:0 0 1rem;">
+    <button type="button" class="btn btn-primary" id="kpiCustomize">⚙️ Tria quins gràfics veure</button>
+</div>
 <div id="kpiCustomPanel" hidden class="panel" style="max-width:480px;margin:0 0 1.2rem;padding:1rem 1.2rem;border:2px solid #1e88c2;">
     <h3 style="margin:0 0 .3rem;font-size:1rem;">⚙️ Quins gràfics vols veure?</h3>
     <p class="muted small" style="margin:0 0 .8rem;">Marca els que vols mostrar i desmarca els que no. Després prem <strong>Desar</strong>.</p>
@@ -221,8 +225,6 @@ $kpisHidden = $kpisHidden ?? [];
     window.__kpiSaveUrl = <?= json_encode(base_url('/admin/kpis/prefs')) ?>;
     window.__kpiHidden = <?= json_encode(array_values($kpisHidden), JSON_UNESCAPED_UNICODE) ?>;
 </script>
-
-<?php $barEvento = $evento; $barActual = 'kpis'; require __DIR__ . '/../partials/cursa_bar.php'; ?>
 
 <?php /* ══ NIVELL 1 · 4 targetes ══════════════════════════════ */ ?>
 <div class="kpi-grid kpi-grid-4">
