@@ -200,16 +200,21 @@ $kpisHidden = $kpisHidden ?? [];
         <p class="muted"><?= e(format_date_ca((string) $evento['fecha_evento'], true)) ?></p>
     </div>
     <div style="display:flex;gap:.6rem;">
-        <button type="button" class="btn" id="kpiCustomize">⚙️ Personalitzar</button>
+        <button type="button" class="btn btn-primary" id="kpiCustomize">⚙️ Tria quins gràfics veure</button>
         <a class="btn" href="<?= e(base_url('/admin/eventos')) ?>">← Tornar</a>
         <a class="btn" href="<?= e(base_url('/admin/eventos/' . (int) $evento['id'] . '/editar')) ?>">Editar</a>
     </div>
 </section>
 
-<div id="kpiCustomPanel" hidden class="panel" style="max-width:460px;margin:0 0 1.2rem;padding:1rem 1.2rem;">
-    <h3 style="margin:0 0 .3rem;font-size:1rem;">⚙️ Personalitzar KPIs</h3>
-    <p class="muted small" style="margin:0 0 .8rem;">Desmarca els gràfics que no vulguis veure. Es desa al teu compte.</p>
-    <div id="kpiCustomList" style="display:flex;flex-direction:column;gap:.4rem;"></div>
+<div id="kpiCustomPanel" hidden class="panel" style="max-width:480px;margin:0 0 1.2rem;padding:1rem 1.2rem;border:2px solid #1e88c2;">
+    <h3 style="margin:0 0 .3rem;font-size:1rem;">⚙️ Quins gràfics vols veure?</h3>
+    <p class="muted small" style="margin:0 0 .8rem;">Marca els que vols mostrar i desmarca els que no. Després prem <strong>Desar</strong>.</p>
+    <div id="kpiCustomList" style="display:flex;flex-direction:column;gap:.45rem;"></div>
+    <div style="display:flex;align-items:center;gap:.8rem;margin-top:1rem;padding-top:.8rem;border-top:1px solid #e5e7eb;">
+        <button type="button" class="btn btn-primary" id="kpiSave">💾 Desar</button>
+        <button type="button" class="btn" id="kpiClose">Tancar</button>
+        <span id="kpiSaveMsg" class="muted small" style="margin-left:auto;"></span>
+    </div>
 </div>
 <script>
     window.__kpiCsrf = <?= json_encode(\App\Core\Csrf::token()) ?>;
@@ -795,17 +800,30 @@ $kpisHidden = $kpisHidden ?? [];
         });
     })();
 
+    var saveBtn = document.getElementById('kpiSave');
+    var closeBtn = document.getElementById('kpiClose');
+    var msg = document.getElementById('kpiSaveMsg');
+
     function currentHidden() {
         return panels().filter(function (p) { return p.style.display === 'none'; })
                        .map(function (p) { return p.getAttribute('data-kpi'); });
     }
 
-    function save() {
+    function setMsg(text, color) {
+        if (!msg) return;
+        msg.textContent = text || '';
+        msg.style.color = color || '';
+    }
+
+    function save(cb) {
         var body = new FormData();
         body.append('_csrf', window.__kpiCsrf || '');
         currentHidden().forEach(function (id) { body.append('hidden[]', id); });
+        setMsg('Desant…', '');
         fetch(window.__kpiSaveUrl, { method: 'POST', body: body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .catch(function () {});
+            .then(function (r) { return r.json(); })
+            .then(function (d) { setMsg(d && d.ok ? '✓ Desat' : 'No s\'ha pogut desar', d && d.ok ? '#15803d' : '#dc2626'); if (cb) cb(); })
+            .catch(function () { setMsg('Error de connexió', '#dc2626'); });
     }
 
     function buildList() {
@@ -816,12 +834,12 @@ $kpisHidden = $kpisHidden ?? [];
             var visible = p.style.display !== 'none';
             var lbl = document.createElement('label');
             lbl.className = 'inline-check';
-            lbl.style.cssText = 'display:flex;align-items:center;gap:.5rem;';
+            lbl.style.cssText = 'display:flex;align-items:center;gap:.5rem;cursor:pointer;';
             var cb = document.createElement('input');
             cb.type = 'checkbox'; cb.checked = visible;
             cb.addEventListener('change', function () {
-                p.style.display = cb.checked ? '' : 'none';
-                save();
+                p.style.display = cb.checked ? '' : 'none';   // vista prèvia en viu
+                setMsg('Canvis sense desar', '#b45309');
             });
             lbl.appendChild(cb);
             lbl.appendChild(document.createTextNode(' ' + title));
@@ -830,8 +848,10 @@ $kpisHidden = $kpisHidden ?? [];
     }
 
     btn.addEventListener('click', function () {
-        if (panel.hidden) { buildList(); panel.hidden = false; }
+        if (panel.hidden) { buildList(); setMsg('', ''); panel.hidden = false; panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
         else { panel.hidden = true; }
     });
+    if (saveBtn) saveBtn.addEventListener('click', function () { save(); });
+    if (closeBtn) closeBtn.addEventListener('click', function () { save(function () { panel.hidden = true; }); });
 })();
 </script>
