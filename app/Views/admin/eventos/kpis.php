@@ -21,6 +21,7 @@
 /** @var array|null $comparativa */
 /** @var array|null $evolucioEdicions */
 /** @var list<array>|null $ingressosEdicions */
+/** @var array|null $fidelitzacio */
 /** @var int|null $aforoMax */
 
 $sexoLabels = ['H' => 'Home', 'M' => 'Dona', 'NB' => 'No binari'];
@@ -161,6 +162,18 @@ $jsData = [
     'edicionsAvui'   => $evolucioEdicions['diesFalten'] ?? null,  // dies que falten avui (marca vermella)
     'edicionsActual' => (string) ($evolucioEdicions['anyActual'] ?? ''),  // any de l'edició que s'està veient
     'ingressosEd'    => array_map(fn($r) => ['label' => (string) $r['any'], 'value' => round((float) $r['total'], 2)], $ingressosEdicions ?? []),
+    // Fidelització: % repetidors per edició (excloent la primera, que no té anterior)
+    'fidelEd'        => (function () use ($fidelitzacio) {
+        if ($fidelitzacio === null || empty($fidelitzacio['edicions'])) return [];
+        $eds = $fidelitzacio['edicions'];
+        $minAny = min(array_map(fn($e) => (int) $e['any'], $eds));
+        $out = [];
+        foreach ($eds as $e) {
+            if ((int) $e['any'] === $minAny) continue; // la 1a no té edició anterior
+            $out[] = ['label' => (string) $e['any'], 'value' => (float) $e['pct']];
+        }
+        return $out;
+    })(),
 ];
 
 // Amaga automàticament els KPIs SENSE dades reals (irrellevants per a l'event),
@@ -174,6 +187,11 @@ $mostraChip = ((int) ($porChip['si'] ?? 0) + (int) ($porChip['no'] ?? 0)) > 0;
 // Comparativa d'ingressos entre edicions: només si hi ha 2+ edicions i algun ingrés
 $ingEd = $ingressosEdicions ?? [];
 $mostraIngEd = count($ingEd) >= 2 && array_sum(array_map(fn($r) => (float) $r['total'], $ingEd)) > 0;
+
+// Fidelització: només si hi ha alguna edició amb anterior (2+ edicions)
+$fidelEds = ($fidelitzacio !== null) ? ($fidelitzacio['edicions'] ?? []) : [];
+$fidelActual = ($fidelitzacio !== null) ? ($fidelitzacio['actual'] ?? null) : null;
+$mostraFidel = count($fidelEds) >= 2;
 ?>
 <section class="page-head with-action">
     <div>
@@ -314,6 +332,21 @@ $mostraIngEd = count($ingEd) >= 2 && array_sum(array_map(fn($r) => (float) $r['t
         <h2>Ingressos per edició <span class="muted" style="font-weight:400;font-size:.9rem;">(confirmats, comparativa entre anys)</span></h2>
     </div>
     <div class="kpi-chart-wrap kpi-chart-wide"><canvas id="chartIngEd"></canvas></div>
+</div>
+<?php endif; ?>
+
+<?php if ($mostraFidel): ?>
+<div class="kpi-panel">
+    <div class="kpi-panel-head">
+        <h2>Fidelització <span class="muted" style="font-weight:400;font-size:.9rem;">(% que ja havien participat en una edició anterior)</span></h2>
+        <?php if ($fidelActual !== null): ?>
+            <span class="kpi-growth" style="background:#e0f2fe;color:#075985;">
+                🔁 <strong><?= e(number_format($fidelActual['pct'], 1, ',', '.')) ?>%</strong> repetidors
+                · <?= (int) $fidelActual['novells'] ?> nous
+            </span>
+        <?php endif; ?>
+    </div>
+    <div class="kpi-chart-wrap kpi-chart-wide"><canvas id="chartFidel"></canvas></div>
 </div>
 <?php endif; ?>
 
@@ -592,6 +625,27 @@ $mostraIngEd = count($ingEd) >= 2 && array_sum(array_map(fn($r) => (float) $r['t
                     tooltip: { callbacks: { label: ctx => eur(ctx.parsed.y) } }
                 },
                 scales: { y: { beginAtZero: true, ticks: { callback: v => eur(v) } } }
+            }
+        });
+    })();
+
+    // ── Fidelització: % repetidors per edició (barres) ──────
+    (function () {
+        const el = document.getElementById('chartFidel');
+        if (!el || !data.fidelEd || data.fidelEd.length === 0) return;
+        new Chart(el, {
+            type: 'bar',
+            data: {
+                labels: data.fidelEd.map(d => d.label),
+                datasets: [{ data: data.fidelEd.map(d => d.value), backgroundColor: '#0ea5e9', borderRadius: 4 }]
+            },
+            options: {
+                ...baseOpts,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => ctx.parsed.y + '% repetidors' } }
+                },
+                scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }
             }
         });
     })();

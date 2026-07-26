@@ -471,6 +471,9 @@ final class EventoController
         // ── Ingressos per edició (comparativa entre anys de la mateixa carrera) ──
         $ingressosEdicions = $this->ingressosPerEdicions($evento);
 
+        // ── Fidelització: repetidors per edició (match per email/DNI amb anys anteriors) ──
+        $fidelitzacio = $this->fidelitzacioPerEdicions($evento);
+
         View::render('admin/eventos/kpis', [
             'user'                => $user,
             'evento'              => $evento,
@@ -495,6 +498,7 @@ final class EventoController
             'comparativa'         => $comparativa,
             'evolucioEdicions'    => $evolucioEdicions,
             'ingressosEdicions'   => $ingressosEdicions,
+            'fidelitzacio'        => $fidelitzacio,
             'aforoMax'            => $evento['aforo_maximo'] !== null ? (int) $evento['aforo_maximo'] : null,
         ], layout: 'admin');
     }
@@ -523,6 +527,81 @@ final class EventoController
                 [(int) $carreraId]
             )->fetchAll()
         );
+    }
+
+    /**
+     * Fidelització: per cada edició de la carrera, quants inscrits ja havien
+     * participat en ALGUNA edició anterior (match per email o DNI). Es calcula
+     * en PHP carregant una sola vegada (any, email, dni) de tota la carrera.
+     *
+     * @return array{
+     *   edicions: list<array{any:int, total:int, repetidors:int, pct:float}>,
+     *   actual: array{any:int, total:int, repetidors:int, novells:int, pct:float}|null
+     * }|null
+     */
+    private function fidelitzacioPerEdicions(array $evento): ?array
+    {
+        $carreraId = $evento['carrera_id'] ?? null;
+        if (empty($carreraId)) return null;
+
+        $rows = Database::getInstance()->query(
+            "SELECT e.anio_edicion AS any, LOWER(TRIM(i.email)) AS email, UPPER(TRIM(COALESCE(i.dni,''))) AS dni
+             FROM inscritos i JOIN eventos e ON e.id = i.evento_id
+             WHERE e.carrera_id = ? AND e.anio_edicion IS NOT NULL
+               AND i.estado IN ('pendiente','confirmado')",
+            [(int) $carreraId]
+        )->fetchAll();
+        if (count($rows) === 0) return null;
+
+        // Primer any en què apareix cada email / dni
+        $emailMin = [];
+        $dniMin = [];
+        foreach ($rows as $r) {
+            $any = (int) $r['any'];
+            if ($r['email'] !== '') {
+                $emailMin[$r['email']] = isset($emailMin[$r['email']]) ? min($emailMin[$r['email']], $any) : $any;
+            }
+            if ($r['dni'] !== '') {
+                $dniMin[$r['dni']] = isset($dniMin[$r['dni']]) ? min($dniMin[$r['dni']], $any) : $any;
+            }
+        }
+
+        // Per edició: total i repetidors (email o dni vistos en un any anterior)
+        $agg = []; // any => [total, rep]
+        foreach ($rows as $r) {
+            $any = (int) $r['any'];
+            if (!isset($agg[$any])) $agg[$any] = ['total' => 0, 'rep' => 0];
+            $agg[$any]['total']++;
+            $repeteix = false;
+            if ($r['email'] !== '' && isset($emailMin[$r['email']]) && $emailMin[$r['email']] < $any) $repeteix = true;
+            if (!$repeteix && $r['dni'] !== '' && isset($dniMin[$r['dni']]) && $dniMin[$r['dni']] < $any) $repeteix = true;
+            if ($repeteix) $agg[$any]['rep']++;
+        }
+        ksort($agg);
+
+        $edicions = [];
+        foreach ($agg as $any => $a) {
+            $pct = $a['total'] > 0 ? round($a['rep'] * 100 / $a['total'], 1) : 0.0;
+            $edicions[] = ['any' => (int) $any, 'total' => (int) $a['total'], 'repetidors' => (int) $a['rep'], 'pct' => $pct];
+        }
+
+        // Resum de l'edició que s'està veient
+        $anyActual = (int) ($evento['anio_edicion'] ?? 0);
+        $actual = null;
+        foreach ($edicions as $ed) {
+            if ($ed['any'] === $anyActual) {
+                $actual = [
+                    'any'        => $ed['any'],
+                    'total'      => $ed['total'],
+                    'repetidors' => $ed['repetidors'],
+                    'novells'    => $ed['total'] - $ed['repetidors'],
+                    'pct'        => $ed['pct'],
+                ];
+                break;
+            }
+        }
+
+        return ['edicions' => $edicions, 'actual' => $actual];
     }
 
     /**
