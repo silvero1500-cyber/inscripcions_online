@@ -102,6 +102,7 @@ return [
     'form.submit'                      => 'Inscribirme y pagar',
     'form.submit.free'                 => 'Inscribirme',
     'form.rate_limited'                => 'Se han hecho demasiadas inscripciones seguidas desde esta conexión. Espera unos minutos y vuelve a intentarlo.',
+    'form.duplicate_recent'            => 'Ya hemos recibido tu inscripción hace un momento. Revisa tu correo; no hace falta volver a enviarla.',
     'event.access.intro'               => 'El acceso a este formulario está restringido. Introduce la contraseña que te ha facilitado la organización.',
     'event.access.label'               => 'Contraseña de acceso',
     'event.access.submit'              => 'Acceder',

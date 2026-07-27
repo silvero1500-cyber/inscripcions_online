@@ -252,6 +252,23 @@ final class InscripcionController
             Response::redirect(base_url('/eventos/' . $slug) . '#formulari');
         }
 
+        // ── Anti-duplicat (doble enviament) ──────────────────
+        // Si fa menys de 3 min ja ha entrat una inscripció idèntica (mateix event,
+        // tarifa, email, nom i cognom), és un reenviament → no en creem una altra.
+        $dupId = (int) Database::getInstance()->query(
+            "SELECT id FROM inscritos
+             WHERE evento_id = ? AND tarifa_id = ? AND LOWER(email) = ?
+               AND LOWER(nombre) = ? AND LOWER(COALESCE(apellido,'')) = ?
+               AND created_at > (NOW() - INTERVAL 3 MINUTE)
+             ORDER BY id DESC LIMIT 1",
+            [$eventoId, $tarifaId, strtolower((string) $data['email']),
+             strtolower((string) $data['nombre']), strtolower((string) ($data['apellido'] ?? ''))]
+        )->fetchColumn();
+        if ($dupId > 0) {
+            Session::flash('success', t('form.duplicate_recent'));
+            Response::redirect(base_url('/eventos/' . $slug));
+        }
+
         // ── Codi de descompte (opcional) ─────────────────────
         // Si l'esdeveniment té els descomptes desactivats, s'ignora el codi rebut.
         $descuentoCodigo = empty($evento['descuentos_activos'])
@@ -477,6 +494,22 @@ final class InscripcionController
             Session::flash('insc_old', (string) json_encode($post, JSON_UNESCAPED_UNICODE));
             Session::flash('insc_errors', (string) json_encode($errors, JSON_UNESCAPED_UNICODE));
             Response::redirect(base_url('/eventos/' . $slug) . '#formulari');
+        }
+
+        // ── Anti-duplicat (doble enviament d'un grup) ────────
+        // Si fa menys de 3 min ja ha entrat una comanda d'aquest event amb el mateix
+        // email de contacte i el mateix nombre de participants, és un reenviament.
+        $dupPed = (int) Database::getInstance()->query(
+            "SELECT p.id FROM pedidos p
+             WHERE p.evento_id = ? AND LOWER(p.email) = ?
+               AND p.created_at > (NOW() - INTERVAL 3 MINUTE)
+               AND (SELECT COUNT(*) FROM inscritos i WHERE i.pedido_id = p.id) = ?
+             ORDER BY p.id DESC LIMIT 1",
+            [$eventoId, $contactEmail, count($prepared)]
+        )->fetchColumn();
+        if ($dupPed > 0) {
+            Session::flash('success', t('form.duplicate_recent'));
+            Response::redirect(base_url('/eventos/' . $slug));
         }
 
         // ── Secció crítica: pedido + N inscritos en una transacció (tot o res) ──

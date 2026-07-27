@@ -102,6 +102,7 @@ return [
     'form.submit'                      => "Inscriure'm i pagar",
     'form.submit.free'                 => "Inscriure'm",
     'form.rate_limited'                => "S'han fet massa inscripcions seguides des d'aquesta connexió. Espera uns minuts i torna-ho a provar.",
+    'form.duplicate_recent'            => "Ja hem rebut la teva inscripció fa un moment. Revisa el teu correu; no cal tornar-la a enviar.",
     'event.access.intro'               => "L'accés a aquest formulari està restringit. Introdueix la contrasenya que t'ha facilitat l'organització.",
     'event.access.label'               => "Contrasenya d'accés",
     'event.access.submit'              => 'Accedir',

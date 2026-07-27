@@ -971,7 +971,13 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
             if (!ok) {
                 ev.preventDefault();
                 if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
             }
+            // Evitar doble enviament: bloqueja el botó un cop enviat
+            if (form.dataset.sent === '1') { ev.preventDefault(); return; }
+            form.dataset.sent = '1';
+            var b = form.querySelector('button[type="submit"]');
+            if (b) { b.disabled = true; b.style.opacity = '.6'; b.textContent = 'Enviant…'; }
         });
 
         renumber(); recalcTotal();
@@ -1171,7 +1177,13 @@ foreach ($campos as $cc) $camposById[(int) $cc['id']] = $cc;
             if (!check(true)) {
                 e.preventDefault();
                 msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
             }
+            // Evitar doble enviament
+            if (form.dataset.sent === '1') { e.preventDefault(); return; }
+            form.dataset.sent = '1';
+            var b = form.querySelector('button[type="submit"]');
+            if (b) { b.disabled = true; b.style.opacity = '.6'; b.textContent = 'Enviant…'; }
         });
     }
 })();
