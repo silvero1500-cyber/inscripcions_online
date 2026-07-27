@@ -50,6 +50,15 @@ $row = function (string $label, $value, bool $raw = false): void {
     <div class="alert alert-error"><?= e($flash['error']) ?></div>
 <?php endif; ?>
 
+<?php $duplicatDe = !empty($inscrito['duplicado_de']) ? (int) $inscrito['duplicado_de'] : 0; ?>
+<?php if ($duplicatDe): ?>
+    <div class="alert alert-warning">
+        ⚠️ Aquesta inscripció està marcada com a <strong>duplicada</strong> de la
+        <a href="<?= e(base_url('/admin/inscritos/' . $duplicatDe)) ?>">inscripció #<?= $duplicatDe ?></a>.
+        No compta per l'aforament ni els KPIs, però es conserva perquè el seu QR porti a la inscripció bona.
+    </div>
+<?php endif; ?>
+
 <!-- ── Accions ── -->
 <div class="detail-actions">
     <?php if ($estado === 'confirmado'): ?>
@@ -64,6 +73,21 @@ $row = function (string $label, $value, bool $raw = false): void {
     <?php if ($evento): ?>
         <a class="btn btn-small" href="<?= e(base_url('/eventos/' . $evento['slug'])) ?>" target="_blank" rel="noopener">👁️ Veure esdeveniment</a>
     <?php endif; ?>
+
+    <?php if ($duplicatDe): ?>
+        <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int) $inscrito['id'] . '/duplicat-desfer')) ?>" class="inline"
+              onsubmit="return confirm('Desfer el marcatge de duplicat? La inscripció tornarà a comptar com a confirmada.');">
+            <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+            <button type="submit" class="btn btn-small">↩️ Desfer duplicat (de #<?= $duplicatDe ?>)</button>
+        </form>
+    <?php else: ?>
+        <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int) $inscrito['id'] . '/duplicat')) ?>" class="inline" id="form-duplicat">
+            <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
+            <input type="hidden" name="canonical_id" id="dup-canonical" value="">
+            <button type="submit" class="btn btn-small btn-secondary">🔁 Marcar com a duplicat</button>
+        </form>
+    <?php endif; ?>
+
     <?php $tePagos = !empty($pagos) && count($pagos) > 0; ?>
     <form method="post" action="<?= e(base_url('/admin/inscritos/' . (int) $inscrito['id'] . '/eliminar')) ?>" class="inline" style="margin-left:auto;" id="form-eliminar">
         <input type="hidden" name="_csrf" value="<?= e(\App\Core\Csrf::token()) ?>">
@@ -73,6 +97,26 @@ $row = function (string $label, $value, bool $raw = false): void {
 </div>
 
 <script>
+(function () {
+    var fd = document.getElementById('form-duplicat');
+    if (!fd) return;
+    fd.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var id = prompt(
+            'Marcar aquesta inscripció (#<?= (int) $inscrito['id'] ?>) com a DUPLICADA.\n\n' +
+            'Indica l\'ID de la inscripció BONA (la que es queda).\n' +
+            'La duplicada deixarà de comptar, però el seu QR seguirà portant a la bona.'
+        );
+        if (id === null) return;
+        id = id.trim().replace(/^#/, '');
+        if (!/^\d+$/.test(id) || parseInt(id, 10) <= 0) {
+            alert('ID no vàlid. Escriu només el número de la inscripció bona.');
+            return;
+        }
+        document.getElementById('dup-canonical').value = id;
+        fd.submit();
+    });
+})();
 (function () {
     var form = document.getElementById('form-eliminar');
     if (!form) return;

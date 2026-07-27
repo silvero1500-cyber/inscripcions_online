@@ -243,6 +243,109 @@ final class InscritosAdminController
     }
 
     /**
+     * Marca un inscrit com a DUPLICAT d'un altre (la inscripció "bona"):
+     *  - es posa a estat 'cancelado' (surt d'aforament, KPIs i llistats actius),
+     *  - es desa `duplicado_de` = ID de la inscripció bona,
+     *  - NO s'esborra res: el seu qr_token segueix existint, així que si el
+     *    corredor es presenta amb aquest QR, la recollida el resol i el porta
+     *    a la inscripció bona (mostrant un avís).
+     * Es conserva el pagament si en tenia. Allibera l'ús del cupó (com cancel·lar).
+     */
+    public function marcarDuplicat(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+
+        $inscrito = Inscrito::findById($id);
+        if ($inscrito === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, (int) $inscrito['evento_id'])) Response::forbidden();
+
+        $back      = base_url('/admin/inscritos/' . $id);
+        $canonical = (int) $req->post('canonical_id', 0);
+
+        if ($canonical <= 0) {
+            Session::flash('error', 'Indica l\'ID de la inscripció bona (la que es queda).');
+            Response::redirect($back);
+        }
+        if ($canonical === $id) {
+            Session::flash('error', 'Una inscripció no pot ser duplicada d\'ella mateixa.');
+            Response::redirect($back);
+        }
+
+        $bona = Inscrito::findById($canonical);
+        if ($bona === null) {
+            Session::flash('error', 'No existeix cap inscripció amb l\'ID #' . $canonical . '.');
+            Response::redirect($back);
+        }
+        if ((int) $bona['evento_id'] !== (int) $inscrito['evento_id']) {
+            Session::flash('error', 'La inscripció bona ha de ser del mateix esdeveniment.');
+            Response::redirect($back);
+        }
+        // Evitar cadenes: si la "bona" ja és marcada com a duplicada, apuntar a la seva arrel
+        if (!empty($bona['duplicado_de'])) {
+            $canonical = (int) $bona['duplicado_de'];
+        }
+
+        $db          = Database::getInstance();
+        $descuentoId = !empty($inscrito['descuento_id']) ? (int) $inscrito['descuento_id'] : null;
+        $nom         = trim((string) $inscrito['nombre'] . ' ' . (string) ($inscrito['apellido'] ?? ''));
+
+        $eraActiu = in_array((string) $inscrito['estado'], ['pendiente', 'confirmado'], true);
+        $db->update('inscritos', [
+            'estado'       => 'cancelado',
+            'duplicado_de' => $canonical,
+        ], ['id' => $id]);
+        // Allibera el cupó només si abans comptava (evita descomptar dos cops)
+        if ($eraActiu && $descuentoId !== null) {
+            DescuentoEvento::decrementarUsos($descuentoId);
+        }
+
+        AuditLog::registrar('inscrit_duplicat', 'Inscrit #' . $id . ' (' . $nom . ') marcat com a duplicat de #' . $canonical . ' · esdeveniment #' . (int) $inscrito['evento_id']);
+        Session::flash('success', 'Marcat com a duplicat de la inscripció #' . $canonical . '. Ha deixat de comptar i el seu QR portarà a la inscripció bona.');
+        Response::redirect($back);
+    }
+
+    /**
+     * Desfà el marcatge de duplicat: torna l'inscrit a 'confirmado' i buida
+     * `duplicado_de`. Recupera l'ús del cupó si en tenia.
+     */
+    public function desmarcarDuplicat(Request $req, array $params): void
+    {
+        $user = Auth::user();
+        $id   = (int) ($params['id'] ?? 0);
+
+        if (!Csrf::verify($req->post('_csrf'))) Response::forbidden();
+
+        $inscrito = Inscrito::findById($id);
+        if ($inscrito === null) Response::notFound();
+        if (!Evento::userCanEdit($user->id, $user->rol, (int) $inscrito['evento_id'])) Response::forbidden();
+
+        $back = base_url('/admin/inscritos/' . $id);
+        if (empty($inscrito['duplicado_de'])) {
+            Session::flash('error', 'Aquesta inscripció no està marcada com a duplicada.');
+            Response::redirect($back);
+        }
+
+        $db          = Database::getInstance();
+        $descuentoId = !empty($inscrito['descuento_id']) ? (int) $inscrito['descuento_id'] : null;
+        $nom         = trim((string) $inscrito['nombre'] . ' ' . (string) ($inscrito['apellido'] ?? ''));
+
+        $db->update('inscritos', [
+            'estado'       => 'confirmado',
+            'duplicado_de' => null,
+        ], ['id' => $id]);
+        if ($descuentoId !== null) {
+            DescuentoEvento::incrementarUsos($descuentoId);
+        }
+
+        AuditLog::registrar('inscrit_duplicat_desfet', 'Inscrit #' . $id . ' (' . $nom . ') ja no és duplicat · esdeveniment #' . (int) $inscrito['evento_id']);
+        Session::flash('success', 'S\'ha desfet el marcatge de duplicat. La inscripció torna a comptar com a confirmada.');
+        Response::redirect($back);
+    }
+
+    /**
      * Elimina un inscrit. El comportament depèn de si té algun pagament associat:
      *
      *  - SENSE pagaments: esborrat definitiu (dades, respostes de camps, comanda

@@ -205,6 +205,7 @@ CREATE TABLE IF NOT EXISTS `inscritos` (
     -- Estado de inscripción/pago
     `estado`          ENUM('pendiente','confirmado','cancelado','reembolsado')
                                     NOT NULL DEFAULT 'pendiente',
+    `duplicado_de`    INT UNSIGNED  NULL DEFAULT NULL COMMENT 'Si és duplicat: ID de la inscripció bona (queda cancelado)',
     `origen`          ENUM('formulario','importacion') NOT NULL DEFAULT 'formulario'
                                     COMMENT 'formulario = alta pel formulari public; importacion = alta manual per CSV',
     `numero_dorsal`   INT UNSIGNED  NULL,
@@ -216,12 +217,16 @@ CREATE TABLE IF NOT EXISTS `inscritos` (
     KEY `idx_evento_estado` (`evento_id`, `estado`),
     KEY `idx_email` (`email`),
     KEY `idx_dni` (`dni`),
+    KEY `idx_duplicado_de` (`duplicado_de`),
     CONSTRAINT `fk_inscrito_evento`
         FOREIGN KEY (`evento_id`) REFERENCES `eventos` (`id`)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT `fk_inscrito_tarifa`
         FOREIGN KEY (`tarifa_id`) REFERENCES `tarifas_evento` (`id`)
-        ON DELETE RESTRICT ON UPDATE CASCADE
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `fk_inscritos_duplicado_de`
+        FOREIGN KEY (`duplicado_de`) REFERENCES `inscritos` (`id`)
+        ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

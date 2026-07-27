@@ -119,6 +119,8 @@ $router->get ('/admin/inscritos/{id}/comprovant',              [InscritosAdminCo
 $router->post('/admin/inscritos/{id}/reenviar',                [InscritosAdminController::class, 'resendConfirmation'], $auth);
 $router->post('/admin/inscritos/{id}/early-bird',              [InscritosAdminController::class, 'toggleEarlyBird'],    $auth);
 $router->post('/admin/inscritos/{id}/editar',                  [InscritosAdminController::class, 'updateInline'],      $auth);
+$router->post('/admin/inscritos/{id}/duplicat',                [InscritosAdminController::class, 'marcarDuplicat'],    $auth);
+$router->post('/admin/inscritos/{id}/duplicat-desfer',         [InscritosAdminController::class, 'desmarcarDuplicat'], $auth);
 $router->post('/admin/inscritos/{id}/eliminar',                [InscritosAdminController::class, 'destroy'],           $auth);
 $router->post('/admin/prefs',                                  [InscritosAdminController::class, 'savePrefs'],         $auth);
 $router->get ('/admin/eventos/{id}/inscritos/import',          [InscritosImportController::class, 'form'],    $auth);

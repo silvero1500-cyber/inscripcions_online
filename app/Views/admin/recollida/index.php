@@ -7,6 +7,7 @@
 /** @var array<string,int> $tallas */
 /** @var array|null $scanned */
 /** @var string|null $scanError */
+/** @var string|null $scanWarning */
 /** @var int $total */
 /** @var int $page */
 /** @var int $totalPages */
@@ -60,6 +61,9 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
 <?php endif; ?>
 <?php if ($scanError): ?>
     <div class="alert alert-error"><?= e($scanError) ?></div>
+<?php endif; ?>
+<?php if (!empty($scanWarning)): ?>
+    <div class="alert alert-warning"><?= e($scanWarning) ?></div>
 <?php endif; ?>
 
 <?php /* ── Targeta del corredor escanejat (QR amb la càmera) ───────────────── */ ?>

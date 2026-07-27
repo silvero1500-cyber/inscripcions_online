@@ -35,10 +35,11 @@ final class RecollidaController
         $eventos = self::listEventosForUser($user);
 
         // ── QR escanejat: ?token=... → localitza l'inscrit i fixa el seu event ──
-        $scanned    = null;
-        $scanError  = null;
-        $scanToken  = self::normalizeToken((string) ($req->query('token') ?? ''));
-        $eventoId   = $req->query('evento_id') ? (int) $req->query('evento_id') : null;
+        $scanned     = null;
+        $scanError   = null;
+        $scanWarning = null;
+        $scanToken   = self::normalizeToken((string) ($req->query('token') ?? ''));
+        $eventoId    = $req->query('evento_id') ? (int) $req->query('evento_id') : null;
 
         if ($scanToken !== '') {
             $ins = Inscrito::findByQrToken($scanToken);
@@ -46,18 +47,29 @@ final class RecollidaController
                 $scanError = 'QR no vàlid o no trobat.';
             } elseif (!Evento::userCanEdit($user->id, $user->rol, (int) $ins['evento_id'])) {
                 $scanError = 'No tens permís per gestionar aquest esdeveniment.';
-            } elseif ($ins['estado'] !== 'confirmado') {
-                $scanError = 'Aquesta inscripció no està confirmada (no pot recollir el dorsal).';
-                $eventoId  = (int) $ins['evento_id'];
             } else {
-                $eventoId = (int) $ins['evento_id'];
-                $scanned  = [
-                    'inscrito'   => $ins,
-                    'tarifa'     => Tarifa::findById((int) $ins['tarifa_id']),
-                    'recollitPor'=> !empty($ins['dorsal_recollit_por'])
-                        ? Usuario::findById((int) $ins['dorsal_recollit_por']) : null,
-                    'calaix'     => self::calaixPerInscrit($ins),
-                ];
+                // QR d'una inscripció marcada com a DUPLICADA → resoldre a la bona
+                if (!empty($ins['duplicado_de'])) {
+                    $bona = Inscrito::findById((int) $ins['duplicado_de']);
+                    if ($bona !== null && Evento::userCanEdit($user->id, $user->rol, (int) $bona['evento_id'])) {
+                        $scanWarning = '⚠️ Aquest QR és d\'una inscripció duplicada (#' . (int) $ins['id']
+                            . '). Es mostra la inscripció bona #' . (int) $bona['id'] . '.';
+                        $ins = $bona;
+                    }
+                }
+                if ($ins['estado'] !== 'confirmado') {
+                    $scanError = 'Aquesta inscripció no està confirmada (no pot recollir el dorsal).';
+                    $eventoId  = (int) $ins['evento_id'];
+                } else {
+                    $eventoId = (int) $ins['evento_id'];
+                    $scanned  = [
+                        'inscrito'   => $ins,
+                        'tarifa'     => Tarifa::findById((int) $ins['tarifa_id']),
+                        'recollitPor'=> !empty($ins['dorsal_recollit_por'])
+                            ? Usuario::findById((int) $ins['dorsal_recollit_por']) : null,
+                        'calaix'     => self::calaixPerInscrit($ins),
+                    ];
+                }
             }
         }
 
@@ -105,6 +117,7 @@ final class RecollidaController
             'tallas'     => $tallas,
             'scanned'    => $scanned,
             'scanError'  => $scanError,
+            'scanWarning'=> $scanWarning,
             'pucEditarDorsal' => self::pucEditarDorsal($user),
             'eventoSel'  => $eventoId ? Evento::findById((int) $eventoId) : null,
             'total'      => $total,
