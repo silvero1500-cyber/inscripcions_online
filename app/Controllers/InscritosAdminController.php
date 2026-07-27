@@ -287,6 +287,11 @@ final class InscritosAdminController
         if (!empty($bona['duplicado_de'])) {
             $canonical = (int) $bona['duplicado_de'];
         }
+        // Després de resoldre l'arrel, evitar que apunti a si mateix (cicle A↔B)
+        if ($canonical === $id) {
+            Session::flash('error', 'No es pot marcar com a duplicat: crearia una referència circular.');
+            Response::redirect($back);
+        }
 
         $db          = Database::getInstance();
         $descuentoId = !empty($inscrito['descuento_id']) ? (int) $inscrito['descuento_id'] : null;
