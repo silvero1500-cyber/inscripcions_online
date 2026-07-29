@@ -1039,10 +1039,29 @@ $kpisHidden = $kpisHidden ?? [];
         rows.forEach(function (r) { if (r.d >= since) t += r.n; });
         return t;
     }
+    function minDate(rows) {
+        var m = null;
+        rows.forEach(function (r) { if (m === null || r.d < m) m = r.d; });
+        return m;
+    }
+    function fmt(dStr) {
+        var p = dStr.split('-');
+        return p[2] + '/' + p[1] + '/' + p[0];
+    }
 
     function render() {
-        var days  = parseInt(sel.value, 10) || 15;
-        var since = cutoffStr(days);
+        var days   = parseInt(sel.value, 10) || 15;
+        var cutoff = cutoffStr(days);
+        // El comptador de visites és nou: NO barregem inscripcions d'abans que
+        // existís. La conversió es compta des de la 1a visita registrada (o des
+        // del tall del període si aquest és més recent).
+        var trackStart = minDate(vis);
+        if (trackStart === null) {
+            body.hidden = true; empty.hidden = false; nota.textContent = '';
+            return;
+        }
+        var since = (trackStart > cutoff) ? trackStart : cutoff;
+
         var visites = sumSince(vis, since);
         var inscrip = sumSince(ins, since);
 
@@ -1054,14 +1073,12 @@ $kpisHidden = $kpisHidden ?? [];
 
         var pct = inscrip / visites * 100;
         pctEl.textContent = (Math.round(pct * 10) / 10) + '%';
-        numsEl.textContent = inscrip + ' inscripcions / ' + visites + ' visites (últims ' + days + ' dies)';
+        numsEl.textContent = inscrip + ' inscripcions / ' + visites + ' visites (des del ' + fmt(since) + ')';
         barEl.style.width = Math.min(100, pct) + '%';
 
-        if (pct > 100) {
-            nota.textContent = 'Nota: hi ha més inscripcions que visites registrades perquè el comptador de visites és nou i encara no cobreix totes les inscripcions del període. Es normalitzarà en uns dies.';
-        } else {
-            nota.textContent = 'Les visites es compten des que es va desplegar aquesta funció; la conversió serà més fiable a mesura que passin els dies.';
-        }
+        nota.textContent = (since === trackStart)
+            ? 'Es compta des de la primera visita registrada (' + fmt(trackStart) + '). Serà més representatiu a mesura que passin els dies.'
+            : 'Visites i inscripcions del mateix període.';
     }
 
     sel.addEventListener('change', render);
