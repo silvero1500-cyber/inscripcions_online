@@ -348,6 +348,72 @@ $kpisHidden = $kpisHidden ?? [];
 </div>
 <?php endif; ?>
 
+<style>
+.conn-panel .conn-controls { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin:.2rem 0 1rem; }
+.conn-panel select { padding:.35rem .5rem; border:1px solid #cbd5e1; border-radius:.4rem; }
+.conn-heat-wrap { overflow-x:auto; }
+.conn-heat { border-collapse:separate; border-spacing:2px; }
+.conn-heat th { font-weight:600; font-size:.72rem; color:#64748b; padding:2px; text-align:center; }
+.conn-heat th.row-lbl { text-align:right; padding-right:.5rem; white-space:nowrap; }
+.conn-heat td { width:24px; height:22px; border-radius:3px; background:#eef2f7; }
+.conn-legend { display:flex; align-items:center; gap:.5rem; margin-top:.9rem; font-size:.78rem; color:#64748b; }
+.conn-legend .swatch { display:inline-block; width:16px; height:14px; border-radius:3px; }
+.conn-peak { margin:.2rem 0 0; font-size:.9rem; }
+.conv-stat { display:flex; align-items:baseline; gap:1rem; flex-wrap:wrap; }
+.conv-stat .big { font-size:2.6rem; font-weight:800; color:#16a34a; line-height:1; }
+.conv-stat .nums { font-size:1rem; color:#334155; }
+.conv-bar { height:14px; border-radius:7px; background:#eef2f7; overflow:hidden; margin:.9rem 0 .3rem; max-width:520px; }
+.conv-bar > span { display:block; height:100%; background:#16a34a; border-radius:7px; }
+</style>
+<div class="kpi-panel conn-panel" data-kpi="connexions" data-kpi-title="Connexions (hores punta)">
+    <h2>Connexions al formulari · hores punta</h2>
+    <p class="muted small" style="margin:-.3rem 0 .6rem;">Visites reals al formulari públic d'inscripció (sense bots), agrupades per dia de la setmana i hora.</p>
+    <div class="conn-controls">
+        <label>Període:
+            <select id="connPeriode">
+                <option value="7">Últims 7 dies</option>
+                <option value="15" selected>Últims 15 dies</option>
+                <option value="30">Últims 30 dies</option>
+            </select>
+        </label>
+        <span id="connResum" class="muted small"></span>
+    </div>
+    <p id="connEmpty" class="muted" hidden>Encara no hi ha connexions registrades per aquest esdeveniment (el comptador va començar en desplegar aquesta funció).</p>
+    <div class="conn-heat-wrap"><table class="conn-heat" id="connHeat"></table></div>
+    <p id="connPeak" class="conn-peak"></p>
+    <div class="conn-legend"><span>Menys</span>
+        <span class="swatch" style="background:#eef2f7;"></span>
+        <span class="swatch" style="background:#bfdbfe;"></span>
+        <span class="swatch" style="background:#60a5fa;"></span>
+        <span class="swatch" style="background:#2563eb;"></span>
+        <span class="swatch" style="background:#1e3a8a;"></span>
+        <span>Més</span>
+    </div>
+</div>
+
+<div class="kpi-panel conv-panel" data-kpi="conversio" data-kpi-title="Conversió (visites → inscripcions)">
+    <h2>Conversió · visites → inscripcions</h2>
+    <p class="muted small" style="margin:-.3rem 0 .6rem;">Quin percentatge de les visites al formulari acaben en inscripció, en el període triat.</p>
+    <div class="conn-controls">
+        <label>Període:
+            <select id="convPeriode">
+                <option value="7">Últims 7 dies</option>
+                <option value="15" selected>Últims 15 dies</option>
+                <option value="30">Últims 30 dies</option>
+            </select>
+        </label>
+    </div>
+    <p id="convEmpty" class="muted" hidden>Encara no hi ha prou dades de visites per calcular la conversió (el comptador va començar en desplegar aquesta funció).</p>
+    <div id="convBody">
+        <div class="conv-stat">
+            <span class="big" id="convPct">—</span>
+            <span class="nums" id="convNums"></span>
+        </div>
+        <div class="conv-bar"><span id="convBar" style="width:0"></span></div>
+    </div>
+    <p id="convNota" class="muted small" style="margin:.6rem 0 0;"></p>
+</div>
+
 <?php if ($mostraIngEd): ?>
 <div class="kpi-panel" data-kpi="ingressos-ed" data-kpi-title="Ingressos per edició">
     <div class="kpi-panel-head">
@@ -443,76 +509,6 @@ $kpisHidden = $kpisHidden ?? [];
             </table>
         <?php endif; ?>
     </div>
-</div>
-
-<style>
-.conn-panel .conn-controls { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin:.2rem 0 1rem; }
-.conn-panel select { padding:.35rem .5rem; border:1px solid #cbd5e1; border-radius:.4rem; }
-.conn-heat-wrap { overflow-x:auto; }
-.conn-heat { border-collapse:separate; border-spacing:2px; }
-.conn-heat th { font-weight:600; font-size:.72rem; color:#64748b; padding:2px; text-align:center; }
-.conn-heat th.row-lbl { text-align:right; padding-right:.5rem; white-space:nowrap; }
-.conn-heat td { width:24px; height:22px; border-radius:3px; background:#eef2f7; }
-.conn-legend { display:flex; align-items:center; gap:.5rem; margin-top:.9rem; font-size:.78rem; color:#64748b; }
-.conn-legend .swatch { display:inline-block; width:16px; height:14px; border-radius:3px; }
-.conn-peak { margin:.2rem 0 0; font-size:.9rem; }
-</style>
-<div class="kpi-panel conn-panel" data-kpi="connexions" data-kpi-title="Connexions (hores punta)">
-    <h2>Connexions al formulari · hores punta</h2>
-    <p class="muted small" style="margin:-.3rem 0 .6rem;">Visites reals al formulari públic d'inscripció (sense bots), agrupades per dia de la setmana i hora.</p>
-    <div class="conn-controls">
-        <label>Període:
-            <select id="connPeriode">
-                <option value="7">Últims 7 dies</option>
-                <option value="15" selected>Últims 15 dies</option>
-                <option value="30">Últims 30 dies</option>
-            </select>
-        </label>
-        <span id="connResum" class="muted small"></span>
-    </div>
-    <p id="connEmpty" class="muted" hidden>Encara no hi ha connexions registrades per aquest esdeveniment (el comptador va començar en desplegar aquesta funció).</p>
-    <div class="conn-heat-wrap"><table class="conn-heat" id="connHeat"></table></div>
-    <p id="connPeak" class="conn-peak"></p>
-    <div class="conn-legend"><span>Menys</span>
-        <span class="swatch" style="background:#eef2f7;"></span>
-        <span class="swatch" style="background:#bfdbfe;"></span>
-        <span class="swatch" style="background:#60a5fa;"></span>
-        <span class="swatch" style="background:#2563eb;"></span>
-        <span class="swatch" style="background:#1e3a8a;"></span>
-        <span>Més</span>
-    </div>
-</div>
-
-<style>
-.conv-panel .conn-controls { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin:.2rem 0 1rem; }
-.conv-panel select { padding:.35rem .5rem; border:1px solid #cbd5e1; border-radius:.4rem; }
-.conv-stat { display:flex; align-items:baseline; gap:1rem; flex-wrap:wrap; }
-.conv-stat .big { font-size:2.6rem; font-weight:800; color:#16a34a; line-height:1; }
-.conv-stat .nums { font-size:1rem; color:#334155; }
-.conv-bar { height:14px; border-radius:7px; background:#eef2f7; overflow:hidden; margin:.9rem 0 .3rem; max-width:520px; }
-.conv-bar > span { display:block; height:100%; background:#16a34a; border-radius:7px; }
-</style>
-<div class="kpi-panel conv-panel" data-kpi="conversio" data-kpi-title="Conversió (visites → inscripcions)">
-    <h2>Conversió · visites → inscripcions</h2>
-    <p class="muted small" style="margin:-.3rem 0 .6rem;">Quin percentatge de les visites al formulari acaben en inscripció, en el període triat.</p>
-    <div class="conn-controls">
-        <label>Període:
-            <select id="convPeriode">
-                <option value="7">Últims 7 dies</option>
-                <option value="15" selected>Últims 15 dies</option>
-                <option value="30">Últims 30 dies</option>
-            </select>
-        </label>
-    </div>
-    <p id="convEmpty" class="muted" hidden>Encara no hi ha prou dades de visites per calcular la conversió (el comptador va començar en desplegar aquesta funció).</p>
-    <div id="convBody">
-        <div class="conv-stat">
-            <span class="big" id="convPct">—</span>
-            <span class="nums" id="convNums"></span>
-        </div>
-        <div class="conv-bar"><span id="convBar" style="width:0"></span></div>
-    </div>
-    <p id="convNota" class="muted small" style="margin:.6rem 0 0;"></p>
 </div>
 
 <script src="<?= e(asset('js/chart.umd.min.js')) ?>"></script>
