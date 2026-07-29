@@ -505,7 +505,35 @@ final class EventoController
                 return is_array($arr) ? array_values(array_filter(array_map('strval', $arr))) : [];
             })(),
             'aforoMax'            => $evento['aforo_maximo'] !== null ? (int) $evento['aforo_maximo'] : null,
+            'connexions'          => $this->connexionsPerHores($evento),
         ], layout: 'admin');
+    }
+
+    /**
+     * Connexions (visites) al formulari públic per dia i hora, dels últims 30
+     * dies. Es retorna en cru [{d,h,n}] i la vista construeix el mapa de calor
+     * dia-de-la-setmana × hora amb el selector de període (7/15/30 dies).
+     * @return list<array{d:string,h:int,n:int}>
+     */
+    private function connexionsPerHores(array $evento): array
+    {
+        try {
+            $rows = Database::getInstance()->query(
+                "SELECT fecha, hora, n FROM visitas_horas
+                 WHERE evento_id = ? AND fecha >= (CURDATE() - INTERVAL 30 DAY)
+                 ORDER BY fecha ASC, hora ASC",
+                [(int) $evento['id']]
+            )->fetchAll();
+        } catch (\Throwable $e) {
+            // La taula pot no existir encara (migració 048 no aplicada) → sense dades
+            return [];
+        }
+
+        return array_map(fn($r) => [
+            'd' => (string) $r['fecha'],
+            'h' => (int) $r['hora'],
+            'n' => (int) $r['n'],
+        ], $rows);
     }
 
     /**

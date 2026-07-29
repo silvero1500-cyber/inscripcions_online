@@ -106,6 +106,10 @@ final class PublicController
             return;
         }
 
+        // Registra la visita al formulari (KPI de connexions / hores punta).
+        // El registre real es fa al shutdown, després d'enviar la resposta.
+        \App\Services\VisitTracker::mark((int) $evento['id']);
+
         $campos = Database::getInstance()->query(
             'SELECT * FROM campos_personalizados
              WHERE evento_id = ? AND activo = 1 AND oculto = 0

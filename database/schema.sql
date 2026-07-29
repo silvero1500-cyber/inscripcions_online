@@ -230,6 +230,20 @@ CREATE TABLE IF NOT EXISTS `inscritos` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- 6b. CONNEXIONS/VISITES PER HORA (KPI d'hores punta) — comptador agregat
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `visitas_horas` (
+    `evento_id` INT UNSIGNED     NOT NULL,
+    `fecha`     DATE             NOT NULL,
+    `hora`      TINYINT UNSIGNED NOT NULL,
+    `n`         INT UNSIGNED     NOT NULL DEFAULT 0,
+    PRIMARY KEY (`evento_id`, `fecha`, `hora`),
+    CONSTRAINT `fk_visitas_evento`
+        FOREIGN KEY (`evento_id`) REFERENCES `eventos` (`id`)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- 7. VALORES DE CAMPOS PERSONALIZADOS POR INSCRIPCIÓN
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `inscrito_campos_valores` (

@@ -174,6 +174,8 @@ $jsData = [
         }
         return $out;
     })(),
+    // Connexions al formulari (crues, últims 30 dies): [{d:'Y-m-d', h:0..23, n}]
+    'connexions'     => $connexions ?? [],
 ];
 
 // Amaga automàticament els KPIs SENSE dades reals (irrellevants per a l'event),
@@ -440,6 +442,44 @@ $kpisHidden = $kpisHidden ?? [];
                 </tbody>
             </table>
         <?php endif; ?>
+    </div>
+</div>
+
+<style>
+.conn-panel .conn-controls { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin:.2rem 0 1rem; }
+.conn-panel select { padding:.35rem .5rem; border:1px solid #cbd5e1; border-radius:.4rem; }
+.conn-heat-wrap { overflow-x:auto; }
+.conn-heat { border-collapse:separate; border-spacing:2px; }
+.conn-heat th { font-weight:600; font-size:.72rem; color:#64748b; padding:2px; text-align:center; }
+.conn-heat th.row-lbl { text-align:right; padding-right:.5rem; white-space:nowrap; }
+.conn-heat td { width:24px; height:22px; border-radius:3px; background:#eef2f7; }
+.conn-legend { display:flex; align-items:center; gap:.5rem; margin-top:.9rem; font-size:.78rem; color:#64748b; }
+.conn-legend .swatch { display:inline-block; width:16px; height:14px; border-radius:3px; }
+.conn-peak { margin:.2rem 0 0; font-size:.9rem; }
+</style>
+<div class="kpi-panel conn-panel" data-kpi="connexions" data-kpi-title="Connexions (hores punta)">
+    <h2>Connexions al formulari · hores punta</h2>
+    <p class="muted small" style="margin:-.3rem 0 .6rem;">Visites reals al formulari públic d'inscripció (sense bots), agrupades per dia de la setmana i hora.</p>
+    <div class="conn-controls">
+        <label>Període:
+            <select id="connPeriode">
+                <option value="7">Últims 7 dies</option>
+                <option value="15" selected>Últims 15 dies</option>
+                <option value="30">Últims 30 dies</option>
+            </select>
+        </label>
+        <span id="connResum" class="muted small"></span>
+    </div>
+    <p id="connEmpty" class="muted" hidden>Encara no hi ha connexions registrades per aquest esdeveniment (el comptador va començar en desplegar aquesta funció).</p>
+    <div class="conn-heat-wrap"><table class="conn-heat" id="connHeat"></table></div>
+    <p id="connPeak" class="conn-peak"></p>
+    <div class="conn-legend"><span>Menys</span>
+        <span class="swatch" style="background:#eef2f7;"></span>
+        <span class="swatch" style="background:#bfdbfe;"></span>
+        <span class="swatch" style="background:#60a5fa;"></span>
+        <span class="swatch" style="background:#2563eb;"></span>
+        <span class="swatch" style="background:#1e3a8a;"></span>
+        <span>Més</span>
     </div>
 </div>
 
@@ -855,5 +895,93 @@ $kpisHidden = $kpisHidden ?? [];
     });
     if (saveBtn) saveBtn.addEventListener('click', function () { save(); });
     if (closeBtn) closeBtn.addEventListener('click', function () { save(function () { panel.hidden = true; }); });
+})();
+</script>
+
+<script>
+/* ── Mapa de calor de connexions (hores punta) ─────────────────────────── */
+(function () {
+    var rows = <?= json_encode($connexions ?? [], JSON_UNESCAPED_UNICODE) ?>;
+    var table = document.getElementById('connHeat');
+    if (!table) return;
+
+    var DIES  = ['Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte','Diumenge'];
+    var DIES3 = ['Dl','Dt','Dc','Dj','Dv','Ds','Dg'];
+    var sel   = document.getElementById('connPeriode');
+    var empty = document.getElementById('connEmpty');
+    var resum = document.getElementById('connResum');
+    var peakEl= document.getElementById('connPeak');
+
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function cutoffStr(days) {
+        var c = new Date(); c.setHours(0,0,0,0); c.setDate(c.getDate() - (days - 1));
+        return c.getFullYear() + '-' + pad(c.getMonth() + 1) + '-' + pad(c.getDate());
+    }
+    function dowIndex(dateStr) {              // 0 = Dilluns … 6 = Diumenge
+        var p = dateStr.split('-');
+        var d = new Date(+p[0], +p[1] - 1, +p[2]);
+        return (d.getDay() + 6) % 7;
+    }
+    function color(v, max) {
+        if (v <= 0 || max <= 0) return '#eef2f7';
+        var r = v / max;
+        if (r <= 0.25) return '#bfdbfe';
+        if (r <= 0.50) return '#60a5fa';
+        if (r <= 0.75) return '#2563eb';
+        return '#1e3a8a';
+    }
+
+    function render() {
+        var days = parseInt(sel.value, 10) || 15;
+        var since = cutoffStr(days);
+
+        // Matriu 7 (dies) × 24 (hores)
+        var grid = [], d, h;
+        for (d = 0; d < 7; d++) { grid[d] = []; for (h = 0; h < 24; h++) grid[d][h] = 0; }
+
+        var total = 0, max = 0, peak = null;
+        rows.forEach(function (r) {
+            if (r.d < since) return;
+            var di = dowIndex(r.d);
+            grid[di][r.h] += r.n;
+            total += r.n;
+        });
+        for (d = 0; d < 7; d++) for (h = 0; h < 24; h++) {
+            var v = grid[d][h];
+            if (v > max) { max = v; peak = { d: d, h: h, v: v }; }
+        }
+
+        if (total === 0) {
+            table.innerHTML = ''; empty.hidden = false;
+            resum.textContent = ''; peakEl.textContent = '';
+            return;
+        }
+        empty.hidden = true;
+        resum.textContent = total + ' connexions en els últims ' + days + ' dies';
+
+        // Capçalera d'hores
+        var html = '<tr><th class="row-lbl"></th>';
+        for (h = 0; h < 24; h++) html += '<th>' + h + '</th>';
+        html += '</tr>';
+        // Files per dia
+        for (d = 0; d < 7; d++) {
+            html += '<tr><th class="row-lbl" title="' + DIES[d] + '">' + DIES3[d] + '</th>';
+            for (h = 0; h < 24; h++) {
+                var v = grid[d][h];
+                var t = DIES[d] + ' a les ' + h + 'h · ' + v + ' connexion' + (v === 1 ? '' : 's');
+                html += '<td style="background:' + color(v, max) + '" title="' + t + '"></td>';
+            }
+            html += '</tr>';
+        }
+        table.innerHTML = html;
+
+        if (peak) {
+            peakEl.innerHTML = '🔥 <strong>Hora punta:</strong> ' + DIES[peak.d] +
+                ' a les ' + peak.h + 'h (' + peak.v + ' connexions)';
+        }
+    }
+
+    sel.addEventListener('change', render);
+    render();
 })();
 </script>

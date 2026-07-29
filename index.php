@@ -52,6 +52,8 @@ Session::start(secureCookie: $isProd);
 // només treballi la primera petició de cada dia.
 register_shutdown_function(static function (): void {
     if (function_exists('fastcgi_finish_request')) @fastcgi_finish_request();
+    // Comptador de connexions (KPI hores punta): la pàgina ja s'ha enviat.
+    \App\Services\VisitTracker::flush();
     \App\Services\BackupService::runDailyIfDue();
 });
 
