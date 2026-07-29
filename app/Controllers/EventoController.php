@@ -506,7 +506,31 @@ final class EventoController
             })(),
             'aforoMax'            => $evento['aforo_maximo'] !== null ? (int) $evento['aforo_maximo'] : null,
             'connexions'          => $this->connexionsPerHores($evento),
+            'inscDia'             => $this->inscripcionsPerDia($evento),
         ], layout: 'admin');
+    }
+
+    /**
+     * Inscripcions creades per dia (últims 30 dies), per calcular el % de
+     * conversió (inscripcions / visites) a la vista de KPIs.
+     * @return list<array{d:string,n:int}>
+     */
+    private function inscripcionsPerDia(array $evento): array
+    {
+        $rows = Database::getInstance()->query(
+            "SELECT DATE(created_at) AS d, COUNT(*) AS n
+             FROM inscritos
+             WHERE evento_id = ? AND estado IN ('pendiente','confirmado')
+               AND created_at >= (CURDATE() - INTERVAL 30 DAY)
+             GROUP BY DATE(created_at)
+             ORDER BY d ASC",
+            [(int) $evento['id']]
+        )->fetchAll();
+
+        return array_map(fn($r) => [
+            'd' => (string) $r['d'],
+            'n' => (int) $r['n'],
+        ], $rows);
     }
 
     /**

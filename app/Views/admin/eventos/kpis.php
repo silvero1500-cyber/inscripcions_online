@@ -483,6 +483,38 @@ $kpisHidden = $kpisHidden ?? [];
     </div>
 </div>
 
+<style>
+.conv-panel .conn-controls { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin:.2rem 0 1rem; }
+.conv-panel select { padding:.35rem .5rem; border:1px solid #cbd5e1; border-radius:.4rem; }
+.conv-stat { display:flex; align-items:baseline; gap:1rem; flex-wrap:wrap; }
+.conv-stat .big { font-size:2.6rem; font-weight:800; color:#16a34a; line-height:1; }
+.conv-stat .nums { font-size:1rem; color:#334155; }
+.conv-bar { height:14px; border-radius:7px; background:#eef2f7; overflow:hidden; margin:.9rem 0 .3rem; max-width:520px; }
+.conv-bar > span { display:block; height:100%; background:#16a34a; border-radius:7px; }
+</style>
+<div class="kpi-panel conv-panel" data-kpi="conversio" data-kpi-title="Conversió (visites → inscripcions)">
+    <h2>Conversió · visites → inscripcions</h2>
+    <p class="muted small" style="margin:-.3rem 0 .6rem;">Quin percentatge de les visites al formulari acaben en inscripció, en el període triat.</p>
+    <div class="conn-controls">
+        <label>Període:
+            <select id="convPeriode">
+                <option value="7">Últims 7 dies</option>
+                <option value="15" selected>Últims 15 dies</option>
+                <option value="30">Últims 30 dies</option>
+            </select>
+        </label>
+    </div>
+    <p id="convEmpty" class="muted" hidden>Encara no hi ha prou dades de visites per calcular la conversió (el comptador va començar en desplegar aquesta funció).</p>
+    <div id="convBody">
+        <div class="conv-stat">
+            <span class="big" id="convPct">—</span>
+            <span class="nums" id="convNums"></span>
+        </div>
+        <div class="conv-bar"><span id="convBar" style="width:0"></span></div>
+    </div>
+    <p id="convNota" class="muted small" style="margin:.6rem 0 0;"></p>
+</div>
+
 <script src="<?= e(asset('js/chart.umd.min.js')) ?>"></script>
 <script>
 (function () {
@@ -978,6 +1010,61 @@ $kpisHidden = $kpisHidden ?? [];
         if (peak) {
             peakEl.innerHTML = '🔥 <strong>Hora punta:</strong> ' + DIES[peak.d] +
                 ' a les ' + peak.h + 'h (' + peak.v + ' connexions)';
+        }
+    }
+
+    sel.addEventListener('change', render);
+    render();
+})();
+</script>
+
+<script>
+/* ── Conversió: visites → inscripcions ─────────────────────────────────── */
+(function () {
+    var vis = <?= json_encode($connexions ?? [], JSON_UNESCAPED_UNICODE) ?>;
+    var ins = <?= json_encode($inscDia ?? [], JSON_UNESCAPED_UNICODE) ?>;
+    var sel = document.getElementById('convPeriode');
+    if (!sel) return;
+
+    var pctEl  = document.getElementById('convPct');
+    var numsEl = document.getElementById('convNums');
+    var barEl  = document.getElementById('convBar');
+    var body   = document.getElementById('convBody');
+    var empty  = document.getElementById('convEmpty');
+    var nota   = document.getElementById('convNota');
+
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function cutoffStr(days) {
+        var c = new Date(); c.setHours(0,0,0,0); c.setDate(c.getDate() - (days - 1));
+        return c.getFullYear() + '-' + pad(c.getMonth() + 1) + '-' + pad(c.getDate());
+    }
+    function sumSince(rows, since) {
+        var t = 0;
+        rows.forEach(function (r) { if (r.d >= since) t += r.n; });
+        return t;
+    }
+
+    function render() {
+        var days  = parseInt(sel.value, 10) || 15;
+        var since = cutoffStr(days);
+        var visites = sumSince(vis, since);
+        var inscrip = sumSince(ins, since);
+
+        if (visites === 0) {
+            body.hidden = true; empty.hidden = false; nota.textContent = '';
+            return;
+        }
+        body.hidden = false; empty.hidden = true;
+
+        var pct = inscrip / visites * 100;
+        pctEl.textContent = (Math.round(pct * 10) / 10) + '%';
+        numsEl.textContent = inscrip + ' inscripcions / ' + visites + ' visites (últims ' + days + ' dies)';
+        barEl.style.width = Math.min(100, pct) + '%';
+
+        if (pct > 100) {
+            nota.textContent = 'Nota: hi ha més inscripcions que visites registrades perquè el comptador de visites és nou i encara no cobreix totes les inscripcions del període. Es normalitzarà en uns dies.';
+        } else {
+            nota.textContent = 'Les visites es compten des que es va desplegar aquesta funció; la conversió serà més fiable a mesura que passin els dies.';
         }
     }
 
