@@ -504,6 +504,18 @@ $cfState = function (string $key) use ($old, $camposFijosCfg): string {
         </div>
     </fieldset>
 
+    <fieldset>
+        <legend>Pantalla de recollida (lectura QR)</legend>
+        <small class="muted" style="display:block;margin:0 0 .6rem;">Quin disseny veu qui entrega els dorsals quan escaneja el QR d'un corredor.</small>
+        <?php $rd = (int) ($old['recollida_disseny'] ?? $evento['recollida_disseny'] ?? 1); ?>
+        <label style="font-weight:600;">Disseny
+            <select name="recollida_disseny" style="display:block;margin-top:.3rem;max-width:520px;">
+                <option value="1" <?= $rd === 1 ? 'selected' : '' ?>>Disseny 1 · Clàssic (dorsal + talla, DNI, tarifa)</option>
+                <option value="2" <?= $rd === 2 ? 'selected' : '' ?>>Disseny 2 · Mostrador (dorsal, DNI, tarifa, tipus xip · sense talla)</option>
+            </select>
+        </label>
+    </fieldset>
+
     <?php
     // ── Franges de temps + calaix de sortida (camp fix "franja_temps") ──
     // Una FILA = franja (text) + tarifa + calaix. Si una franja val per a

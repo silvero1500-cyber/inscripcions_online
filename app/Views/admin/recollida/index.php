@@ -67,7 +67,14 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
 <?php endif; ?>
 
 <?php /* ── Targeta del corredor escanejat (QR amb la càmera) ───────────────── */ ?>
-<?php if ($scanned): $ins = $scanned['inscrito']; $jaRecollit = !empty($ins['dorsal_recollit_at']); $calaix = $scanned['calaix'] ?? null; ?>
+<?php if ($scanned): $ins = $scanned['inscrito']; $jaRecollit = !empty($ins['dorsal_recollit_at']); $calaix = $scanned['calaix'] ?? null;
+    // Disseny de la pantalla de recollida (per event). 1 = clàssic · 2 = mostrador.
+    $disseny     = (int) ($eventoSel['recollida_disseny'] ?? 1);
+    $mostraTalla = ($disseny !== 2);          // Disseny 2 (mostrador): sense talla
+    $mostraXip   = ($disseny === 2);          // Disseny 2: mostra el tipus de xip
+    $xipTxt      = ($ins['chip_groc'] ?? null) === 'si' ? 'Propi'
+                 : (($ins['chip_groc'] ?? null) === 'no' ? 'Cessió' : '—');
+?>
     <div class="recollida-scan-card <?= $jaRecollit ? 'is-done' : '' ?>">
         <div class="rsc-head">
             <span class="rsc-tag">QR escanejat</span>
@@ -82,10 +89,12 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
                 <span>Dorsal</span>
                 <strong class="rsc-xl"><?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '—' ?></strong>
             </div>
+            <?php if ($mostraTalla): ?>
             <div class="rsc-big-item">
                 <span>Talla</span>
                 <strong class="rsc-xl"><?= e($ins['talla_camiseta'] ?? '—') ?></strong>
             </div>
+            <?php endif; ?>
         </div>
 
         <?php if ($calaix): ?>
@@ -97,6 +106,9 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
         <div class="rsc-facts">
             <div><span>DNI</span><strong><?= e($ins['dni'] ?? '—') ?></strong></div>
             <div><span>Tarifa</span><strong><?= e($scanned['tarifa']['nombre'] ?? '—') ?></strong></div>
+            <?php if ($mostraXip): ?>
+            <div><span>Tipus xip</span><strong><?= e($xipTxt) ?></strong></div>
+            <?php endif; ?>
         </div>
 
         <?php if ($jaRecollit): ?>

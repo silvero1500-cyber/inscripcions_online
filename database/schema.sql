@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS `eventos` (
     `form_password`             VARCHAR(100)    NULL COMMENT 'Si té valor, el formulari public demana aquesta contrasenya',
     `campos_fijos`              JSON            NULL COMMENT 'Config per camp fix: obligatori/opcional/ocult',
     `franjas_config`            JSON            NULL COMMENT 'Franges de temps + calaix: [{label, calaix}]',
+    `recollida_disseny`         TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Disseny pantalla recollida (lectura QR)',
     `archivado_at`              DATETIME        NULL COMMENT 'Si té data, esdeveniment arxivat',
     `created_at`                TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`                TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

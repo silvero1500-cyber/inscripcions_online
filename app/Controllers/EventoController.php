@@ -118,6 +118,7 @@ final class EventoController
                     'incidencias_activo'       => $data['incidencias_activo'],
                     'form_password'            => $data['form_password'],
                     'campos_fijos'             => $data['campos_fijos'],
+                    'recollida_disseny'        => $data['recollida_disseny'],
                     'campos_orden'             => null,
                 ]);
                 $map = GrupoAforo::syncForEvento($eventoId, $grupos);
@@ -203,6 +204,7 @@ final class EventoController
             'incidencias_activo'       => $data['incidencias_activo'],
             'form_password'            => $data['form_password'],
             'campos_fijos'             => $data['campos_fijos'],
+            'recollida_disseny'        => $data['recollida_disseny'],
         ];
 
         // Si el título cambió, regenerar slug único
@@ -1083,6 +1085,8 @@ final class EventoController
             'incidencias_activo'       => isset($post['incidencias_activo']) ? 1 : 0,
             'form_password'            => trim((string)($post['form_password'] ?? '')) ?: null,
             'campos_fijos'             => CamposFijos::fromPost($post),
+            'recollida_disseny'        => in_array((int)($post['recollida_disseny'] ?? 1), [1, 2], true)
+                                            ? (int)($post['recollida_disseny'] ?? 1) : 1,
         ];
     }
 
