@@ -807,23 +807,54 @@ $kpisHidden = $kpisHidden ?? [];
     const btnBack = document.getElementById('edatBack');
     let edatChart = null;
 
+    // Dibuixa "N · X%" a sobre de cada barra (sense llibreries externes)
+    function pctLabels(total) {
+        return {
+            id: 'pctLabels',
+            afterDatasetsDraw: function (chart) {
+                var ctx = chart.ctx;
+                var meta = chart.getDatasetMeta(0);
+                var vals = chart.data.datasets[0].data;
+                ctx.save();
+                ctx.font = '600 12px system-ui, sans-serif';
+                ctx.fillStyle = '#334155';
+                ctx.textAlign = 'center';
+                meta.data.forEach(function (bar, i) {
+                    var v = vals[i]; if (v == null) return;
+                    var pct = total > 0 ? Math.round(v / total * 100) : 0;
+                    ctx.fillText(v + ' · ' + pct + '%', bar.x, bar.y - 6);
+                });
+                ctx.restore();
+            }
+        };
+    }
+    function pctTooltip(total) {
+        return { callbacks: { label: function (c) {
+            var p = total > 0 ? Math.round(c.parsed.y / total * 100) : 0;
+            return c.parsed.y + ' inscrits (' + p + '%)';
+        } } };
+    }
+
     function renderFranges() {
         titol.textContent = "Per franja d'edat";
         btnBack.style.display = 'none';
         const ds = data.edat;
+        const total = ds.reduce((a, d) => a + d.value, 0);
         if (edatChart) edatChart.destroy();
         edatChart = new Chart(edatEl, {
             type: 'bar',
             data: { labels: ds.map(d => d.label), datasets: [{ data: ds.map(d => d.value), backgroundColor: '#1e88c2' }] },
             options: {
                 ...baseOpts,
-                plugins: { legend: { display: false } },
+                layout: { padding: { top: 24 } },
+                plugins: { legend: { display: false }, tooltip: pctTooltip(total) },
                 scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
                 onClick: function (evt, els) {
                     if (!els.length) return;
                     renderCategoria(ds[els[0].index].label);
                 }
-            }
+            },
+            plugins: [pctLabels(total)]
         });
     }
 
@@ -831,6 +862,7 @@ $kpisHidden = $kpisHidden ?? [];
         const cats = data.edatCat[franja] || {};
         const labels = Object.keys(cats);
         const values = labels.map(k => cats[k]);
+        const total = values.reduce((a, v) => a + v, 0);
         titol.textContent = "Franja " + franja + " · per categoria";
         btnBack.style.display = 'inline-block';
         if (edatChart) edatChart.destroy();
@@ -845,7 +877,13 @@ $kpisHidden = $kpisHidden ?? [];
         edatChart = new Chart(edatEl, {
             type: 'bar',
             data: { labels: labels, datasets: [{ data: values, backgroundColor: colors }] },
-            options: { ...baseOpts, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+            options: {
+                ...baseOpts,
+                layout: { padding: { top: 24 } },
+                plugins: { legend: { display: false }, tooltip: pctTooltip(total) },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            },
+            plugins: [pctLabels(total)]
         });
     }
 
