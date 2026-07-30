@@ -181,6 +181,8 @@ $jsData = [
     })(),
     // Connexions al formulari (crues, últims 30 dies): [{d:'Y-m-d', h:0..23, n}]
     'connexions'     => $connexions ?? [],
+    // Origen de les visites (crues, últims 30 dies): [{d:'Y-m-d', f:'facebook', n}]
+    'origen'         => $origen ?? [],
 ];
 
 // Amaga automàticament els KPIs SENSE dades reals (irrellevants per a l'event),
@@ -417,6 +419,33 @@ $kpisHidden = $kpisHidden ?? [];
         <div class="conv-bar"><span id="convBar" style="width:0"></span></div>
     </div>
     <p id="convNota" class="muted small" style="margin:.6rem 0 0;"></p>
+</div>
+
+<style>
+.orig-panel .conn-controls { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin:.2rem 0 1rem; }
+.orig-panel select { padding:.35rem .5rem; border:1px solid #cbd5e1; border-radius:.4rem; }
+.orig-rows { display:flex; flex-direction:column; gap:.55rem; margin-top:.4rem; max-width:640px; }
+.orig-row { display:grid; grid-template-columns:140px 1fr 92px; align-items:center; gap:.7rem; }
+.orig-lbl { font-size:.88rem; color:#334155; font-weight:600; }
+.orig-track { background:#eef2f7; border-radius:6px; height:16px; overflow:hidden; }
+.orig-track > span { display:block; height:100%; border-radius:6px; }
+.orig-num { font-size:.85rem; color:#475569; text-align:right; white-space:nowrap; }
+</style>
+<div class="kpi-panel orig-panel" data-kpi="origen" data-kpi-title="Origen de les visites">
+    <h2>Origen de les visites</h2>
+    <p class="muted small" style="margin:-.3rem 0 .6rem;">D'on vénen les visites al formulari. Google, Facebook, Instagram… es detecten soles; el <strong>mailing</strong> i campanyes concretes cal etiquetar l'enllaç amb <code>?utm_source=…</code>.</p>
+    <div class="conn-controls">
+        <label>Període:
+            <select id="origPeriode">
+                <option value="7">Últims 7 dies</option>
+                <option value="15" selected>Últims 15 dies</option>
+                <option value="30">Últims 30 dies</option>
+            </select>
+        </label>
+        <span id="origResum" class="muted small"></span>
+    </div>
+    <p id="origEmpty" class="muted" hidden>Encara no hi ha visites registrades per aquest esdeveniment (el comptador va començar en desplegar aquesta funció).</p>
+    <div class="orig-rows" id="origRows"></div>
 </div>
 
 <?php if ($mostraIngEd): ?>
@@ -1050,6 +1079,74 @@ $kpisHidden = $kpisHidden ?? [];
             peakEl.innerHTML = '🔥 <strong>Hora punta:</strong> ' + DIES[peak.d] +
                 ' a les ' + peak.h + 'h (' + peak.v + ' connexions)';
         }
+    }
+
+    sel.addEventListener('change', render);
+    render();
+})();
+</script>
+
+<script>
+/* ── Origen de les visites ─────────────────────────────────────────────── */
+(function () {
+    var rows = <?= json_encode($origen ?? [], JSON_UNESCAPED_UNICODE) ?>;
+    var sel  = document.getElementById('origPeriode');
+    if (!sel) return;
+    var wrap  = document.getElementById('origRows');
+    var empty = document.getElementById('origEmpty');
+    var resum = document.getElementById('origResum');
+
+    var LABELS = {
+        facebook:'Facebook', instagram:'Instagram', google:'Google', mailing:'Mailing',
+        whatsapp:'WhatsApp', twitter:'Twitter / X', youtube:'YouTube', tiktok:'TikTok',
+        linkedin:'LinkedIn', telegram:'Telegram', cerca:'Altres cercadors',
+        web:'Web pròpia', directe:'Directe / app / email', altres:'Altres webs'
+    };
+    var COLORS = {
+        facebook:'#1877f2', instagram:'#e1306c', google:'#ea4335', mailing:'#16a34a',
+        whatsapp:'#25d366', twitter:'#1d9bf0', youtube:'#ff0000', tiktok:'#111827',
+        linkedin:'#0a66c2', telegram:'#229ed9', cerca:'#0ea5e9',
+        web:'#8b5cf6', directe:'#94a3b8', altres:'#64748b'
+    };
+    function label(f) { return LABELS[f] || f; }
+    function color(f) { return COLORS[f] || '#64748b'; }
+
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function cutoffStr(days) {
+        var c = new Date(); c.setHours(0,0,0,0); c.setDate(c.getDate() - (days - 1));
+        return c.getFullYear() + '-' + pad(c.getMonth() + 1) + '-' + pad(c.getDate());
+    }
+
+    function render() {
+        var days = parseInt(sel.value, 10) || 15;
+        var since = cutoffStr(days);
+        var agg = {}, total = 0;
+        rows.forEach(function (r) {
+            if (r.d < since) return;
+            agg[r.f] = (agg[r.f] || 0) + r.n;
+            total += r.n;
+        });
+
+        if (total === 0) {
+            wrap.innerHTML = ''; empty.hidden = false; resum.textContent = '';
+            return;
+        }
+        empty.hidden = true;
+        resum.textContent = total + ' visites en els últims ' + days + ' dies';
+
+        var list = Object.keys(agg).map(function (f) { return { f: f, n: agg[f] }; });
+        list.sort(function (a, b) { return b.n - a.n; });
+        var max = list[0].n;
+
+        wrap.innerHTML = list.map(function (o) {
+            var pct = Math.round(o.n / total * 100);
+            var w   = Math.max(3, Math.round(o.n / max * 100));
+            return '<div class="orig-row">'
+                 + '<span class="orig-lbl">' + label(o.f) + '</span>'
+                 + '<span class="orig-track"><span style="width:' + w + '%;background:' + color(o.f) + '"></span></span>'
+                 + '<span class="orig-num">' + o.n + ' · ' + pct + '%</span>'
+                 + '</div>';
+        }).join('');
     }
 
     sel.addEventListener('change', render);

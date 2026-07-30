@@ -243,6 +243,18 @@ CREATE TABLE IF NOT EXISTS `visitas_horas` (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Origen (font de trànsit) de les visites al formulari — KPI "Origen"
+CREATE TABLE IF NOT EXISTS `visitas_origen` (
+    `evento_id` INT UNSIGNED NOT NULL,
+    `fecha`     DATE         NOT NULL,
+    `font`      VARCHAR(20)  NOT NULL,
+    `n`         INT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (`evento_id`, `fecha`, `font`),
+    CONSTRAINT `fk_visitas_origen_evento`
+        FOREIGN KEY (`evento_id`) REFERENCES `eventos` (`id`)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- 7. VALORES DE CAMPOS PERSONALIZADOS POR INSCRIPCIÓN
 -- ------------------------------------------------------------

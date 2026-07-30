@@ -507,7 +507,33 @@ final class EventoController
             'aforoMax'            => $evento['aforo_maximo'] !== null ? (int) $evento['aforo_maximo'] : null,
             'connexions'          => $this->connexionsPerHores($evento),
             'inscDia'             => $this->inscripcionsPerDia($evento),
+            'origen'              => $this->origenVisites($evento),
         ], layout: 'admin');
+    }
+
+    /**
+     * Origen (font de trànsit) de les visites al formulari, últims 30 dies.
+     * Cru [{d,f,n}]; la vista agrega per font segons el període triat.
+     * @return list<array{d:string,f:string,n:int}>
+     */
+    private function origenVisites(array $evento): array
+    {
+        try {
+            $rows = Database::getInstance()->query(
+                "SELECT fecha, font, n FROM visitas_origen
+                 WHERE evento_id = ? AND fecha >= (CURDATE() - INTERVAL 30 DAY)
+                 ORDER BY fecha ASC",
+                [(int) $evento['id']]
+            )->fetchAll();
+        } catch (\Throwable $e) {
+            return []; // taula pot no existir encara (migració 049)
+        }
+
+        return array_map(fn($r) => [
+            'd' => (string) $r['fecha'],
+            'f' => (string) $r['font'],
+            'n' => (int) $r['n'],
+        ], $rows);
     }
 
     /**

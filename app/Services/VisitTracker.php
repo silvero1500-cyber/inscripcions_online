@@ -54,15 +54,88 @@ final class VisitTracker
             // PHP corre en Europe/Madrid → data i hora locals directes
             $fecha = date('Y-m-d');
             $hora  = (int) date('G'); // 0..23
-            Database::getInstance()->query(
+            $db = Database::getInstance();
+            $db->query(
                 'INSERT INTO visitas_horas (evento_id, fecha, hora, n)
                  VALUES (?, ?, ?, 1)
                  ON DUPLICATE KEY UPDATE n = n + 1',
                 [self::$eventoId, $fecha, $hora]
             );
+            // Origen (font de trànsit): UTM prioritari, si no el referer
+            $db->query(
+                'INSERT INTO visitas_origen (evento_id, fecha, font, n)
+                 VALUES (?, ?, ?, 1)
+                 ON DUPLICATE KEY UPDATE n = n + 1',
+                [self::$eventoId, $fecha, self::detectFont()]
+            );
         } catch (\Throwable $e) {
             // L'analítica no pot fer caure la petició
             error_log('[VisitTracker] ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Determina l'origen de la visita:
+     *  1) Paràmetres UTM de l'enllaç (utm_source / utm_medium) — l'únic fiable
+     *     per al mailing (els correus no envien Referer).
+     *  2) Si no n'hi ha, el Referer (autodetecció de Google, Facebook, etc.).
+     *  3) Sense cap pista → 'directe'.
+     */
+    private static function detectFont(): string
+    {
+        // ── 1) UTM ──
+        $utm = strtolower(trim((string) ($_GET['utm_source'] ?? '')));
+        if ($utm !== '') {
+            $f = self::normalitza($utm);
+            if ($f !== null) return $f;
+            // utm_source desconegut: es guarda sanejat i escurçat
+            $clean = preg_replace('/[^a-z0-9]/', '', $utm) ?: 'altres';
+            return substr($clean, 0, 20);
+        }
+        $med = strtolower((string) ($_GET['utm_medium'] ?? ''));
+        if (str_contains($med, 'mail') || str_contains($med, 'email') || str_contains($med, 'news')) {
+            return 'mailing';
+        }
+
+        // ── 2) Referer ──
+        $ref = (string) ($_SERVER['HTTP_REFERER'] ?? '');
+        if ($ref === '') return 'directe';
+        $host = strtolower((string) parse_url($ref, PHP_URL_HOST));
+        if ($host === '') return 'directe';
+
+        // Navegació dins del propi domini
+        $self = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+        if (($self !== '' && $host === $self) || str_contains($host, 'werun.cat')) {
+            return 'web';
+        }
+
+        $map = [
+            'google.' => 'google', 'facebook.' => 'facebook', 'fb.me' => 'facebook',
+            'fb.com' => 'facebook', 'instagram' => 'instagram', 'wa.me' => 'whatsapp',
+            'whatsapp' => 'whatsapp', 't.co' => 'twitter', 'twitter.' => 'twitter',
+            'x.com' => 'twitter', 'youtube.' => 'youtube', 'youtu.be' => 'youtube',
+            'tiktok' => 'tiktok', 'linkedin' => 'linkedin', 't.me' => 'telegram',
+            'bing.' => 'cerca', 'yahoo.' => 'cerca', 'duckduckgo' => 'cerca', 'ecosia' => 'cerca',
+        ];
+        foreach ($map as $needle => $font) {
+            if (str_contains($host, $needle)) return $font;
+        }
+        return 'altres';
+    }
+
+    /** Normalitza un utm_source conegut a la nostra font canònica (o null). */
+    private static function normalitza(string $s): ?string
+    {
+        if ($s === 'fb' || str_contains($s, 'face')) return 'facebook';
+        if ($s === 'ig' || str_contains($s, 'insta')) return 'instagram';
+        if (str_contains($s, 'google')) return 'google';
+        if (str_contains($s, 'mail') || str_contains($s, 'news') || str_contains($s, 'email') || str_contains($s, 'butlleti')) return 'mailing';
+        if ($s === 'wa' || str_contains($s, 'whats')) return 'whatsapp';
+        if ($s === 'x' || str_contains($s, 'twitter')) return 'twitter';
+        if (str_contains($s, 'youtube') || str_contains($s, 'youtu')) return 'youtube';
+        if (str_contains($s, 'tiktok')) return 'tiktok';
+        if (str_contains($s, 'linkedin')) return 'linkedin';
+        if (str_contains($s, 'telegram')) return 'telegram';
+        return null;
     }
 }
