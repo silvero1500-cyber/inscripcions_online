@@ -1422,10 +1422,10 @@ li.col-manager-item label {
     box-shadow: 0 2px 8px rgba(15, 23, 42, .12);
 }
 .rsc-facts {
-    display: flex; flex-wrap: wrap; gap: 1.5rem;
+    display: flex; flex-wrap: wrap; gap: 1rem;
     margin: 1rem 0 1.2rem;
 }
-.rsc-facts > div { display: flex; flex-direction: column; gap: .2rem; }
+.rsc-facts > div { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: .3rem; }
 .rsc-facts span { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #9ca3af; font-weight: 600; }
 .rsc-facts strong { font-size: 1.05rem; color: #1f2937; }
 .rsc-action { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
