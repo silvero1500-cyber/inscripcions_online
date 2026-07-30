@@ -49,9 +49,14 @@ foreach ($edatCategoria as $row) {
 }
 
 // Comparativa: helper de format del delta
-$delta = function (int $d): array {
-    if ($d > 0) return ['cls' => 'kpi-delta-up',   'txt' => '+' . $d];
-    if ($d < 0) return ['cls' => 'kpi-delta-down', 'txt' => (string) $d];
+// $base (opcional) = valor de l'edició anterior al mateix punt. Si es passa,
+// s'afegeix el % de creixement: extra / base (p. ex. 254/851 = 29%).
+$delta = function (int $d, ?int $base = null): array {
+    $pct = ($base !== null && $base > 0 && $d !== 0)
+        ? ' (' . (int) ($d / $base * 100) . '%)'   // part entera: 29,8% → 29%
+        : '';
+    if ($d > 0) return ['cls' => 'kpi-delta-up',   'txt' => '+' . $d . $pct];
+    if ($d < 0) return ['cls' => 'kpi-delta-down', 'txt' => $d . $pct];
     return ['cls' => 'kpi-delta-flat', 'txt' => '±0'];
 };
 
@@ -236,7 +241,7 @@ $kpisHidden = $kpisHidden ?? [];
         <div class="kpi-sub">
             <?= (int) ($estados['confirmado'] ?? 0) ?> confirmats · <?= (int) ($estados['pendiente'] ?? 0) ?> pendents
         </div>
-        <?php if ($comparativa !== null): $d = $delta($comparativa['deltaTotal']); ?>
+        <?php if ($comparativa !== null): $d = $delta($comparativa['deltaTotal'], $comparativa['inscritsMateixPunt']); ?>
             <div class="kpi-cmp <?= $d['cls'] ?>">
                 <?= e($d['txt']) ?> vs edició <?= (int) $comparativa['anyAnterior'] ?> (a data d'avui)
             </div>
@@ -270,7 +275,7 @@ $kpisHidden = $kpisHidden ?? [];
     <div class="kpi-card kpi-card-lvl1">
         <div class="kpi-label">Inscrits últims 7 dies</div>
         <div class="kpi-value"><?= $darrers7 ?></div>
-        <?php if ($comparativa !== null): $d = $delta($comparativa['delta7']); ?>
+        <?php if ($comparativa !== null): $d = $delta($comparativa['delta7'], $comparativa['darrers7Ant']); ?>
             <div class="kpi-cmp <?= $d['cls'] ?>">
                 <?= e($d['txt']) ?> vs mateixos 7 dies edició <?= (int) $comparativa['anyAnterior'] ?>
             </div>
