@@ -134,17 +134,18 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
             <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/marcar')) ?>" class="rsc-action" onsubmit="return confirmRecollit(this)">
                 <?= Csrf::field() ?>
                 <?php if (!empty($pucEditarDorsal) || $mostraXip): ?>
-                    <div style="display:flex;gap:1.6rem;align-items:flex-start;flex-wrap:wrap;">
+                    <div class="rsc-assign">
                         <?php if (!empty($pucEditarDorsal)): ?>
-                            <label style="margin:0;">Assignar dorsal
+                            <div class="rsc-assign-col">
+                                <span>Assignar dorsal</span>
                                 <input type="number" name="dorsal" min="1" inputmode="numeric"
                                        value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>" placeholder="—">
-                            </label>
+                            </div>
                         <?php endif; ?>
                         <?php if ($mostraXip): ?>
-                            <div style="line-height:1.3;">
-                                <span style="display:block;font-size:.8rem;color:#64748b;text-transform:uppercase;letter-spacing:.03em;margin-bottom:.35rem;">Tipus xip</span>
-                                <strong style="font-size:1.35rem;"><?= e($xipTxt) ?></strong>
+                            <div class="rsc-assign-col">
+                                <span>Tipus xip</span>
+                                <strong><?= e($xipTxt) ?></strong>
                             </div>
                         <?php endif; ?>
                     </div>

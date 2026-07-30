@@ -1462,6 +1462,14 @@ li.col-manager-item label {
 .rsc-action label { font-size: .9rem; }
 .btn-lg { padding: .7rem 1.4rem; font-size: 1.05rem; }
 
+/* Disseny 2 recollida: "Assignar dorsal" + "Tipus xip", centrats i amb el
+   mateix estil d'etiqueta que la resta (majúscules gris). */
+.rsc-assign { display: flex; width: 100%; gap: 1rem; margin: .2rem 0 1.1rem; }
+.rsc-assign-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .5rem; text-align: center; }
+.rsc-assign-col span { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #9ca3af; font-weight: 600; }
+.rsc-assign-col strong { font-size: 1.7rem; font-weight: 800; color: #1f2937; line-height: 1; }
+.rsc-assign input { width: 6.5rem; padding: .5rem .4rem; border: 1px solid #d1d5db; border-radius: 10px; font-size: 1.7rem; font-weight: 700; text-align: center; color: #1e293b; }
+
 /* ════════════════════════════════════════════════════
    PANEL (dashboard) rediseñat
    ════════════════════════════════════════════════════ */
