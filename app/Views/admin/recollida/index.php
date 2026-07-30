@@ -106,9 +106,6 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
         <div class="rsc-facts">
             <div><span>DNI</span><strong><?= e($ins['dni'] ?? '—') ?></strong></div>
             <div><span>Tarifa</span><strong><?= e($scanned['tarifa']['nombre'] ?? '—') ?></strong></div>
-            <?php if ($mostraXip): ?>
-            <div><span>Tipus xip</span><strong><?= e($xipTxt) ?></strong></div>
-            <?php endif; ?>
         </div>
 
         <?php if ($jaRecollit): ?>
@@ -136,11 +133,21 @@ $pageUrl = function (int $p) use ($selEvento, $recFilter, $search): string {
         <?php else: ?>
             <form method="post" action="<?= e(base_url('/admin/recollida/' . (int) $ins['id'] . '/marcar')) ?>" class="rsc-action" onsubmit="return confirmRecollit(this)">
                 <?= Csrf::field() ?>
-                <?php if (!empty($pucEditarDorsal)): ?>
-                    <label>Assignar dorsal
-                        <input type="number" name="dorsal" min="1" inputmode="numeric"
-                               value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>" placeholder="—">
-                    </label>
+                <?php if (!empty($pucEditarDorsal) || $mostraXip): ?>
+                    <div style="display:flex;gap:1.4rem;align-items:flex-end;flex-wrap:wrap;">
+                        <?php if (!empty($pucEditarDorsal)): ?>
+                            <label>Assignar dorsal
+                                <input type="number" name="dorsal" min="1" inputmode="numeric"
+                                       value="<?= !empty($ins['numero_dorsal']) ? (int) $ins['numero_dorsal'] : '' ?>" placeholder="—">
+                            </label>
+                        <?php endif; ?>
+                        <?php if ($mostraXip): ?>
+                            <div style="line-height:1.25;">
+                                <span style="display:block;font-size:.8rem;color:#64748b;text-transform:uppercase;letter-spacing:.03em;">Tipus xip</span>
+                                <strong style="font-size:1.2rem;"><?= e($xipTxt) ?></strong>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 <?php endif; ?>
                 <div class="rsc-btns">
                     <button type="submit" class="btn btn-primary btn-lg">✓ Marcar recollit</button>
