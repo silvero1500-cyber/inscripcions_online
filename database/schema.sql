@@ -381,6 +381,7 @@ CREATE TABLE IF NOT EXISTS `tienda_productos` (
     `precio`      DECIMAL(8,2)  NOT NULL DEFAULT 0,
     `stock`       INT           NULL,
     `activo`      TINYINT(1)    NOT NULL DEFAULT 1,
+    `oculto`      TINYINT(1)    NOT NULL DEFAULT 0 COMMENT 'Actiu però no llistat (comprable per URL directa)',
     `destacado`   TINYINT(1)    NOT NULL DEFAULT 0,
     `orden`       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     `created_at`  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,

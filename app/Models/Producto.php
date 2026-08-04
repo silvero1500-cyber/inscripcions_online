@@ -47,7 +47,7 @@ final class Producto
     public static function hayActivos(): bool
     {
         return (bool) Database::getInstance()
-            ->query('SELECT 1 FROM tienda_productos WHERE activo = 1 LIMIT 1')
+            ->query('SELECT 1 FROM tienda_productos WHERE activo = 1 AND oculto = 0 LIMIT 1')
             ->fetchColumn();
     }
 
@@ -58,7 +58,7 @@ final class Producto
             "SELECT p.*,
                     (SELECT ruta FROM tienda_producto_imagenes WHERE producto_id = p.id ORDER BY orden, id LIMIT 1) AS imagen
              FROM tienda_productos p
-             WHERE p.activo = 1
+             WHERE p.activo = 1 AND p.oculto = 0
              ORDER BY p.destacado DESC, p.orden ASC, p.id DESC"
         )->fetchAll();
         foreach ($rows as &$p) {
