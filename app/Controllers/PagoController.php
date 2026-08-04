@@ -392,15 +392,45 @@ final class PagoController
             Response::text('OK', 200);
         }
 
-        // Si ya estaba procesado, no volver a aplicar (idempotencia)
-        if (in_array($pago['estado'], [Pago::ESTADO_COMPLETADO, Pago::ESTADO_FALLIDO], true)) {
-            RedsysNotificacion::log($dsOrder, $params, $req->ip, true, 'Duplicado: ya procesado');
-            Response::text('OK', 200);
-        }
-
         $resultado = RedsysService::interpretResponse($params);
 
-        Database::getInstance()->transaction(function () use ($pago, $params, $resultado): void {
+        // ── Validacions defensives ──────────────────────────────────────────
+        // La firma HMAC ja garanteix que la notificació ve de Redsys per a AQUEST
+        // order. Aquestes comprovacions addicionals detecten discrepàncies
+        // inesperades (bugs, imports canviats) i les deixen registrades. No
+        // bloquegen el cobrament (els diners ja s'han mogut), però queden al log.
+        $avisos = [];
+        $notifCents  = (isset($params['Ds_Amount']) && ctype_digit((string) $params['Ds_Amount'])) ? (int) $params['Ds_Amount'] : null;
+        $expectCents = (int) round((float) $pago['importe'] * 100);
+        if ($notifCents !== null && $notifCents !== $expectCents) {
+            $avisos[] = "import {$notifCents} != esperat {$expectCents} cts";
+        }
+        $notifTerm = (string) ($params['Ds_Terminal'] ?? '');
+        if ($notifTerm !== '' && !empty($pago['ds_terminal'])
+            && ltrim($notifTerm, '0') !== ltrim((string) $pago['ds_terminal'], '0')) {
+            $avisos[] = "terminal {$notifTerm} != {$pago['ds_terminal']}";
+        }
+        $notifCur = (string) ($params['Ds_Currency'] ?? '');
+        if ($notifCur !== '' && $notifCur !== '978') {
+            $avisos[] = "moneda {$notifCur} != 978";
+        }
+
+        // ── Aplicació ATÒMICA i idempotent davant IPN duplicades/concurrents ──
+        // Redsys pot reenviar la mateixa notificació (o dues alhora). Bloquegem
+        // la fila del pagament (FOR UPDATE) i rellegim l'estat DINS la
+        // transacció: només la primera la processa; les altres no fan res.
+        $didProcess = false;
+        Database::getInstance()->transaction(function () use (&$didProcess, $pago, $params, $resultado): void {
+            $db = Database::getInstance();
+            $locked = $db->query('SELECT estado FROM pagos WHERE id = ? FOR UPDATE', [(int) $pago['id']])->fetch();
+            if ($locked === false) {
+                return;
+            }
+            if (in_array($locked['estado'], [Pago::ESTADO_COMPLETADO, Pago::ESTADO_FALLIDO], true)) {
+                return; // ja processat per una altra notificació
+            }
+            $didProcess = true;
+
             if ($resultado['success']) {
                 Pago::marcarCompletado((int) $pago['id'], $params);
                 if (!empty($pago['tienda_pedido_id'])) {
@@ -422,11 +452,20 @@ final class PagoController
             }
         });
 
-        RedsysNotificacion::log($dsOrder, $params, $req->ip, true, null);
+        // Registre de la notificació (amb avisos si n'hi ha)
+        $nota = null;
+        if (!$didProcess) {
+            $nota = 'Duplicat: ja processat';
+        } elseif ($avisos) {
+            $nota = 'Processat amb AVISOS: ' . implode(' · ', $avisos);
+            error_log('[PagoController] Avisos IPN order=' . $dsOrder . ': ' . implode(' · ', $avisos));
+        }
+        RedsysNotificacion::log($dsOrder, $params, $req->ip, true, $nota);
 
-        // Email de confirmación + QR (solo si el pago fue OK). Si falla el envío,
-        // logueamos pero devolvemos OK a Redsys igualmente para no reintentar.
-        if ($resultado['success']) {
+        // Email de confirmació + QR — NOMÉS si aquesta invocació ha processat el
+        // pagament (evita correus duplicats amb IPN concurrents) i ha estat OK.
+        // Si falla l'enviament, ho registrem però tornem OK a Redsys igualment.
+        if ($didProcess && $resultado['success']) {
             try {
                 if (!empty($pago['tienda_pedido_id'])) {
                     EmailService::sendComandaTienda((int) $pago['tienda_pedido_id']);        // client: confirmada, en preparació
