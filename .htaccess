@@ -7,10 +7,16 @@ Options -MultiViews
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    # HSTS: força HTTPS al navegador durant 180 dies (només té efecte sobre HTTPS).
+    # Sense includeSubDomains per no afectar altres subdominis de werun.cat.
+    Header always set Strict-Transport-Security "max-age=15552000"
     # Permitir cámara y micrófono solo en el propio origen (para check-in QR)
     Header always set Permissions-Policy "geolocation=(self), microphone=(self), camera=(self)"
-    # CSP: 'self' + permitir fonts.googleapis.com y fonts.gstatic.com (Inter), data: para SVG inline en selects, https: para imágenes de eventos
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; media-src 'self' blob:; connect-src 'self';"
+    # CSP: 'self' + fonts.googleapis/gstatic (Inter), data: per SVG inline, https: per imatges.
+    # form-action inclou els dominis de Redsys (el pagament fa POST cap allà: prod + sandbox).
+    # object-src 'none' (sense plugins), base-uri 'self' (anti-injecció de <base>),
+    # frame-ancestors 'self' (anti-clickjacking, coherent amb X-Frame-Options).
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self' https://sis.redsys.es https://sis-t.redsys.es:25443;"
 </IfModule>
 
 # ── Bloquear acceso directo a directorios sensibles ─────────
