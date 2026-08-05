@@ -61,12 +61,22 @@ final class VisitTracker
                  ON DUPLICATE KEY UPDATE n = n + 1',
                 [self::$eventoId, $fecha, $hora]
             );
+            // Domini de la web oficial de l'event → compta com a "web pròpia"
+            $ownHost = null;
+            $webUrl = $db->query('SELECT web_oficial_url FROM eventos WHERE id = ?', [self::$eventoId])->fetchColumn();
+            if (is_string($webUrl) && $webUrl !== '') {
+                $h = strtolower((string) parse_url($webUrl, PHP_URL_HOST));
+                $h = preg_replace('/^www\./', '', $h) ?? $h;
+                if ($h !== '' && strlen($h) >= 4 && str_contains($h, '.')) {
+                    $ownHost = $h;
+                }
+            }
             // Origen (font de trànsit): UTM prioritari, si no el referer
             $db->query(
                 'INSERT INTO visitas_origen (evento_id, fecha, font, n)
                  VALUES (?, ?, ?, 1)
                  ON DUPLICATE KEY UPDATE n = n + 1',
-                [self::$eventoId, $fecha, self::detectFont()]
+                [self::$eventoId, $fecha, self::detectFont($ownHost)]
             );
         } catch (\Throwable $e) {
             // L'analítica no pot fer caure la petició
@@ -80,8 +90,11 @@ final class VisitTracker
      *     per al mailing (els correus no envien Referer).
      *  2) Si no n'hi ha, el Referer (autodetecció de Google, Facebook, etc.).
      *  3) Sense cap pista → 'directe'.
+     *
+     * @param string|null $ownHost Domini de la web oficial de l'event (sense
+     *   "www."), que es comptabilitza com a "web pròpia" (p. ex. la web de la cursa).
      */
-    private static function detectFont(): string
+    private static function detectFont(?string $ownHost = null): string
     {
         // ── 1) UTM ──
         $utm = strtolower(trim((string) ($_GET['utm_source'] ?? '')));
@@ -103,9 +116,12 @@ final class VisitTracker
         $host = strtolower((string) parse_url($ref, PHP_URL_HOST));
         if ($host === '') return 'directe';
 
-        // Navegació dins del propi domini
+        // Navegació dins del propi domini (werun.cat) o des de la web oficial de
+        // l'event (p. ex. cursafestamajorsabadell.cat) → "web pròpia".
         $self = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
-        if (($self !== '' && $host === $self) || str_contains($host, 'werun.cat')) {
+        if (($self !== '' && $host === $self)
+            || str_contains($host, 'werun.cat')
+            || ($ownHost !== null && str_contains($host, $ownHost))) {
             return 'web';
         }
 
