@@ -345,16 +345,21 @@ final class EventoController
             [$id]
         )->fetch();
 
-        // ── Per mètode de pagament (TPV vs Manual/Import) ──────
-        // TPV = té un pagament Redsys completat; si no, es considera manual/importat.
+        // ── Per mètode de pagament ─────────────────────────────
+        // Si l'inscrit té `metodo_pago` desat (p. ex. importat: Targeta/Bizum/
+        // Transferència) es fa servir. Si no, es dedueix: TPV = té un pagament
+        // Redsys completat; en cas contrari, Manual/importat.
         $porPagament = $db->query(
-            "SELECT CASE WHEN EXISTS (
-                        SELECT 1 FROM pagos p WHERE p.inscrito_id = i.id AND p.estado = 'completado'
-                    ) THEN 'TPV' ELSE 'Manual' END AS metode,
+            "SELECT COALESCE(NULLIF(i.metodo_pago, ''),
+                        CASE WHEN EXISTS (
+                            SELECT 1 FROM pagos p WHERE p.inscrito_id = i.id AND p.estado = 'completado'
+                        ) THEN 'TPV' ELSE 'Manual' END
+                    ) AS metode,
                     COUNT(*) AS n
              FROM inscritos i
              WHERE i.evento_id = ? AND i.estado IN ('pendiente','confirmado')
-             GROUP BY metode",
+             GROUP BY metode
+             ORDER BY n DESC",
             [$id]
         )->fetchAll(\PDO::FETCH_KEY_PAIR);
 

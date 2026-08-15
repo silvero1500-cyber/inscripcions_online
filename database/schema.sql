@@ -209,6 +209,7 @@ CREATE TABLE IF NOT EXISTS `inscritos` (
     `duplicado_de`    INT UNSIGNED  NULL DEFAULT NULL COMMENT 'Si és duplicat: ID de la inscripció bona (queda cancelado)',
     `origen`          ENUM('formulario','importacion') NOT NULL DEFAULT 'formulario'
                                     COMMENT 'formulario = alta pel formulari public; importacion = alta manual per CSV',
+    `metodo_pago`     VARCHAR(30)   NULL COMMENT 'Mètode de pagament (Targeta/Bizum/Transferència), si es coneix',
     `numero_dorsal`   INT UNSIGNED  NULL,
     -- Metadatos de seguridad/auditoría
     `ip_registro`     VARCHAR(45)   NULL COMMENT 'IPv4 o IPv6',
